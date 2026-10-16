@@ -1,10 +1,20 @@
-import React from 'react';
-import { MapPin, Mail, BookOpen, QrCode, PhoneCall, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, Mail, BookOpen, QrCode, PhoneCall, ArrowUpRight, ExternalLink } from 'lucide-react';
 import { getSiteConfig } from '../data/siteConfig';
 import SocialFollowSection from './SocialFollowSection';
 
 export default function Footer({ navigate }) {
-  const config = getSiteConfig();
+  const [config, setConfig] = useState(getSiteConfig);
+
+  useEffect(() => {
+    const handleUpdate = () => setConfig(getSiteConfig());
+    window.addEventListener('site-config-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('site-config-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
 
   return (
     <div className="w-full">
@@ -158,34 +168,81 @@ export default function Footer({ navigate }) {
               </div>
             </div>
 
-            {/* Quét QR Thực Đơn Trực Tuyến */}
+            {/* Cột 4: Zalo Official Account & QR Code (Hoặc tùy biến theo Admin) */}
             <div className="space-y-4">
-              <h4 className="text-[#2b170e] text-sm font-black tracking-widest uppercase border-l-3 border-[#8c5932] pl-2.5">
-                Quét QR Thực Đơn
-              </h4>
-              
-              <div className="grid grid-cols-2 gap-3 text-center text-xs">
-                <div className="bg-white/70 p-3.5 rounded-2xl border border-white/90 shadow-sm">
-                  <img 
-                    src="/images/qr_menu_table.png" 
-                    alt="QR Menu 413PHI" 
-                    className="w-18 h-18 bg-white p-1 rounded-xl mx-auto border border-stone-200"
-                  />
-                  <span className="text-xs sm:text-sm text-[#2b170e] font-bold block mt-2">Menu 413PHI</span>
-                </div>
-                <div className="bg-white/70 p-3.5 rounded-2xl border border-white/90 shadow-sm">
-                  <img 
-                    src="/images/qr_menu_96d5.png" 
-                    alt="QR Menu 96D5" 
-                    className="w-18 h-18 bg-white p-1 rounded-xl mx-auto border border-stone-200"
-                  />
-                  <span className="text-xs sm:text-sm text-[#2b170e] font-bold block mt-2">Menu 96D5</span>
-                </div>
+              <div className="flex items-center justify-between">
+                <h4 className="text-[#2b170e] text-sm font-black tracking-widest uppercase border-l-3 border-[#8c5932] pl-2.5">
+                  {config.zaloOA?.title || 'Zalo Official Account'}
+                </h4>
+                {config.zaloOA?.badge && (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-700 font-extrabold border border-blue-500/30">
+                    {config.zaloOA.badge}
+                  </span>
+                )}
               </div>
+              
+              {/* Chế độ hiển thị: zalo_only (mặc định) | both | branch_menu_only */}
+              {config.zaloOA?.displayMode !== 'branch_menu_only' && (
+                <div className="p-4 rounded-3xl bg-white/75 border border-white/95 shadow-sm space-y-3 flex flex-col items-center text-center">
+                  <div className="relative group p-2 rounded-2xl bg-white border border-stone-200/80 shadow-2xs">
+                    <img 
+                      src={config.zaloOA?.qrImage || '/images/qr_zalo_oa.png'} 
+                      alt="QR Zalo Official Account" 
+                      className="w-24 h-24 object-contain rounded-xl group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shadow-sm">
+                      Z
+                    </div>
+                  </div>
 
-              <p className="text-xs sm:text-sm text-[#7a5843] pt-1 leading-relaxed">
-                Quét mã QR bằng camera điện thoại để xem nhanh thực đơn & chọn món tại bàn.
-              </p>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-[#2b170e]">{config.zaloOA?.oaName || 'COFFEE 24/24'}</p>
+                    <p className="text-xs text-[#704f38] leading-relaxed font-medium">
+                      {config.zaloOA?.desc || 'Quét QR qua Zalo hoặc nhấn nút để nhận ưu đãi & tích điểm 24/7.'}
+                    </p>
+                  </div>
+
+                  <a 
+                    href={config.zaloOA?.url || 'https://zalo.me/197464281190102692'} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs sm:text-sm font-black tracking-wide shadow-xs hover:shadow-md transition-all inline-flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <span>{config.zaloOA?.buttonText || 'Mở Zalo OA Nhận Ưu Đãi'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-white" />
+                  </a>
+                </div>
+              )}
+
+              {/* Nếu admin chọn chế độ 'both' */}
+              {config.zaloOA?.displayMode === 'both' && (
+                <div className="pt-2 border-t border-white/60">
+                  <p className="text-xs font-bold text-[#8c5932] uppercase tracking-wider mb-2">Hoặc Quét Menu Tại Bàn:</p>
+                  <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                    <div className="bg-white/70 p-2.5 rounded-xl border border-white/90 shadow-2xs">
+                      <img src="/images/qr_menu_table.png" alt="QR 413PHI" className="w-12 h-12 bg-white p-0.5 rounded-lg mx-auto border border-stone-200" />
+                      <span className="text-[11px] text-[#2b170e] font-bold block mt-1">413PHI</span>
+                    </div>
+                    <div className="bg-white/70 p-2.5 rounded-xl border border-white/90 shadow-2xs">
+                      <img src="/images/qr_menu_96d5.png" alt="QR 96D5" className="w-12 h-12 bg-white p-0.5 rounded-lg mx-auto border border-stone-200" />
+                      <span className="text-[11px] text-[#2b170e] font-bold block mt-1">96D5</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {config.zaloOA?.displayMode === 'branch_menu_only' && (
+                <div className="grid grid-cols-2 gap-3 text-center text-xs">
+                  <div className="bg-white/70 p-3.5 rounded-2xl border border-white/90 shadow-sm">
+                    <img src="/images/qr_menu_table.png" alt="QR 413PHI" className="w-18 h-18 bg-white p-1 rounded-xl mx-auto border border-stone-200" />
+                    <span className="text-xs sm:text-sm text-[#2b170e] font-bold block mt-2">Menu 413PHI</span>
+                  </div>
+                  <div className="bg-white/70 p-3.5 rounded-2xl border border-white/90 shadow-sm">
+                    <img src="/images/qr_menu_96d5.png" alt="QR 96D5" className="w-18 h-18 bg-white p-1 rounded-xl mx-auto border border-stone-200" />
+                    <span className="text-xs sm:text-sm text-[#2b170e] font-bold block mt-2">Menu 96D5</span>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>

@@ -46,8 +46,11 @@ import {
   ShieldCheck,
   EyeOff,
   Key,
-  Shield
+  Shield,
+  Share2,
+  QrCode
 } from 'lucide-react';
+import { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
 import { getBranches, saveBranches } from '../data/branches';
 import { getSiteConfig, saveSiteConfig } from '../data/siteConfig';
@@ -94,7 +97,7 @@ export default function AdminPage({ navigate }) {
 
   // Automatically expand group containing activeTab when activeTab changes
   useEffect(() => {
-    if (['sideBanners', 'bannerSections', 'theme', 'reviews'].includes(activeTab)) {
+    if (['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, home: true }));
     } else if (activeTab === 'about') {
       setOpenGroups(prev => ({ ...prev, about: true }));
@@ -639,6 +642,74 @@ export default function AdminPage({ navigate }) {
     saveSiteConfig(updatedConfig);
   };
 
+  // Helper update Zalo OA fields
+  const handleUpdateZaloOA = (field, val) => {
+    const updated = {
+      ...config,
+      zaloOA: {
+        ...(config.zaloOA || {}),
+        [field]: val
+      }
+    };
+    setConfig(updated);
+    saveSiteConfig(updated);
+  };
+
+  // Helper upload custom Zalo QR code
+  const handleZaloQrUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File ảnh quá lớn! Vui lòng chọn ảnh QR dung lượng dưới 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      const dataUrl = loadEvt.target.result;
+      handleUpdateZaloOA('qrImage', dataUrl);
+      triggerAlert('✓ Đã cập nhật ảnh mã QR Zalo OA thành công!');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Helper update Social platform
+  const handleUpdateSocialPlatform = (platformId, field, val) => {
+    const platforms = [...(config.socialMedia?.platforms || [])];
+    const idx = platforms.findIndex(p => p.id === platformId);
+    if (idx !== -1) {
+      platforms[idx] = { ...platforms[idx], [field]: val };
+      const updated = {
+        ...config,
+        socialMedia: {
+          ...(config.socialMedia || {}),
+          platforms
+        }
+      };
+      setConfig(updated);
+      saveSiteConfig(updated);
+    }
+  };
+
+  // Helper toggle platform visibility
+  const handleTogglePlatformVisible = (platformId) => {
+    const platforms = [...(config.socialMedia?.platforms || [])];
+    const idx = platforms.findIndex(p => p.id === platformId);
+    if (idx !== -1) {
+      const current = platforms[idx].visible !== false;
+      platforms[idx] = { ...platforms[idx], visible: !current };
+      const updated = {
+        ...config,
+        socialMedia: {
+          ...(config.socialMedia || {}),
+          platforms
+        }
+      };
+      setConfig(updated);
+      saveSiteConfig(updated);
+      triggerAlert(`Đã ${!current ? 'BẬT' : 'TẮT'} hiển thị nền tảng ${platforms[idx].name}!`);
+    }
+  };
+
   // Helper to toggle a navigation item's visibility
   const toggleNavVisibility = (navId) => {
     const updatedNav = (config.navMenu || []).map(item => {
@@ -934,9 +1005,9 @@ export default function AdminPage({ navigate }) {
           <div className="p-3 sm:p-3.5 space-y-2.5 flex-1 overflow-y-auto">
             
             {/* NHÓM 1: 🏠 TRANG CHỦ */}
-            {['sideBanners', 'bannerSections', 'theme', 'reviews'].some(p => hasPermission(currentUser, p)) && (
+            {['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                ['sideBanners', 'bannerSections', 'theme', 'reviews'].includes(activeTab)
+                ['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                   ? 'bg-amber-500/10 border-amber-600/40 shadow-xs'
                   : 'bg-white/70 hover:bg-white/90 border-white/80'
               }`}>
@@ -945,7 +1016,7 @@ export default function AdminPage({ navigate }) {
                   type="button"
                   onClick={() => {
                     toggleGroup('home');
-                    if (!['sideBanners', 'bannerSections', 'theme', 'reviews'].includes(activeTab)) {
+                    if (!['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
                       setActiveTab('sideBanners');
                     }
                   }}
@@ -953,7 +1024,7 @@ export default function AdminPage({ navigate }) {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      ['sideBanners', 'bannerSections', 'theme', 'reviews'].includes(activeTab)
+                      ['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                         ? 'bg-[#2b170e] text-amber-300 shadow-xs'
                         : 'bg-white/90 text-[#8c5932] group-hover:bg-[#2b170e] group-hover:text-amber-300'
                     }`}>
@@ -964,13 +1035,13 @@ export default function AdminPage({ navigate }) {
                         Trang Chủ
                       </span>
                       <span className="text-[11.5px] font-medium text-[#7a5843] block truncate mt-0.5">
-                        4 phân mục tùy biến
+                        5 phân mục tùy biến
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[11px] font-bold text-[#7a5843] bg-white/90 px-2 py-0.5 rounded-full border border-stone-200/60 shadow-2xs">
-                      4 mục
+                      5 mục
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openGroups.home ? 'rotate-180 text-amber-600' : 'text-stone-400 group-hover:text-stone-600'}`} />
                   </div>
@@ -1076,6 +1147,30 @@ export default function AdminPage({ navigate }) {
                         }`}>
                           {reviewsList.filter(r => r.active !== false).length}
                         </span>
+                      </button>
+                    )}
+
+                    {/* 1.5: Mạng Xã Hội & Zalo OA */}
+                    {hasPermission(currentUser, 'socialZalo') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('socialZalo'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'socialZalo'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Share2 className={`w-4 h-4 shrink-0 ${activeTab === 'socialZalo' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Mạng Xã Hội & Zalo OA</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'socialZalo' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Facebook, TikTok & QR Zalo
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'socialZalo' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
                       </button>
                     )}
                   </div>
@@ -1648,7 +1743,7 @@ export default function AdminPage({ navigate }) {
               </span>
               <span className="text-neutral-700">/</span>
               <span className="text-neutral-400 font-bold">
-                {['sideBanners', 'bannerSections', 'theme', 'reviews'].includes(activeTab) 
+                {['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab) 
                   ? 'Trang Chủ' 
                   : activeTab === 'about'
                     ? 'Trang Giới Thiệu'
@@ -1668,6 +1763,7 @@ export default function AdminPage({ navigate }) {
                 {activeTab === 'bannerSections' && <><span>🖼️</span> Khối Banner & Check-in</>}
                 {activeTab === 'theme' && <><span>⚙️</span> Slogan & Trang Chủ</>}
                 {activeTab === 'reviews' && <><span>⭐</span> Đánh Giá Khách Hàng</>}
+                {activeTab === 'socialZalo' && <><span>🌐</span> Mạng Xã Hội & Zalo OA</>}
                 {activeTab === 'navigation' && <><span>🧭</span> Menu & Các Trang Web</>}
                 {activeTab === 'about' && <><span>✨</span> Trang Giới Thiệu</>}
                 {activeTab === 'articles' && <><span>📝</span> Bài Viết & Tối Ưu SEO</>}
@@ -3642,6 +3738,547 @@ export default function AdminPage({ navigate }) {
               <span>LƯU NỘI DUNG TRANG CHỦ</span>
             </button>
           </form>
+        )}
+
+        {/* TAB: MẠNG XÃ HỘI & ZALO OFFICIAL ACCOUNT */}
+        {activeTab === 'socialZalo' && (
+          <div className="space-y-8 max-w-5xl">
+            {/* Header Box */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                    <Share2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-white flex items-center gap-2">
+                      Mạng Xã Hội & Zalo Official Account
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">
+                        Đang Hoạt Động
+                      </span>
+                    </h2>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      Tùy chỉnh liên kết Facebook, TikTok, Instagram, Threads, YouTube và mã QR Zalo OA ở chân trang.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => window.open('/', '_blank')}
+                  className="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Xem Website Khách</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveConfig}
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black inline-flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-all"
+                >
+                  <Save className="w-4 h-4 stroke-[2.5]" />
+                  <span>LƯU TẤT CẢ THAY ĐỔI</span>
+                </button>
+              </div>
+            </div>
+
+            {/* KHỐI 1: ZALO OFFICIAL ACCOUNT & MÃ QR (ĐẶT Ở CHÂN TRANG THAY THẾ CHỖ MENU 2 CHI NHÁNH) */}
+            <div className="bg-neutral-950 p-6 sm:p-8 rounded-3xl border border-neutral-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-neutral-800/80 gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-sm">
+                    Z
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                      Zalo Official Account & Mã QR Chân Trang
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-extrabold border border-blue-500/30">
+                        Chân Trang & Slide 5
+                      </span>
+                    </h3>
+                    <p className="text-xs text-neutral-400">
+                      Thay thế mục quét menu 2 chi nhánh ở dưới cùng để tập trung nhận diện Zalo OA & tích điểm khách hàng.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-neutral-300 font-semibold">Trạng thái:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateZaloOA('enabled', !(config.zaloOA?.enabled !== false))}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      config.zaloOA?.enabled !== false
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                    }`}
+                  >
+                    {config.zaloOA?.enabled !== false ? '✓ Đang Bật' : '✕ Đang Tắt'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tùy chọn Chế độ hiển thị Chân Trang */}
+              <div className="space-y-2.5">
+                <label className="text-xs font-extrabold text-neutral-200 block uppercase tracking-wider">
+                  Chế Độ Hiển Thị Ở Khối Chân Trang:
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateZaloOA('displayMode', 'zalo_only')}
+                    className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                      (config.zaloOA?.displayMode || 'zalo_only') === 'zalo_only'
+                        ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/30 text-white'
+                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-white">Chỉ Zalo OA</span>
+                      {(config.zaloOA?.displayMode || 'zalo_only') === 'zalo_only' && (
+                        <Check className="w-4 h-4 text-blue-400" />
+                      )}
+                    </div>
+                    <span className="text-[11px] block leading-tight text-neutral-400">
+                      ★ Khuyên Dùng: Thay thế 2 QR chi nhánh bằng Zalo OA chính thức
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateZaloOA('displayMode', 'both')}
+                    className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                      config.zaloOA?.displayMode === 'both'
+                        ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/30 text-white'
+                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-white">Cả Zalo OA & Menu</span>
+                      {config.zaloOA?.displayMode === 'both' && (
+                        <Check className="w-4 h-4 text-blue-400" />
+                      )}
+                    </div>
+                    <span className="text-[11px] block leading-tight text-neutral-400">
+                      Hiển thị Zalo OA ở trên kèm 2 mã menu chi nhánh bên dưới
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateZaloOA('displayMode', 'branch_menu_only')}
+                    className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                      config.zaloOA?.displayMode === 'branch_menu_only'
+                        ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/30 text-white'
+                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-white">Chỉ Menu 2 Chi Nhánh</span>
+                      {config.zaloOA?.displayMode === 'branch_menu_only' && (
+                        <Check className="w-4 h-4 text-blue-400" />
+                      )}
+                    </div>
+                    <span className="text-[11px] block leading-tight text-neutral-400">
+                      Chỉ hiển thị QR menu 413PHI & 96D5
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Chi tiết nội dung Zalo OA */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-2">
+                {/* Cột trái: Form thông tin */}
+                <div className="lg:col-span-8 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-neutral-300 block mb-1">
+                        Tiêu Đề Cột (Heading)
+                      </label>
+                      <input
+                        type="text"
+                        value={config.zaloOA?.title || ''}
+                        onChange={(e) => handleUpdateZaloOA('title', e.target.value)}
+                        placeholder="Zalo Official Account"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-neutral-300 block mb-1">
+                        Huy Hiệu (Badge)
+                      </label>
+                      <input
+                        type="text"
+                        value={config.zaloOA?.badge || ''}
+                        onChange={(e) => handleUpdateZaloOA('badge', e.target.value)}
+                        placeholder="KẾT NỐI CHÍNH THỨC"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-neutral-300 block mb-1">
+                        Liên Kết Zalo OA (URL)
+                      </label>
+                      <input
+                        type="text"
+                        value={config.zaloOA?.url || ''}
+                        onChange={(e) => handleUpdateZaloOA('url', e.target.value)}
+                        placeholder="https://zalo.me/197464281190102692"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-neutral-300 block mb-1">
+                        Mã Zalo OA ID
+                      </label>
+                      <input
+                        type="text"
+                        value={config.zaloOA?.oaId || ''}
+                        onChange={(e) => handleUpdateZaloOA('oaId', e.target.value)}
+                        placeholder="197464281190102692"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-neutral-300 block mb-1">
+                      Mô Tả Hướng Dẫn Quét Mã
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={config.zaloOA?.desc || ''}
+                      onChange={(e) => handleUpdateZaloOA('desc', e.target.value)}
+                      placeholder="Quét mã QR bằng ứng dụng Zalo để nhận ngay ưu đãi thành viên & hỗ trợ 24/7..."
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-neutral-300 block mb-1">
+                      Chữ Nút Bấm Hành Động (Call-to-Action)
+                    </label>
+                    <input
+                      type="text"
+                      value={config.zaloOA?.buttonText || ''}
+                      onChange={(e) => handleUpdateZaloOA('buttonText', e.target.value)}
+                      placeholder="Mở Zalo OA Nhận Ưu Đãi"
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-bold"
+                    />
+                  </div>
+                </div>
+
+                {/* Cột phải: Quản lý ảnh QR Zalo OA */}
+                <div className="lg:col-span-4 p-5 rounded-2xl bg-neutral-900 border border-neutral-800 flex flex-col items-center text-center space-y-3">
+                  <span className="text-xs font-bold text-neutral-200 uppercase tracking-wider">
+                    Ảnh Mã QR Zalo OA Hiện Tại
+                  </span>
+                  
+                  <div className="relative p-2.5 bg-white rounded-2xl border-2 border-dashed border-blue-500/50 shadow-md group">
+                    <img
+                      src={config.zaloOA?.qrImage || '/images/qr_zalo_oa.png'}
+                      alt="Zalo QR Preview"
+                      className="w-32 h-32 object-contain rounded-lg"
+                    />
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-md">
+                      Z
+                    </div>
+                  </div>
+
+                  <div className="w-full space-y-2 pt-1">
+                    <label className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black tracking-wide inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Tải Ảnh QR Mới Lên</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleZaloQrUpload}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleUpdateZaloOA('qrImage', '/images/qr_zalo_oa.png');
+                        try { localStorage.removeItem('coffee2424_zalo_qr_img'); } catch(e){}
+                        triggerAlert('Đã khôi phục ảnh QR Zalo gốc ban đầu!');
+                      }}
+                      className="w-full py-2 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-semibold transition-all cursor-pointer"
+                    >
+                      Khôi Phục QR Mặc Định
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* KHỐI 2: QUẢN LÝ 5 NỀN TẢNG MẠNG XÃ HỘI (Facebook, TikTok, Instagram, Threads, YouTube) */}
+            <div className="bg-neutral-950 p-6 sm:p-8 rounded-3xl border border-neutral-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-neutral-800/80 gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                      Kết Nối Mạng Xã Hội (5 Nền Tảng)
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-extrabold border border-pink-500/30">
+                        Top Slide 5 & Chân Trang
+                      </span>
+                    </h3>
+                    <p className="text-xs text-neutral-400">
+                      Đã nhúng Facebook & TikTok; Chừa sẵn các ô nhúng cho Instagram, Threads, YouTube.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+                    {(config.socialMedia?.platforms || []).filter(p => p.visible !== false).length}/5 Kênh Hiển Thị
+                  </span>
+                </div>
+              </div>
+
+              {/* Tiêu đề nhóm */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800">
+                <div>
+                  <label className="text-xs font-bold text-neutral-300 block mb-1">
+                    Tiêu Đề Dòng Tag (Section Title)
+                  </label>
+                  <input
+                    type="text"
+                    value={config.socialMedia?.sectionTitle || ''}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      socialMedia: { ...(config.socialMedia || {}), sectionTitle: e.target.value }
+                    })}
+                    placeholder="FOLLOW OUR JOURNEY · #ENJOYYOURLIFE"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-neutral-300 block mb-1">
+                    Tiêu Đề Lớn (Subtitle)
+                  </label>
+                  <input
+                    type="text"
+                    value={config.socialMedia?.sectionSubtitle || ''}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      socialMedia: { ...(config.socialMedia || {}), sectionSubtitle: e.target.value }
+                    })}
+                    placeholder="Kết nối cùng cộng đồng COFFEE 24/24"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Danh sách 5 nền tảng */}
+              <div className="space-y-4">
+                {(config.socialMedia?.platforms || []).map((platform) => {
+                  const IconComp = BrandIcons[platform.id] || BrandIcons.facebook;
+                  const isVisible = platform.visible !== false;
+
+                  return (
+                    <div
+                      key={platform.id}
+                      className={`p-5 rounded-2xl border transition-all ${
+                        isVisible
+                          ? 'bg-neutral-900 border-neutral-800'
+                          : 'bg-neutral-900/40 border-neutral-800/50 opacity-60'
+                      }`}
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-800/70">
+                        {/* Title & Brand Icon */}
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${
+                            platform.id === 'facebook'
+                              ? 'bg-blue-600'
+                              : platform.id === 'tiktok'
+                              ? 'bg-black border border-white/20'
+                              : platform.id === 'instagram'
+                              ? 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600'
+                              : platform.id === 'threads'
+                              ? 'bg-black border border-white/20'
+                              : 'bg-red-600'
+                          }`}>
+                            <IconComp />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-black text-white">{platform.name}</h4>
+                              {platform.isPlaceholder ? (
+                                <span className="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/15 text-amber-400 font-bold border border-amber-500/30">
+                                  Ô Chờ Nhúng
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">
+                                  Đang Hoạt Động
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-neutral-400 block mt-0.5">
+                              {platform.desc || `Kênh ${platform.name} chính thức của COFFEE 24/24`}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Toggles */}
+                        <div className="flex items-center gap-3 self-end lg:self-auto">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <span className="text-xs text-neutral-400">Hiển thị:</span>
+                            <input
+                              type="checkbox"
+                              checked={isVisible}
+                              onChange={() => handleTogglePlatformVisible(platform.id)}
+                              className="w-4 h-4 accent-amber-500 cursor-pointer"
+                            />
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateSocialPlatform(platform.id, 'isPlaceholder', !platform.isPlaceholder)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
+                              platform.isPlaceholder
+                                ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                                : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                            }`}
+                          >
+                            {platform.isPlaceholder ? 'Chế độ: Ô Chờ Nhúng' : 'Chế độ: Link Trực Tiếp'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Inputs */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-4">
+                        <div>
+                          <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                            Đường Dẫn URL Liên Kết
+                          </label>
+                          <input
+                            type="text"
+                            value={platform.url || ''}
+                            onChange={(e) => handleUpdateSocialPlatform(platform.id, 'url', e.target.value)}
+                            placeholder="https://..."
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                            Tên Người Dùng / Handle
+                          </label>
+                          <input
+                            type="text"
+                            value={platform.handle || ''}
+                            onChange={(e) => handleUpdateSocialPlatform(platform.id, 'handle', e.target.value)}
+                            placeholder="@coffee2424"
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                            Huy Hiệu (Badge nhỏ)
+                          </label>
+                          <input
+                            type="text"
+                            value={platform.badge || ''}
+                            onChange={(e) => handleUpdateSocialPlatform(platform.id, 'badge', e.target.value)}
+                            placeholder="Chính thức / Sắp ra mắt"
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* LIVE PREVIEW KHỐI (XEM TRƯỚC GIAO DIỆN CLIENT) */}
+            <div className="bg-neutral-950 p-6 sm:p-8 rounded-3xl border border-neutral-800 space-y-4">
+              <h3 className="text-sm font-black text-white flex items-center gap-2 uppercase tracking-wider">
+                <Eye className="w-4 h-4 text-amber-500" />
+                <span>Xem Trước Hiển Thị Trên Website (Live Preview)</span>
+              </h3>
+              
+              <div className="p-6 rounded-2xl bg-[#f5ede3] border border-white/60 space-y-6">
+                {/* Social Bar Preview */}
+                <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-md border border-white/90 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-mono tracking-widest text-[#8c5932] font-black uppercase block">
+                      {config.socialMedia?.sectionTitle || 'FOLLOW OUR JOURNEY · #ENJOYYOURLIFE'}
+                    </span>
+                    <span className="text-sm font-black text-[#2b170e]">
+                      {config.socialMedia?.sectionSubtitle || 'Kết nối cùng cộng đồng COFFEE 24/24'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(config.socialMedia?.platforms || []).filter(p => p.visible !== false).map((p) => {
+                      const IconC = BrandIcons[p.id] || BrandIcons.facebook;
+                      return (
+                        <div
+                          key={p.id}
+                          className="px-3 py-1.5 rounded-xl bg-white border border-stone-200 text-xs font-bold text-[#2b170e] flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <div className="w-4 h-4 flex items-center justify-center">
+                            <IconC />
+                          </div>
+                          <span>{p.name}</span>
+                          <span className="text-[10px] text-stone-500 font-normal">({p.handle})</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Zalo OA Column Preview */}
+                <div className="max-w-xs mx-auto p-4 rounded-2xl bg-white/80 border border-white/95 shadow-md text-center space-y-2">
+                  <span className="text-xs font-black text-[#2b170e] uppercase tracking-wider block">
+                    {config.zaloOA?.title || 'Zalo Official Account'}
+                  </span>
+                  <div className="relative inline-block p-1.5 bg-white rounded-xl border border-stone-200">
+                    <img
+                      src={config.zaloOA?.qrImage || '/images/qr_zalo_oa.png'}
+                      alt="Zalo QR"
+                      className="w-20 h-20 object-contain mx-auto"
+                    />
+                  </div>
+                  <p className="text-xs font-black text-[#2b170e]">{config.zaloOA?.oaName || 'COFFEE 24/24'}</p>
+                  <p className="text-[10.5px] text-[#704f38] leading-tight">
+                    {config.zaloOA?.desc || 'Quét mã QR bằng ứng dụng Zalo để nhận ưu đãi 24/7.'}
+                  </p>
+                  <button
+                    type="button"
+                    className="w-full py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-xs"
+                  >
+                    {config.zaloOA?.buttonText || 'Mở Zalo OA Nhận Ưu Đãi'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Save Bar */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={handleSaveConfig}
+                className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-sm flex items-center gap-2 shadow-2xl cursor-pointer active:scale-95 transition-all"
+              >
+                <Save className="w-5 h-5 stroke-[2.5]" />
+                <span>LƯU CẤU HÌNH MẠNG XÃ HỘI & ZALO OA</span>
+              </button>
+            </div>
+          </div>
         )}
 
         {/* TAB 7: QUẢN LÝ 12 VỊ TRÍ TUYỂN DỤNG */}

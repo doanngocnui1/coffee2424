@@ -21,6 +21,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import CoffeeStorySlider from '../components/CoffeeStorySlider';
+import { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
 import CustomerReviewsSection from '../components/CustomerReviewsSection';
 import { getSiteConfig } from '../data/siteConfig';
@@ -38,10 +39,17 @@ export default function HomePage({ navigate }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [copiedCode, setCopiedCode] = useState(null);
   const isLockedRef = useRef(false);
-  const touchStartYRef = useRef(0);
-  const siteConfig = getSiteConfig();
+  const [siteConfig, setSiteConfig] = useState(getSiteConfig);
 
-  const TOTAL_SLIDES = SLIDES_NAV.length;
+  useEffect(() => {
+    const handleConfigUpdate = () => setSiteConfig(getSiteConfig());
+    window.addEventListener('site-config-updated', handleConfigUpdate);
+    window.addEventListener('storage', handleConfigUpdate);
+    return () => {
+      window.removeEventListener('site-config-updated', handleConfigUpdate);
+      window.removeEventListener('storage', handleConfigUpdate);
+    };
+  }, []);
 
   const goToSlide = (targetIndex) => {
     if (targetIndex < 0 || targetIndex >= TOTAL_SLIDES) return;
@@ -180,12 +188,7 @@ export default function HomePage({ navigate }) {
 
   const latestArticles = INITIAL_ARTICLES.slice(0, 3);
 
-  const socials = [
-    { id: 'facebook', name: 'Facebook', handle: '@coffee2424.official', url: 'https://facebook.com' },
-    { id: 'instagram', name: 'Instagram', handle: '@coffee2424', url: 'https://instagram.com' },
-    { id: 'tiktok', name: 'TikTok', handle: '@coffee2424.vn', url: 'https://tiktok.com' },
-    { id: 'zalo', name: 'Zalo OA', handle: 'COFFEE 24/24', url: 'https://zalo.me' }
-  ];
+  const socialPlatforms = (siteConfig.socialMedia?.platforms || []).filter(p => p.visible !== false);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none font-sans">
@@ -526,27 +529,81 @@ export default function HomePage({ navigate }) {
             <div className="rounded-[28px] ios-glass-panel p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
               <div className="space-y-0.5 text-center sm:text-left">
                 <span className="text-[11px] font-mono tracking-[0.2em] uppercase text-[#8c5932] font-black block">
-                  FOLLOW OUR JOURNEY · #ENJOYYOURLIFE
+                  {siteConfig.socialMedia?.sectionTitle || 'FOLLOW OUR JOURNEY · #ENJOYYOURLIFE'}
                 </span>
                 <div className="text-base sm:text-lg font-black text-[#2b170e]">
-                  Kết nối cùng cộng đồng COFFEE 24/24
+                  {siteConfig.socialMedia?.sectionSubtitle || 'Kết nối cùng cộng đồng COFFEE 24/24'}
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {socials.map((s) => (
-                  <a
-                    key={s.id}
-                    href={s.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 rounded-full bg-white/60 hover:bg-white text-[#2b170e] hover:text-[#180d08] border border-white/85 text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all inline-flex items-center gap-1.5 active:scale-95"
-                  >
-                    <span>{s.name}</span>
-                    <span className="text-[11px] text-[#7a5843] font-normal">({s.handle})</span>
-                    <ExternalLink className="w-3 h-3 text-[#8c5932]" />
-                  </a>
-                ))}
+                {socialPlatforms.map((platform) => {
+                  const IconComponent = BrandIcons[platform.id] || BrandIcons.facebook;
+                  const isPlaceholder = platform.isPlaceholder;
+
+                  if (isPlaceholder && !platform.url) {
+                    return (
+                      <div
+                        key={platform.id}
+                        className="px-3.5 py-2 rounded-2xl bg-white/40 border border-dashed border-[#8c5932]/40 text-[#5c3d2e] inline-flex items-center gap-2 text-xs font-semibold shadow-2xs"
+                        title={platform.desc || `Ô nhúng ${platform.name}`}
+                      >
+                        <div className="w-5 h-5 rounded-md bg-stone-200/80 text-stone-600 flex items-center justify-center shrink-0">
+                          <IconComponent />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <span className="font-bold text-[#2b170e] text-[11px] flex items-center gap-1">
+                            <span>{platform.name}</span>
+                            <span className="text-[8px] px-1 rounded-full bg-stone-200 text-stone-600 font-bold">
+                              {platform.badge || 'Sắp ra mắt'}
+                            </span>
+                          </span>
+                          <span className="text-[9.5px] text-[#7a5843]">{platform.handle || platform.placeholderText || 'Chờ liên kết'}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={platform.id}
+                      href={platform.url || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`px-3.5 sm:px-4 py-2 rounded-2xl border transition-all inline-flex items-center gap-2 text-xs sm:text-sm font-bold shadow-2xs hover:shadow-md active:scale-95 group ${
+                        platform.id === 'facebook'
+                          ? 'bg-blue-600/10 hover:bg-blue-600 hover:text-white border-blue-500/30 text-[#1877F2]'
+                          : platform.id === 'tiktok'
+                          ? 'bg-black/5 hover:bg-black hover:text-white border-black/20 text-[#180d08]'
+                          : platform.id === 'instagram'
+                          ? 'bg-pink-500/10 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:text-white border-pink-400/30 text-[#E1306C]'
+                          : platform.id === 'threads'
+                          ? 'bg-stone-900/10 hover:bg-black hover:text-white border-black/20 text-[#111]'
+                          : platform.id === 'youtube'
+                          ? 'bg-red-500/10 hover:bg-red-600 hover:text-white border-red-500/30 text-[#FF0000]'
+                          : 'bg-white/70 hover:bg-white text-[#2b170e] border-white/90'
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded-md bg-white/90 shadow-2xs flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform text-[#2b170e]">
+                        <IconComponent />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="flex items-center gap-1 leading-tight text-xs font-black">
+                          <span>{platform.name}</span>
+                          {platform.badge && (
+                            <span className="text-[8px] px-1 rounded-full bg-white/80 text-[#2b170e] font-extrabold shadow-2xs">
+                              {platform.badge}
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-[9.5px] font-normal opacity-80 group-hover:opacity-100">
+                          {platform.handle}
+                        </span>
+                      </div>
+                      <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-all" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
 
@@ -652,24 +709,81 @@ export default function HomePage({ navigate }) {
                 </div>
               </div>
 
-              {/* QR Codes */}
+              {/* Cột 4: Zalo Official Account & QR Code (Hoặc tùy biến theo Admin) */}
               <div className="space-y-2">
-                <h4 className="text-[#2b170e] text-xs font-black tracking-widest uppercase border-l-2 border-[#8c5932] pl-2">
-                  Quét QR Thực Đơn
-                </h4>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-2.5 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
-                    <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-16 h-16 object-contain" />
-                    <span className="text-[10px] font-bold text-[#2b170e] mt-1">Menu 413PHI</span>
-                  </div>
-                  <div className="p-2.5 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
-                    <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-16 h-16 object-contain" />
-                    <span className="text-[10px] font-bold text-[#2b170e] mt-1">Menu 96D5</span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[#2b170e] text-xs font-black tracking-widest uppercase border-l-2 border-[#8c5932] pl-2">
+                    {siteConfig.zaloOA?.title || 'Zalo Official Account'}
+                  </h4>
+                  {siteConfig.zaloOA?.badge && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 font-extrabold border border-blue-500/30">
+                      {siteConfig.zaloOA.badge}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] text-[#704f38] leading-tight pt-1">
-                  Quét mã QR bằng camera điện thoại để xem nhanh thực đơn & chọn món tại bàn.
-                </p>
+
+                {/* Chế độ hiển thị: zalo_only (mặc định) | both | branch_menu_only */}
+                {siteConfig.zaloOA?.displayMode !== 'branch_menu_only' && (
+                  <div className="p-3 rounded-2xl bg-white/75 border border-white/95 shadow-sm space-y-2 flex flex-col items-center text-center">
+                    <div className="relative group p-1.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs">
+                      <img 
+                        src={siteConfig.zaloOA?.qrImage || '/images/qr_zalo_oa.png'} 
+                        alt="QR Zalo Official Account" 
+                        className="w-20 h-20 sm:w-22 sm:h-22 object-contain rounded-lg group-hover:scale-105 transition-transform" 
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[9px] shadow-sm">
+                        Z
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-black text-[#2b170e]">{siteConfig.zaloOA?.oaName || 'COFFEE 24/24'}</p>
+                      <p className="text-[10.5px] text-[#704f38] leading-tight font-medium">
+                        {siteConfig.zaloOA?.desc || 'Quét QR qua Zalo hoặc nhấn nút để nhận ưu đãi & tích điểm 24/7.'}
+                      </p>
+                    </div>
+
+                    <a 
+                      href={siteConfig.zaloOA?.url || 'https://zalo.me/197464281190102692'} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-[11px] font-black tracking-wide shadow-xs hover:shadow-md transition-all inline-flex items-center justify-center gap-1.5 active:scale-95"
+                    >
+                      <span>{siteConfig.zaloOA?.buttonText || 'Mở Zalo OA Nhận Ưu Đãi'}</span>
+                      <ExternalLink className="w-3 h-3 text-white" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Nếu admin cấu hình chế độ 'both' */}
+                {siteConfig.zaloOA?.displayMode === 'both' && (
+                  <div className="pt-2 border-t border-white/60">
+                    <p className="text-[10px] font-bold text-[#8c5932] uppercase tracking-wider mb-1">Hoặc Quét Menu Tại Bàn:</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="p-1.5 rounded-xl bg-white/60 border border-white/80 text-center">
+                        <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-10 h-10 object-contain mx-auto" />
+                        <span className="text-[9px] font-bold text-[#2b170e] block">413PHI</span>
+                      </div>
+                      <div className="p-1.5 rounded-xl bg-white/60 border border-white/80 text-center">
+                        <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-10 h-10 object-contain mx-auto" />
+                        <span className="text-[9px] font-bold text-[#2b170e] block">96D5</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {siteConfig.zaloOA?.displayMode === 'branch_menu_only' && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="p-2.5 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
+                      <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-16 h-16 object-contain" />
+                      <span className="text-[10px] font-bold text-[#2b170e] mt-1">Menu 413PHI</span>
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
+                      <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-16 h-16 object-contain" />
+                      <span className="text-[10px] font-bold text-[#2b170e] mt-1">Menu 96D5</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>

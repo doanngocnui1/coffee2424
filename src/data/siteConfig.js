@@ -65,6 +65,89 @@ export const DEFAULT_SITE_CONFIG = {
     hashtag1: '#Coffee2424',
     hashtag2: '#ThucCungDamMe'
   },
+  // Quản lý Kết Nối Mạng Xã Hội (Facebook, TikTok, Instagram, Threads, YouTube)
+  socialMedia: {
+    sectionTitle: 'FOLLOW OUR JOURNEY · #ENJOYYOURLIFE',
+    sectionSubtitle: 'Kết nối cùng cộng đồng COFFEE 24/24',
+    platforms: [
+      {
+        id: 'facebook',
+        name: 'Facebook',
+        handle: '@coffee2424',
+        url: 'https://www.facebook.com/coffee2424',
+        embedUrl: 'https://www.facebook.com/coffee2424',
+        visible: true,
+        isPlaceholder: false,
+        badge: 'Chính thức',
+        color: '#1877F2',
+        desc: 'Cập nhật tin tức, sự kiện & hoạt động chi nhánh'
+      },
+      {
+        id: 'tiktok',
+        name: 'TikTok',
+        handle: '@hethongcoffee2424',
+        url: 'https://www.tiktok.com/@hethongcoffee2424',
+        embedUrl: 'https://www.tiktok.com/@hethongcoffee2424',
+        visible: true,
+        isPlaceholder: false,
+        badge: 'Kênh TikTok',
+        color: '#000000',
+        desc: 'Video pha chế, review không gian & khoảnh khắc 24/24'
+      },
+      {
+        id: 'instagram',
+        name: 'Instagram',
+        handle: '@coffee2424',
+        url: 'https://www.instagram.com/coffee2424',
+        embedUrl: '',
+        visible: true,
+        isPlaceholder: true,
+        placeholderText: 'Chờ nhúng Instagram',
+        badge: 'Sắp ra mắt',
+        color: '#E1306C',
+        desc: 'Hình ảnh không gian & feedback từ khách hàng'
+      },
+      {
+        id: 'threads',
+        name: 'Threads',
+        handle: '@coffee2424',
+        url: 'https://www.threads.net/@coffee2424',
+        embedUrl: '',
+        visible: true,
+        isPlaceholder: true,
+        placeholderText: 'Chờ nhúng Threads',
+        badge: 'Sắp ra mắt',
+        color: '#111111',
+        desc: 'Chia sẻ tâm sự đêm muộn & giao lưu cộng đồng'
+      },
+      {
+        id: 'youtube',
+        name: 'YouTube',
+        handle: '@coffee2424',
+        url: 'https://www.youtube.com/@coffee2424',
+        embedUrl: '',
+        visible: true,
+        isPlaceholder: true,
+        placeholderText: 'Chờ nhúng YouTube',
+        badge: 'Sắp ra mắt',
+        color: '#FF0000',
+        desc: 'Podcast, âm nhạc lofi & câu chuyện cà phê'
+      }
+    ]
+  },
+  // Quản lý Zalo Official Account & Mã QR (Hiển thị ở chân trang thay chỗ QR menu 2 chi nhánh)
+  zaloOA: {
+    enabled: true,
+    displayMode: 'zalo_only', // 'zalo_only' | 'both' | 'branch_menu_only'
+    title: 'Zalo Official Account',
+    badge: 'KẾT NỐI CHÍNH THỨC',
+    oaName: 'COFFEE 24/24',
+    oaId: '197464281190102692',
+    url: 'https://zalo.me/197464281190102692',
+    qrImage: '/images/qr_zalo_oa.png',
+    desc: 'Quét mã QR bằng Zalo hoặc nhấn nút để quan tâm OA, nhận ngay ưu đãi thành viên & hỗ trợ 24/7.',
+    buttonText: 'Mở Zalo OA Nhận Ưu Đãi'
+  },
   // Cấu hình Trang Giới Thiệu (About Page CMS)
   aboutPage: {
     heroBadge: 'Câu Chuyện Thương Hiệu COFFEE 24/24',
@@ -196,11 +279,40 @@ export function getSiteConfig() {
       }
     }
 
+    // Restore custom Zalo QR code if stored in dedicated key
+    const customZaloQr = localStorage.getItem('coffee2424_zalo_qr_img');
+    const zaloConfig = {
+      ...DEFAULT_SITE_CONFIG.zaloOA,
+      ...(parsed.zaloOA || {})
+    };
+    if (customZaloQr && (zaloConfig.qrImage === '__STORED_ZALO_QR__' || !zaloConfig.qrImage)) {
+      zaloConfig.qrImage = customZaloQr;
+    }
+
+    // Merge Social Media platforms
+    let socialConfig = {
+      ...DEFAULT_SITE_CONFIG.socialMedia,
+      ...(parsed.socialMedia || {})
+    };
+    if (!socialConfig.platforms || socialConfig.platforms.length === 0) {
+      socialConfig.platforms = DEFAULT_SITE_CONFIG.socialMedia.platforms;
+    } else {
+      // Ensure all 5 platforms exist even if user loaded an older config
+      const existingIds = new Set(socialConfig.platforms.map(p => p.id));
+      DEFAULT_SITE_CONFIG.socialMedia.platforms.forEach(defPlatform => {
+        if (!existingIds.has(defPlatform.id)) {
+          socialConfig.platforms.push(defPlatform);
+        }
+      });
+    }
+
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
       navMenu: currentNavMenu,
       slogan: updatedSlogan,
+      socialMedia: socialConfig,
+      zaloOA: zaloConfig,
       aboutPage: {
         ...DEFAULT_SITE_CONFIG.aboutPage,
         ...(parsed.aboutPage || {})
@@ -229,6 +341,7 @@ export function saveSiteConfig(newConfig) {
   try {
     const leftImg = newConfig.sideBanners?.left?.image;
     const rightImg = newConfig.sideBanners?.right?.image;
+    const zaloQr = newConfig.zaloOA?.qrImage;
 
     // 1. Save data URLs into dedicated keys to ensure isolation and quota safety
     if (leftImg && leftImg.startsWith('data:image')) {
@@ -243,6 +356,13 @@ export function saveSiteConfig(newConfig) {
         localStorage.setItem('coffee2424_banner_right_img', rightImg);
       } catch (imgErr) {
         console.warn('Could not save right banner image into dedicated key:', imgErr);
+      }
+    }
+    if (zaloQr && zaloQr.startsWith('data:image')) {
+      try {
+        localStorage.setItem('coffee2424_zalo_qr_img', zaloQr);
+      } catch (qrErr) {
+        console.warn('Could not save Zalo QR image into dedicated key:', qrErr);
       }
     }
 
@@ -264,6 +384,10 @@ export function saveSiteConfig(newConfig) {
             ...newConfig.sideBanners?.right,
             image: rightImg && rightImg.startsWith('data:image') ? '__STORED_RIGHT__' : rightImg
           }
+        },
+        zaloOA: {
+          ...newConfig.zaloOA,
+          qrImage: zaloQr && zaloQr.startsWith('data:image') ? '__STORED_ZALO_QR__' : zaloQr
         }
       };
       localStorage.setItem('coffee2424_site_config', JSON.stringify(safeConfig));

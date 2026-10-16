@@ -5,6 +5,7 @@ export const ALL_PERMISSIONS = [
   { id: 'bannerSections', label: 'Khối Banner & Check-in', group: 'Trang Chủ', desc: 'Quản lý ưu đãi đêm & hashtag check-in' },
   { id: 'theme', label: 'Slogan & Thương Hiệu', group: 'Trang Chủ', desc: 'Đổi slogan "Enjoy Your Life", tên thương hiệu' },
   { id: 'reviews', label: 'Đánh Giá Khách Hàng', group: 'Trang Chủ', desc: 'Kiểm duyệt & thêm đánh giá khách hàng' },
+  { id: 'socialZalo', label: 'Mạng Xã Hội & Zalo OA', group: 'Trang Chủ', desc: 'Quản lý link Facebook, TikTok, Instagram, Threads, YouTube & Zalo OA' },
   { id: 'navigation', label: 'Menu & Liên Kết Web', group: 'Nội Dung', desc: 'Bật/tắt thanh menu và các trang độc lập' },
   { id: 'about', label: 'Trang Giới Thiệu', group: 'Nội Dung', desc: 'Chỉnh sửa câu chuyện thương hiệu & tiện nghi 24/7' },
   { id: 'articles', label: 'Bài Viết & Tối Ưu SEO', group: 'Nội Dung', desc: 'Viết, sửa, xóa bài viết cẩm nang & Google SEO' },
@@ -32,7 +33,7 @@ export const INITIAL_ACCOUNTS = [
     name: 'Biên Tập Viên Marketing',
     role: 'marketing',
     roleName: 'Biên Tập & Marketing',
-    permissions: ['sideBanners', 'bannerSections', 'theme', 'reviews', 'about', 'articles'],
+    permissions: ['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'about', 'articles'],
     active: true,
     createdAt: '16/10/2026'
   },
