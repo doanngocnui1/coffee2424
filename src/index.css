@@ -1,0 +1,656 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.012em;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Custom warm latte scrollbar */
+::-webkit-scrollbar {
+  width: 9px;
+}
+::-webkit-scrollbar-track {
+  background: #ede6dc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbb9a8;
+  border-radius: 9999px;
+  border: 2px solid #ede6dc;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8c5932;
+}
+
+/* =========================================================================
+   iOS 27 FROSTED GLASS & MOTION SYSTEM
+   ========================================================================= */
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(1.2deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(14px) rotate(-1.5deg);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes orb-drift-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(90px, -70px) scale(1.18);
+  }
+  66% {
+    transform: translate(-60px, 50px) scale(0.88);
+  }
+}
+
+@keyframes orb-drift-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  40% {
+    transform: translate(-100px, 70px) scale(1.22);
+  }
+  80% {
+    transform: translate(75px, -45px) scale(0.9);
+  }
+}
+
+@keyframes orb-drift-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(70px, 90px) scale(1.15);
+  }
+}
+
+@keyframes page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes page-exit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.988);
+    filter: blur(6px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+@keyframes steam-drift {
+  0% {
+    transform: translateY(0) scale(0.85);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(-26px) scale(1.25);
+    opacity: 0;
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 5.5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 6.5s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s ease-in-out infinite;
+}
+
+.animate-orb-drift-1 {
+  animation: orb-drift-1 20s ease-in-out infinite;
+}
+
+.animate-orb-drift-2 {
+  animation: orb-drift-2 25s ease-in-out infinite;
+}
+
+.animate-orb-drift-3 {
+  animation: orb-drift-3 18s ease-in-out infinite;
+}
+
+.animate-page-enter {
+  animation: page-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-page-exit {
+  animation: page-exit 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.animate-steam {
+  animation: steam-drift 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* =========================================================================
+   TRUE TRANSLUCENT FROSTED GLASS (ĐỘ MỜ TRONG SUỐT THẤY NỀN MẬP MỜ PHÍA SAU)
+   ========================================================================= */
+
+.ios-glass-panel {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(32px) saturate(220%);
+  -webkit-backdrop-filter: blur(32px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 
+    0 24px 60px rgba(60, 35, 15, 0.06),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.ios-glass-card {
+  background: rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(28px) saturate(210%);
+  -webkit-backdrop-filter: blur(28px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow: 
+    0 16px 45px rgba(60, 35, 15, 0.05),
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ios-glass-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  background: rgba(255, 255, 255, 0.48);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 28px 65px rgba(60, 35, 15, 0.12),
+    inset 0 2px 2px 0 rgba(255, 255, 255, 1);
+}
+
+/* Ensure images always remain 100% vibrant, opaque and crisp */
+.ios-glass-card img,
+.ios-glass-panel img,
+img {
+  opacity: 1 !important;
+}
+
+/* iOS Interactive Buttons with Spring Scaling & Shimmer */
+.ios-btn-primary {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2b170e 0%, #1f0f09 100%);
+  color: #ffffff;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 24px rgba(43, 23, 14, 0.22);
+}
+
+.ios-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+  transition: none;
+}
+
+.ios-btn-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 16px 32px rgba(43, 23, 14, 0.32);
+}
+
+.ios-btn-primary:hover::after {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.ios-btn-primary:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 4px 10px rgba(43, 23, 14, 0.2);
+}
+
+.ios-btn-secondary {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #2b170e;
+  box-shadow: 0 6px 18px rgba(60, 35, 15, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ios-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(60, 35, 15, 0.09), inset 0 1.5px 1.5px rgba(255, 255, 255, 1);
+}
+
+.ios-btn-secondary:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* Squircle Icon Button with Inner Light */
+.ios-squircle-btn {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 18px rgba(60, 35, 15, 0.05), inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ios-squircle-btn:hover {
+  transform: translateY(-4px) scale(1.12);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 14px 28px rgba(60, 35, 15, 0.12), inset 0 2px 2px rgba(255, 255, 255, 1);
+}
+
+.ios-squircle-btn:active {
+  transform: scale(0.92);
+}
+
+/* =========================================================================
+   ADMIN LIQUID GLASS THEME SYSTEM
+   Đồng bộ toàn diện giao diện Admin CMS theo phong cách Liquid Glass iOS 27
+   ========================================================================= */
+
+.admin-liquid-glass {
+  background-color: #ede6dc !important;
+  color: #2b170e !important;
+}
+
+/* Biến đổi các khối nền đen / xám đậm sang kính mờ trong suốt Liquid Glass */
+.admin-liquid-glass .bg-neutral-950,
+.admin-liquid-glass .bg-black,
+.admin-liquid-glass .bg-\[\#0d0c0c\],
+.admin-liquid-glass .bg-neutral-950\/80,
+.admin-liquid-glass .bg-neutral-950\/90 {
+  background: rgba(255, 255, 255, 0.42) !important;
+  backdrop-filter: blur(28px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(210%) !important;
+  border-color: rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 16px 40px rgba(60, 35, 15, 0.05), inset 0 1px 1.5px rgba(255, 255, 255, 0.9) !important;
+}
+
+.admin-liquid-glass .bg-neutral-950,
+.admin-liquid-glass .bg-neutral-900,
+.admin-liquid-glass .bg-neutral-900\/80,
+.admin-liquid-glass .bg-neutral-900\/60,
+.admin-liquid-glass .bg-neutral-900\/40,
+.admin-liquid-glass .bg-neutral-900\/90 {
+  background: rgba(255, 255, 255, 0.68) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 8px 25px rgba(60, 35, 15, 0.05), inset 0 1px 1.5px rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Thanh Topbar Header kính mờ */
+.admin-liquid-glass header {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(32px) saturate(220%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(220%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 10px 30px rgba(60, 35, 15, 0.05) !important;
+}
+
+/* Viền kính mờ */
+.admin-liquid-glass .border-neutral-800,
+.admin-liquid-glass .border-neutral-800\/80,
+.admin-liquid-glass .border-neutral-700,
+.admin-liquid-glass .border-neutral-900 {
+  border-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Màu chữ sang trọng đậm nét Coffee Espresso cho toàn bộ Admin (Độ tương phản cao, không bị chìm) */
+.admin-liquid-glass h1,
+.admin-liquid-glass h2,
+.admin-liquid-glass h3,
+.admin-liquid-glass h4 {
+  color: #1f0f09 !important;
+  font-weight: 800 !important;
+}
+
+.admin-liquid-glass .text-neutral-300,
+.admin-liquid-glass .text-neutral-200,
+.admin-liquid-glass .text-stone-100 {
+  color: #1f0f09 !important;
+  font-weight: 600 !important;
+}
+
+.admin-liquid-glass .text-neutral-400,
+.admin-liquid-glass .text-neutral-500,
+.admin-liquid-glass .text-neutral-600 {
+  color: #5c3c26 !important;
+  font-weight: 500 !important;
+}
+
+.admin-liquid-glass .text-amber-400,
+.admin-liquid-glass .text-amber-500 {
+  color: #8c5932 !important;
+}
+
+.admin-liquid-glass .text-amber-300 {
+  color: #704523 !important;
+}
+
+/* Sidebar Menu Điều Hướng Kính Mờ */
+.admin-liquid-glass aside {
+  background: rgba(255, 255, 255, 0.58) !important;
+  backdrop-filter: blur(32px) saturate(220%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(220%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.88) !important;
+  box-shadow: 0 20px 50px rgba(60, 35, 15, 0.06), inset 0 1.5px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Đảm bảo các nút / phần nền tối luôn có chữ trắng sáng rõ 100% */
+.admin-liquid-glass .ios-btn-primary,
+.admin-liquid-glass .ios-btn-primary span,
+.admin-liquid-glass .bg-\[\#2b170e\] {
+  color: #ffffff !important;
+}
+
+/* Tab đang được chọn (Active Tab Button) - Rực rỡ, chữ trắng, icon vàng nổi bật */
+.admin-sidebar-refined button[class*="from-[#2b170e]"],
+.admin-sidebar-refined button.active-sidebar-tab {
+  background: linear-gradient(135deg, #2b170e 0%, #150904 100%) !important;
+  box-shadow: 0 10px 24px rgba(43, 23, 14, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.admin-sidebar-refined button[class*="from-[#2b170e]"] .sidebar-item-title,
+.admin-sidebar-refined button.active-sidebar-tab .sidebar-item-title {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+.admin-sidebar-refined button[class*="from-[#2b170e]"] .sidebar-item-subtitle,
+.admin-sidebar-refined button.active-sidebar-tab .sidebar-item-subtitle {
+  color: #fde68a !important; /* Vàng kem sáng rực, cực kỳ dễ đọc */
+  font-weight: 600 !important;
+}
+
+.admin-sidebar-refined button[class*="from-[#2b170e]"] svg,
+.admin-sidebar-refined button.active-sidebar-tab svg {
+  color: #fde047 !important; /* Vàng gold rực rỡ */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+}
+
+.admin-sidebar-refined button[class*="from-[#2b170e]"] span.bg-white\/20,
+.admin-sidebar-refined button.active-sidebar-tab span.bg-white\/20 {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Tiêu đề các nhóm trong Sidebar (Khu Vực Trang Chủ, Các Trang & Nội Dung, Hệ Thống & Bảo Mật) - Tương phản cực cao, không bị chìm */
+.admin-sidebar-refined .sidebar-group-title,
+.admin-liquid-glass .sidebar-group-title {
+  color: #1f0f09 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em !important;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+}
+
+.admin-sidebar-refined .sidebar-group-title svg,
+.admin-liquid-glass .sidebar-group-title svg {
+  color: #704523 !important;
+}
+
+/* Các tab chưa chọn trong Sidebar */
+.admin-sidebar-refined button:not(.active-sidebar-tab) .sidebar-item-title {
+  color: #1f0f09 !important;
+  font-weight: 800 !important;
+}
+
+.admin-sidebar-refined button:not(.active-sidebar-tab) .sidebar-item-subtitle {
+  color: #5c3c26 !important;
+  font-weight: 600 !important;
+}
+
+.admin-sidebar-refined button:not(.active-sidebar-tab) svg {
+  color: #704523 !important;
+}
+
+.admin-sidebar-refined button:not(.active-sidebar-tab):hover {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 15px rgba(60, 35, 15, 0.06) !important;
+}
+
+/* Tab chưa chọn lúc hover */
+.admin-liquid-glass button.text-neutral-300:hover {
+  background: rgba(255, 255, 255, 0.65) !important;
+  color: #2b170e !important;
+}
+
+/* Ô nhập liệu Form (Input, Textarea, Select) chuẩn Frosted Glass */
+.admin-liquid-glass input,
+.admin-liquid-glass textarea,
+.admin-liquid-glass select {
+  background: rgba(255, 255, 255, 0.75) !important;
+  color: #2b170e !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 2px 8px rgba(60, 35, 15, 0.03), inset 0 1px 1px rgba(0, 0, 0, 0.02) !important;
+}
+
+.admin-liquid-glass input:focus,
+.admin-liquid-glass textarea:focus,
+.admin-liquid-glass select:focus {
+  background: #ffffff !important;
+  border-color: #2b170e !important;
+  outline: 2px solid rgba(43, 23, 14, 0.15) !important;
+}
+
+.admin-liquid-glass select option {
+  background: #ffffff !important;
+  color: #2b170e !important;
+}
+
+/* Nút hành động chính (Tải ảnh mới, Lưu dữ liệu) */
+.admin-liquid-glass button.bg-amber-500:not(.text-neutral-300),
+.admin-liquid-glass button.bg-gradient-to-r.from-amber-500,
+.admin-liquid-glass button.bg-orange-600,
+.admin-liquid-glass label.bg-orange-600,
+.admin-liquid-glass label.bg-amber-500 {
+  background: linear-gradient(135deg, #2b170e 0%, #1f0f09 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(43, 23, 14, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.admin-liquid-glass button.bg-amber-500:not(.text-neutral-300):hover,
+.admin-liquid-glass label.bg-amber-500:hover,
+.admin-liquid-glass label.bg-orange-600:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 16px 32px rgba(43, 23, 14, 0.32) !important;
+}
+
+/* Nút phụ / Nút tiện ích */
+.admin-liquid-glass button.bg-neutral-800,
+.admin-liquid-glass button.bg-neutral-900 {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(16px) !important;
+  color: #2b170e !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 4px 12px rgba(60, 35, 15, 0.04) !important;
+}
+
+.admin-liquid-glass button.bg-neutral-800:hover,
+.admin-liquid-glass button.bg-neutral-900:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #180d08 !important;
+}
+
+/* Trạng thái BẬT / ĐANG BẬT */
+.admin-liquid-glass .bg-emerald-500,
+.admin-liquid-glass .bg-emerald-500\/20 {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #065f46 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Huy hiệu thẻ Badge */
+.admin-liquid-glass .bg-amber-500\/20,
+.admin-liquid-glass .bg-amber-500\/10 {
+  background: rgba(140, 89, 50, 0.12) !important;
+  color: #704523 !important;
+  border-color: rgba(140, 89, 50, 0.25) !important;
+}
+
+/* Thanh cuộn tinh tế cho khung làm việc Admin */
+.admin-liquid-glass main::-webkit-scrollbar,
+.admin-liquid-glass aside div::-webkit-scrollbar {
+  width: 6px;
+}
+.admin-liquid-glass main::-webkit-scrollbar-track,
+.admin-liquid-glass aside div::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-liquid-glass main::-webkit-scrollbar-thumb,
+.admin-liquid-glass aside div::-webkit-scrollbar-thumb {
+  background: rgba(140, 89, 50, 0.22);
+  border-radius: 9999px;
+}
+.admin-liquid-glass main::-webkit-scrollbar-thumb:hover,
+.admin-liquid-glass aside div::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 89, 50, 0.45);
+}
+
+/* Sidebar tinh tế với font Plus Jakarta Sans và size to rõ */
+.admin-sidebar-refined {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  letter-spacing: -0.015em;
+}
+
+.admin-sidebar-refined .sidebar-item-title {
+  font-size: 15.5px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+}
+
+.admin-sidebar-refined .sidebar-item-subtitle {
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  font-weight: 500 !important;
+}
+
+.admin-sidebar-refined .sidebar-group-title {
+  font-size: 13.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em !important;
+  color: #1f0f09 !important;
+}
+
+.admin-sidebar-refined .sidebar-group-title svg {
+  color: #8c5932 !important;
+}
+
+.admin-sidebar-refined button:not([class*="from-[#2b170e]"]) .sidebar-item-title {
+  color: #1f0f09 !important;
+  font-weight: 750 !important;
+}
+
+.admin-sidebar-refined button:not([class*="from-[#2b170e]"]) .sidebar-item-subtitle {
+  color: #634832 !important;
+  font-weight: 600 !important;
+}
+
+/* Tăng kích thước chữ phụ đề, hướng dẫn và nhãn phụ trong toàn bộ Admin */
+.admin-liquid-glass .text-\[10px\] {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.admin-liquid-glass .text-\[11px\] {
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+}
+
+.admin-liquid-glass .text-xs {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.admin-liquid-glass label.text-xs,
+.admin-liquid-glass label {
+  font-size: 14.5px !important;
+  line-height: 1.45 !important;
+  font-weight: 700 !important;
+}
+
+.admin-liquid-glass input,
+.admin-liquid-glass select,
+.admin-liquid-glass textarea {
+  font-size: 14px !important;
+}
