@@ -39,7 +39,10 @@ export default function HomePage({ navigate }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [copiedCode, setCopiedCode] = useState(null);
   const isLockedRef = useRef(false);
+  const touchStartYRef = useRef(0);
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
+
+  const TOTAL_SLIDES = SLIDES_NAV.length;
 
   useEffect(() => {
     const handleConfigUpdate = () => setSiteConfig(getSiteConfig());
