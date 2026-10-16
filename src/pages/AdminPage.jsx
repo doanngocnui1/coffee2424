@@ -4222,22 +4222,26 @@ export default function AdminPage({ navigate }) {
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     {(config.socialMedia?.platforms || []).filter(p => p.visible !== false).map((p) => {
                       const IconC = BrandIcons[p.id] || BrandIcons.facebook;
                       return (
                         <div
                           key={p.id}
-                          className="px-3 py-1.5 rounded-xl bg-white border border-stone-200 text-xs font-bold text-[#2b170e] flex items-center gap-1.5 shadow-2xs"
+                          className="w-10 h-10 rounded-full bg-white border border-stone-200 text-[#2b170e] flex items-center justify-center shadow-xs hover:scale-110 transition-transform relative group cursor-pointer"
+                          title={`${p.name}: ${p.handle}`}
                         >
-                          <div className="w-4 h-4 flex items-center justify-center">
-                            <IconC />
-                          </div>
-                          <span>{p.name}</span>
-                          <span className="text-[10px] text-stone-500 font-normal">({p.handle})</span>
+                          <IconC />
+                          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900 text-white text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity z-10 shadow-md">
+                            {p.name} ({p.badge || 'Online'})
+                          </span>
                         </div>
                       );
                     })}
+                    <div className="h-9 px-3 rounded-full bg-white/80 border border-stone-200 text-xs font-bold text-[#1877F2] flex items-center gap-1.5 shadow-2xs">
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Plugin Fanpage</span>
+                    </div>
                   </div>
                 </div>
 

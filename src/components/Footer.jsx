@@ -31,24 +31,37 @@ export default function Footer({ navigate }) {
             {/* Brand Info */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <img 
-                  src="/images/logo.jpg" 
-                  alt="COFFEE 24/24 Logo" 
-                  className="w-12 h-12 rounded-full border border-white/90 object-cover bg-white shadow-md"
-                />
+                <div className="relative">
+                  <img 
+                    src="/images/logo.jpg" 
+                    alt="COFFEE 24/24 Logo" 
+                    className="w-12 h-12 rounded-full border-2 border-amber-500/40 object-cover bg-white shadow-md"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" title="Mở cửa 24/7" />
+                </div>
                 <div>
                   <span className="text-xl font-black text-[#2b170e] tracking-wider block">COFFEE 24/24</span>
-                  <span className="text-xs text-[#8c5932] font-black tracking-widest uppercase">{config.slogan || 'Enjoy Your Life'}</span>
+                  <span className="text-xs text-[#8c5932] font-black tracking-widest uppercase">{config.slogan || 'ENJOY YOUR LIFE'}</span>
                 </div>
               </div>
               
-              <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed font-normal">
-                Cà phê rang mộc nguyên chất, chắt lọc tinh hoa từ những vùng trồng trứ danh. Không gian mở truyền cảm hứng làm việc & sáng tạo suốt 24 giờ.
+              <p className="text-sm text-[#5c3d2e] leading-relaxed font-normal">
+                Cà phê rang mộc nguyên chất, chắt lọc tinh hoa từ Buôn Ma Thuột & Cầu Đất. Không gian mở truyền cảm hứng làm việc & sáng tạo suốt 24 giờ.
               </p>
 
-              <div className="text-xs sm:text-sm text-[#2b170e] font-bold bg-white/80 px-4 py-2.5 rounded-2xl border border-white/90 w-fit shadow-xs inline-flex items-center gap-1.5">
-                <span>☕</span>
-                <span>Hương vị cà phê nguyên bản & mộc mạc</span>
+              <div className="flex flex-col gap-1.5 text-xs text-[#5c3d2e] font-semibold pt-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-600">☕</span>
+                  <span>100% Cà phê hạt rang mộc nguyên bản</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600">⚡</span>
+                  <span>Wifi Gigabit & Ổ cắm riêng từng bàn</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-600">🌙</span>
+                  <span>Phục vụ bếp nóng xuyên đêm 24/24</span>
+                </div>
               </div>
             </div>
 

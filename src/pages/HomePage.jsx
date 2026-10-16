@@ -21,7 +21,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import CoffeeStorySlider from '../components/CoffeeStorySlider';
-import { BrandIcons } from '../components/SocialFollowSection';
+import { BrandIcons, SocialRoundButtons, SocialPluginModal } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
 import CustomerReviewsSection from '../components/CustomerReviewsSection';
 import { getSiteConfig } from '../data/siteConfig';
@@ -41,6 +41,7 @@ export default function HomePage({ navigate }) {
   const isLockedRef = useRef(false);
   const touchStartYRef = useRef(0);
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
+  const [isPluginModalOpen, setIsPluginModalOpen] = useState(false);
 
   const TOTAL_SLIDES = SLIDES_NAV.length;
 
@@ -526,12 +527,12 @@ export default function HomePage({ navigate }) {
             SLIDE 5: CHÂN TRANG & MẠNG XÃ HỘI (Ảnh 5)
             --------------------------------------------------------------------- */}
         <div className="w-full h-full flex-shrink-0 flex flex-col justify-center items-center px-3 sm:px-6 lg:px-8 py-3 relative overflow-hidden">
-          <div className="w-full max-w-7xl mx-auto flex flex-col justify-center space-y-4">
+          <div className="w-full max-w-7xl mx-auto flex flex-col justify-center space-y-3 sm:space-y-4 max-h-[calc(100vh-40px)] overflow-y-auto lg:overflow-visible">
             
-            {/* Top: Follow Our Journey (Ảnh 5) */}
-            <div className="rounded-[28px] ios-glass-panel p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+            {/* Top: Follow Our Journey (Nút Tròn Mạng Xã Hội Siêu Đẹp) */}
+            <div className="rounded-[26px] ios-glass-panel p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border border-white/80">
               <div className="space-y-0.5 text-center sm:text-left">
-                <span className="text-[11px] font-mono tracking-[0.2em] uppercase text-[#8c5932] font-black block">
+                <span className="text-[10.5px] font-mono tracking-[0.2em] uppercase text-[#8c5932] font-black block">
                   {siteConfig.socialMedia?.sectionTitle || 'FOLLOW OUR JOURNEY · #ENJOYYOURLIFE'}
                 </span>
                 <div className="text-base sm:text-lg font-black text-[#2b170e]">
@@ -539,187 +540,175 @@ export default function HomePage({ navigate }) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {socialPlatforms.map((platform) => {
-                  const IconComponent = BrandIcons[platform.id] || BrandIcons.facebook;
-                  const isPlaceholder = platform.isPlaceholder;
-
-                  if (isPlaceholder && !platform.url) {
-                    return (
-                      <div
-                        key={platform.id}
-                        className="px-3.5 py-2 rounded-2xl bg-white/40 border border-dashed border-[#8c5932]/40 text-[#5c3d2e] inline-flex items-center gap-2 text-xs font-semibold shadow-2xs"
-                        title={platform.desc || `Ô nhúng ${platform.name}`}
-                      >
-                        <div className="w-5 h-5 rounded-md bg-stone-200/80 text-stone-600 flex items-center justify-center shrink-0">
-                          <IconComponent />
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <span className="font-bold text-[#2b170e] text-[11px] flex items-center gap-1">
-                            <span>{platform.name}</span>
-                            <span className="text-[8px] px-1 rounded-full bg-stone-200 text-stone-600 font-bold">
-                              {platform.badge || 'Sắp ra mắt'}
-                            </span>
-                          </span>
-                          <span className="text-[9.5px] text-[#7a5843]">{platform.handle || platform.placeholderText || 'Chờ liên kết'}</span>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <a
-                      key={platform.id}
-                      href={platform.url || '#'}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={`px-3.5 sm:px-4 py-2 rounded-2xl border transition-all inline-flex items-center gap-2 text-xs sm:text-sm font-bold shadow-2xs hover:shadow-md active:scale-95 group ${
-                        platform.id === 'facebook'
-                          ? 'bg-blue-600/10 hover:bg-blue-600 hover:text-white border-blue-500/30 text-[#1877F2]'
-                          : platform.id === 'tiktok'
-                          ? 'bg-black/5 hover:bg-black hover:text-white border-black/20 text-[#180d08]'
-                          : platform.id === 'instagram'
-                          ? 'bg-pink-500/10 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:text-white border-pink-400/30 text-[#E1306C]'
-                          : platform.id === 'threads'
-                          ? 'bg-stone-900/10 hover:bg-black hover:text-white border-black/20 text-[#111]'
-                          : platform.id === 'youtube'
-                          ? 'bg-red-500/10 hover:bg-red-600 hover:text-white border-red-500/30 text-[#FF0000]'
-                          : 'bg-white/70 hover:bg-white text-[#2b170e] border-white/90'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-md bg-white/90 shadow-2xs flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform text-[#2b170e]">
-                        <IconComponent />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="flex items-center gap-1 leading-tight text-xs font-black">
-                          <span>{platform.name}</span>
-                          {platform.badge && (
-                            <span className="text-[8px] px-1 rounded-full bg-white/80 text-[#2b170e] font-extrabold shadow-2xs">
-                              {platform.badge}
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-[9.5px] font-normal opacity-80 group-hover:opacity-100">
-                          {platform.handle}
-                        </span>
-                      </div>
-                      <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-all" />
-                    </a>
-                  );
-                })}
-              </div>
+              {/* Nút Tròn Mạng Xã Hội & Nút Xem Plugin */}
+              <SocialRoundButtons 
+                platforms={socialPlatforms} 
+                onOpenPlugin={() => setIsPluginModalOpen(true)}
+                showPluginBtn={true}
+              />
             </div>
 
-            {/* Bottom 4 Columns (Ảnh 5) */}
-            <div className="rounded-[32px] ios-glass-panel p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 shadow-xl">
+            {/* Bottom 4 Columns (Chân Trang Sang Trọng & Chuyên Nghiệp) */}
+            <div className="rounded-[28px] ios-glass-panel p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 shadow-xl border border-white/80">
               
-              {/* Brand info */}
-              <div className="space-y-3">
+              {/* Cột 1: Thông Tin Thương Hiệu */}
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2.5">
-                  <img 
-                    src="/images/logo.jpg" 
-                    alt="Logo" 
-                    className="w-10 h-10 rounded-full border border-white/90 object-cover shadow-sm"
-                  />
+                  <div className="relative">
+                    <img 
+                      src="/images/logo.jpg" 
+                      alt="Logo" 
+                      className="w-10 h-10 rounded-full border-2 border-amber-500/40 object-cover shadow-sm bg-white"
+                    />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" title="Hoạt động 24/7" />
+                  </div>
                   <div>
-                    <span className="text-base font-black text-[#2b170e] tracking-wider block">COFFEE 24/24</span>
-                    <span className="text-[10px] text-[#8c5932] font-black tracking-widest uppercase">{siteConfig.slogan || 'ENJOY YOUR LIFE'}</span>
+                    <span className="text-sm font-black text-[#2b170e] tracking-wider block">COFFEE 24/24</span>
+                    <span className="text-[9.5px] text-[#8c5932] font-black tracking-widest uppercase block">{siteConfig.slogan || 'ENJOY YOUR LIFE'}</span>
                   </div>
                 </div>
-                <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
-                  Cà phê rang mộc nguyên chất, chắt lọc tinh hoa từ những vùng trồng trứ danh. Không gian mở truyền cảm hứng làm việc & sáng tạo suốt 24 giờ.
+                <p className="text-xs text-[#5c3d2e] leading-relaxed">
+                  Cà phê rang mộc nguyên chất, chắt lọc tinh hoa từ Buôn Ma Thuột & Cầu Đất. Trạm dừng chân 24/7 truyền cảm hứng làm việc, học tập và sáng tạo không giới hạn.
                 </p>
-                <div className="text-xs text-[#2b170e] font-bold bg-white/70 px-3 py-1.5 rounded-xl border border-white/90 inline-flex items-center gap-1 shadow-2xs">
-                  <span>☕</span>
-                  <span>Hương vị cà phê nguyên bản & mộc mạc</span>
+                <div className="flex flex-col gap-1 text-[11px] text-[#2b170e] font-semibold">
+                  <div className="flex items-center gap-1.5 text-[#704f38]">
+                    <span className="text-amber-600">☕</span>
+                    <span>100% Cà phê hạt rang mộc tự nhiên</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[#704f38]">
+                    <span className="text-blue-600">⚡</span>
+                    <span>Wifi Gigabit & Ổ cắm riêng tại bàn</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[#704f38]">
+                    <span className="text-emerald-600">🌙</span>
+                    <span>Phục vụ bếp nóng xuyên đêm 24/24</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Quick Links */}
+              {/* Cột 2: Khám Phá Website */}
               <div className="space-y-2">
                 <h4 className="text-[#2b170e] text-xs font-black tracking-widest uppercase border-l-2 border-[#8c5932] pl-2">
                   Khám Phá Website
                 </h4>
-                <ul className="space-y-1.5 text-xs sm:text-sm">
+                <ul className="space-y-1 text-xs">
                   <li>
-                    <button onClick={() => goToSlide(0)} className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer">
-                      Trang Chủ
+                    <button 
+                      onClick={() => goToSlide(0)} 
+                      className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer flex items-center justify-between w-full group py-0.5"
+                    >
+                      <span>Trang Chủ</span>
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#8c5932]" />
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/dathang')} className="hover:text-[#8c5932] text-[#2b170e] font-bold cursor-pointer inline-flex items-center gap-1.5">
-                      <span>Thực Đơn Đặt Món</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#2b170e] text-white">Menu</span>
+                    <button 
+                      onClick={() => navigate('/dathang')} 
+                      className="hover:text-[#8c5932] text-[#2b170e] font-bold cursor-pointer flex items-center justify-between w-full group py-0.5"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span>Thực Đơn Đặt Món</span>
+                        <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-[#2b170e] text-white font-extrabold">MENU</span>
+                      </span>
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#8c5932]" />
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/khuyenmai')} className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer">
-                      Chương Trình Khuyến Mãi
+                    <button 
+                      onClick={() => navigate('/khuyenmai')} 
+                      className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer flex items-center justify-between w-full group py-0.5"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span>Chương Trình Khuyến Mãi</span>
+                        <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-800 font-bold border border-amber-500/30">%</span>
+                      </span>
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#8c5932]" />
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/gioithieu')} className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer">
-                      Về Chúng Tôi (Giới Thiệu)
+                    <button 
+                      onClick={() => navigate('/gioithieu')} 
+                      className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer flex items-center justify-between w-full group py-0.5"
+                    >
+                      <span>Về Chúng Tôi (Giới Thiệu)</span>
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#8c5932]" />
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/tuyendung')} className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer">
-                      Tuyển Dụng Nhân Sự
+                    <button 
+                      onClick={() => navigate('/tuyendung')} 
+                      className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer flex items-center justify-between w-full group py-0.5"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span>Tuyển Dụng Nhân Sự</span>
+                        <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-800 font-bold border border-emerald-500/30">12 VỊ TRÍ</span>
+                      </span>
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#8c5932]" />
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/baiviet')} className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer">
-                      Bài Viết & Cẩm Nang
+                    <button 
+                      onClick={() => navigate('/baiviet')} 
+                      className="hover:text-[#8c5932] text-[#4a3427] font-semibold cursor-pointer flex items-center justify-between w-full group py-0.5"
+                    >
+                      <span>Bài Viết & Cẩm Nang</span>
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#8c5932]" />
                     </button>
                   </li>
                 </ul>
               </div>
 
-              {/* Chi nhánh */}
+              {/* Cột 3: Chi Nhánh & Hotline */}
               <div className="space-y-2">
                 <h4 className="text-[#2b170e] text-xs font-black tracking-widest uppercase border-l-2 border-[#8c5932] pl-2">
                   Cửa Hàng Tại TP.HCM
                 </h4>
                 <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-white/60 border border-white/80 space-y-0.5">
-                    <p className="text-[#2b170e] font-black">Coffee 24/24 413PHI</p>
-                    <p className="text-[#5c3d2e]">413 Phan Huy Ích, P. An Hội Tây, TP.HCM</p>
-                    <p className="text-[#2b170e] font-bold flex items-center gap-1">
+                  <div className="p-2 rounded-xl bg-white/65 border border-white/85 space-y-0.5 shadow-2xs hover:bg-white/85 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[#2b170e] font-black">Coffee 24/24 413PHI</p>
+                      <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 font-bold">24/7</span>
+                    </div>
+                    <p className="text-[#5c3d2e] text-[11px]">413 Phan Huy Ích, P. An Hội Tây, TP.HCM</p>
+                    <div className="pt-0.5 flex items-center gap-1 text-[11px]">
                       <PhoneCall className="w-3 h-3 text-[#8c5932]" />
-                      <span>Hotline:</span>
-                      <a href={`tel:${siteConfig.hotlinePHI || '0986511897'}`} className="text-[#8c5932] hover:underline font-mono">
-                        {siteConfig.hotlinePHI || '0986511897'}
+                      <a href={`tel:${siteConfig.hotlinePHI || '0986511897'}`} className="text-[#8c5932] hover:underline font-mono font-bold">
+                        {siteConfig.hotlinePHI || '0986 511 897'}
                       </a>
-                    </p>
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white/60 border border-white/80 space-y-0.5">
-                    <p className="text-[#2b170e] font-black">Coffee 24/24 96D5</p>
-                    <p className="text-[#5c3d2e]">96 đường D5, P. Thạnh Mỹ Tây, TP.HCM</p>
-                    <p className="text-[#2b170e] font-bold flex items-center gap-1">
+
+                  <div className="p-2 rounded-xl bg-white/65 border border-white/85 space-y-0.5 shadow-2xs hover:bg-white/85 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[#2b170e] font-black">Coffee 24/24 96D5</p>
+                      <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 font-bold">24/7</span>
+                    </div>
+                    <p className="text-[#5c3d2e] text-[11px]">96 đường D5, P. Thạnh Mỹ Tây, TP.HCM</p>
+                    <div className="pt-0.5 flex items-center gap-1 text-[11px]">
                       <PhoneCall className="w-3 h-3 text-[#8c5932]" />
-                      <span>Hotline:</span>
-                      <a href={`tel:${siteConfig.hotlineD5 || '0347374858'}`} className="text-[#8c5932] hover:underline font-mono">
-                        {siteConfig.hotlineD5 || '0347374858'}
+                      <a href={`tel:${siteConfig.hotlineD5 || '0347374858'}`} className="text-[#8c5932] hover:underline font-mono font-bold">
+                        {siteConfig.hotlineD5 || '0347 374 858'}
                       </a>
-                    </p>
+                    </div>
                   </div>
-                  <div className="px-3 py-1.5 rounded-xl bg-white/60 border border-white/80 flex items-center justify-between text-xs">
-                    <span className="text-[#5c3d2e]">Hotline 24/7:</span>
-                    <a href={`tel:${siteConfig.hotlineGeneral || '0906916816'}`} className="font-black text-[#8c5932] font-mono">
+
+                  <div className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-600/20 flex items-center justify-between text-xs">
+                    <span className="text-[#5c3d2e] text-[11px] font-semibold">Hotline CSKH 24/7:</span>
+                    <a href={`tel:${siteConfig.hotlineGeneral || '0906916816'}`} className="font-black text-[#8c5932] font-mono hover:underline">
                       {siteConfig.hotlineGeneral || '0906 916 816'}
                     </a>
                   </div>
                 </div>
               </div>
 
-              {/* Cột 4: Zalo Official Account & QR Code (Hoặc tùy biến theo Admin) */}
+              {/* Cột 4: Zalo Official Account & QR Code */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-[#2b170e] text-xs font-black tracking-widest uppercase border-l-2 border-[#8c5932] pl-2">
                     {siteConfig.zaloOA?.title || 'Zalo Official Account'}
                   </h4>
                   {siteConfig.zaloOA?.badge && (
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 font-extrabold border border-blue-500/30">
+                    <span className="text-[8.5px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 font-extrabold border border-blue-500/30">
                       {siteConfig.zaloOA.badge}
                     </span>
                   )}
@@ -732,16 +721,16 @@ export default function HomePage({ navigate }) {
                       <img 
                         src={siteConfig.zaloOA?.qrImage || '/images/qr_zalo_oa.png'} 
                         alt="QR Zalo Official Account" 
-                        className="w-20 h-20 sm:w-22 sm:h-22 object-contain rounded-lg group-hover:scale-105 transition-transform" 
+                        className="w-18 h-18 sm:w-20 sm:h-20 object-contain rounded-lg group-hover:scale-105 transition-transform" 
                       />
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[9px] shadow-sm">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[9px] shadow-sm">
                         Z
                       </div>
                     </div>
                     
                     <div className="space-y-0.5">
                       <p className="text-xs font-black text-[#2b170e]">{siteConfig.zaloOA?.oaName || 'COFFEE 24/24'}</p>
-                      <p className="text-[10.5px] text-[#704f38] leading-tight font-medium">
+                      <p className="text-[10px] text-[#704f38] leading-tight font-medium">
                         {siteConfig.zaloOA?.desc || 'Quét QR qua Zalo hoặc nhấn nút để nhận ưu đãi & tích điểm 24/7.'}
                       </p>
                     </div>
@@ -760,30 +749,30 @@ export default function HomePage({ navigate }) {
 
                 {/* Nếu admin cấu hình chế độ 'both' */}
                 {siteConfig.zaloOA?.displayMode === 'both' && (
-                  <div className="pt-2 border-t border-white/60">
-                    <p className="text-[10px] font-bold text-[#8c5932] uppercase tracking-wider mb-1">Hoặc Quét Menu Tại Bàn:</p>
+                  <div className="pt-1.5 border-t border-white/60">
+                    <p className="text-[9.5px] font-bold text-[#8c5932] uppercase tracking-wider mb-1">Hoặc Quét Menu Tại Bàn:</p>
                     <div className="grid grid-cols-2 gap-1.5">
                       <div className="p-1.5 rounded-xl bg-white/60 border border-white/80 text-center">
-                        <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-10 h-10 object-contain mx-auto" />
-                        <span className="text-[9px] font-bold text-[#2b170e] block">413PHI</span>
+                        <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-9 h-9 object-contain mx-auto" />
+                        <span className="text-[8.5px] font-bold text-[#2b170e] block">413PHI</span>
                       </div>
                       <div className="p-1.5 rounded-xl bg-white/60 border border-white/80 text-center">
-                        <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-10 h-10 object-contain mx-auto" />
-                        <span className="text-[9px] font-bold text-[#2b170e] block">96D5</span>
+                        <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-9 h-9 object-contain mx-auto" />
+                        <span className="text-[8.5px] font-bold text-[#2b170e] block">96D5</span>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {siteConfig.zaloOA?.displayMode === 'branch_menu_only' && (
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="p-2.5 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
-                      <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-16 h-16 object-contain" />
-                      <span className="text-[10px] font-bold text-[#2b170e] mt-1">Menu 413PHI</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
+                      <img src="/images/qr_menu_phihuyich.png" alt="QR 413PHI" className="w-14 h-14 object-contain" />
+                      <span className="text-[9.5px] font-bold text-[#2b170e] mt-1">Menu 413PHI</span>
                     </div>
-                    <div className="p-2.5 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
-                      <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-16 h-16 object-contain" />
-                      <span className="text-[10px] font-bold text-[#2b170e] mt-1">Menu 96D5</span>
+                    <div className="p-2 rounded-2xl bg-white/70 border border-white/90 text-center flex flex-col items-center">
+                      <img src="/images/qr_menu_d5.png" alt="QR 96D5" className="w-14 h-14 object-contain" />
+                      <span className="text-[9.5px] font-bold text-[#2b170e] mt-1">Menu 96D5</span>
                     </div>
                   </div>
                 )}
@@ -791,13 +780,16 @@ export default function HomePage({ navigate }) {
 
             </div>
 
-            {/* Back to Top Prompt */}
-            <div className="flex justify-center">
+            {/* Sub-footer Bar (Bản quyền & Về đầu trang) */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-2 text-[11px] text-[#704f38]">
+              <div>
+                <span>© 2026 COFFEE 24/24 · Bản quyền thuộc về Hệ thống Coffee 24/24. All rights reserved.</span>
+              </div>
               <button
                 onClick={() => goToSlide(0)}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/50 hover:bg-white text-[#2b170e] text-xs font-bold border border-white/80 shadow-xs hover:shadow-md transition-all cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/60 hover:bg-white text-[#2b170e] font-bold border border-white/80 shadow-2xs hover:shadow-sm transition-all cursor-pointer active:scale-95"
               >
-                <ArrowUp className="w-3.5 h-3.5 text-[#8c5932]" />
+                <ArrowUp className="w-3 h-3 text-[#8c5932]" />
                 <span>Về đầu trang</span>
               </button>
             </div>
@@ -806,6 +798,12 @@ export default function HomePage({ navigate }) {
         </div>
 
       </div>
+
+      {/* Modal Xem Nhanh Plugin Fanpage Facebook */}
+      <SocialPluginModal 
+        isOpen={isPluginModalOpen} 
+        onClose={() => setIsPluginModalOpen(false)} 
+      />
 
     </div>
   );
