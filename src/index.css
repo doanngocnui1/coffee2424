@@ -21,9 +21,19 @@ body {
   overflow-x: hidden;
 }
 
+/* Ensure generous line-height for all headings so multi-line Vietnamese text with uppercase diacritics never overlaps */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
+  line-height: 1.35 !important;
+}
+
+/* Ensure clean vertical clearance for line-broken heading spans across the entire website */
+h1 br + span,
+h2 br + span,
+h3 br + span {
+  display: inline-block;
+  margin-top: 0.25rem;
 }
 
 button, input, select, textarea {
@@ -198,14 +208,131 @@ button, input, select, textarea {
 }
 
 /* =========================================================================
+   CANVAS BANNER DESIGNER MOTION SUITE (HIỆU ỨNG CHUYỂN ĐỘNG LAYER BANNER)
+   ========================================================================= */
+
+@keyframes canvas-float {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0px) rotate(var(--layer-rotate, 0deg));
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-12px) rotate(calc(var(--layer-rotate, 0deg) + 1.2deg));
+  }
+}
+
+@keyframes canvas-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1) rotate(var(--layer-rotate, 0deg));
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.06) rotate(var(--layer-rotate, 0deg));
+  }
+}
+
+@keyframes canvas-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.45));
+    transform: translate(-50%, -50%) scale(1) rotate(var(--layer-rotate, 0deg));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 35px rgba(251, 191, 36, 0.65));
+    transform: translate(-50%, -50%) scale(1.03) rotate(var(--layer-rotate, 0deg));
+  }
+}
+
+@keyframes canvas-spin-slow {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes canvas-bounce {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0) rotate(var(--layer-rotate, 0deg));
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-14px) rotate(var(--layer-rotate, 0deg));
+  }
+}
+
+@keyframes canvas-wiggle {
+  0%, 100% {
+    transform: translate(-50%, -50%) rotate(var(--layer-rotate, 0deg));
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(calc(var(--layer-rotate, 0deg) - 4.5deg));
+  }
+  75% {
+    transform: translate(-50%, -50%) rotate(calc(var(--layer-rotate, 0deg) + 4.5deg));
+  }
+}
+
+@keyframes canvas-shimmer {
+  0%, 100% {
+    opacity: 0.88;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.35) drop-shadow(0 0 15px rgba(255, 255, 255, 0.75));
+  }
+}
+
+@keyframes canvas-slide-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30%) rotate(var(--layer-rotate, 0deg));
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--layer-rotate, 0deg));
+  }
+}
+
+.canvas-anim-float {
+  animation: canvas-float 4.5s ease-in-out infinite;
+}
+
+.canvas-anim-pulse {
+  animation: canvas-pulse 2.8s ease-in-out infinite;
+}
+
+.canvas-anim-glow-pulse {
+  animation: canvas-glow-pulse 2.2s ease-in-out infinite;
+}
+
+.canvas-anim-spin-slow {
+  animation: canvas-spin-slow 20s linear infinite;
+}
+
+.canvas-anim-bounce {
+  animation: canvas-bounce 2s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+}
+
+.canvas-anim-wiggle {
+  animation: canvas-wiggle 3s ease-in-out infinite;
+}
+
+.canvas-anim-shimmer {
+  animation: canvas-shimmer 3s ease-in-out infinite;
+}
+
+.canvas-anim-slide-up {
+  animation: canvas-slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================================================
    TRUE TRANSLUCENT FROSTED GLASS (ĐỘ MỜ TRONG SUỐT THẤY NỀN MẬP MỜ PHÍA SAU)
    ========================================================================= */
 
 .ios-glass-panel {
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(32px) saturate(220%);
-  -webkit-backdrop-filter: blur(32px) saturate(220%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: var(--glass-panel-bg, rgba(255, 255, 255, 0.28));
+  backdrop-filter: blur(var(--glass-panel-blur, 28px)) saturate(210%);
+  -webkit-backdrop-filter: blur(var(--glass-panel-blur, 28px)) saturate(210%);
+  border: 1px solid var(--glass-panel-border, rgba(255, 255, 255, 0.65));
   box-shadow: 
     0 24px 60px rgba(60, 35, 15, 0.06),
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.9),
@@ -213,10 +340,10 @@ button, input, select, textarea {
 }
 
 .ios-glass-card {
-  background: rgba(255, 255, 255, 0.30);
-  backdrop-filter: blur(28px) saturate(210%);
-  -webkit-backdrop-filter: blur(28px) saturate(210%);
-  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: var(--glass-card-bg, rgba(255, 255, 255, 0.30));
+  backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(200%);
+  border: 1px solid var(--glass-panel-border, rgba(255, 255, 255, 0.68));
   box-shadow: 
     0 16px 45px rgba(60, 35, 15, 0.05),
     inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.9);

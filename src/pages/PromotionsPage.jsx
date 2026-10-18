@@ -93,9 +93,9 @@ export default function PromotionsPage({ navigate }) {
                 <span>Đặc Quyền Tiếp Sức 24/24</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] tracking-tight leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] tracking-tight leading-[1.3] sm:leading-[1.35]">
                 Kho Voucher & Ưu Đãi <br />
-                <span className="text-[#8c5932]">
+                <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">
                   Dành Riêng Cho Bạn
                 </span>
               </h1>

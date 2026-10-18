@@ -109,33 +109,71 @@ export default function App() {
     }
   };
 
+  const glassBg = siteConfig.glassBackground || {};
+  const glassStyleVars = {
+    '--glass-panel-bg': `rgba(255, 255, 255, ${glassBg.glassBgOpacity ?? 0.28})`,
+    '--glass-card-bg': `rgba(255, 255, 255, ${Math.min(0.7, (glassBg.glassBgOpacity ?? 0.28) + 0.04)})`,
+    '--glass-panel-blur': `${glassBg.glassBlur ?? 24}px`,
+    '--glass-panel-border': `rgba(255, 255, 255, ${glassBg.glassBorderOpacity ?? 0.65})`
+  };
+
   return (
-    <div className={`min-h-screen bg-[#ede6dc] text-[#2b170e] flex flex-col font-sans selection:bg-[#2b170e] selection:text-white relative ${currentPath === '/' ? 'h-screen overflow-hidden' : 'overflow-x-hidden'}`}>
+    <div 
+      style={glassStyleVars}
+      className="min-h-screen bg-[#ede6dc] text-[#2b170e] flex flex-col font-sans selection:bg-[#2b170e] selection:text-white relative overflow-x-hidden"
+    >
       {/* Top Subtle Transition Progress Line */}
       {isTransitioning && (
         <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-600 via-[#8c5932] to-[#2b170e] z-50 animate-pulse" />
       )}
 
+      {/* Dynamic Background Wallpaper (Visible through frosted glass) */}
+      {glassBg.enabled && glassBg.image && (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          <div 
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-700 ${
+              glassBg.animation === 'ken_burns' ? 'animate-pulse-subtle scale-105' : ''
+            }`}
+            style={{
+              backgroundImage: `url(${glassBg.image})`,
+              opacity: glassBg.opacity ?? 0.38,
+              filter: `blur(${glassBg.blur ?? 6}px) brightness(${glassBg.brightness ?? 95}%) contrast(${glassBg.contrast ?? 105}%) saturate(${glassBg.saturate ?? 110}%)`,
+              transform: glassBg.animation === 'ken_burns' ? 'scale(1.06)' : 'scale(1.01)'
+            }}
+          />
+          {/* Tint Overlay */}
+          <div 
+            className="absolute inset-0 transition-all duration-500"
+            style={{
+              backgroundColor: glassBg.overlayColor || '#ede6dc',
+              opacity: glassBg.overlayOpacity ?? 0.30
+            }}
+          />
+        </div>
+      )}
+
       {/* Dynamic Animated Ambient Orbs for Authentic iOS Frosted Glass Translucency */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Warm Caramel Amber Orb (Top Left) */}
-        <div className="absolute -top-32 -left-32 w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-[#df934e]/70 via-[#f4bd80]/60 to-[#fedbb9]/45 blur-[100px] animate-orb-drift-1" />
-        
-        {/* Rich Espresso Mocha Orb (Mid Right) */}
-        <div className="absolute top-1/4 -right-32 w-[600px] h-[600px] rounded-full bg-gradient-to-bl from-[#b86d32]/65 via-[#d48c4e]/55 to-[#f3cfad]/45 blur-[110px] animate-orb-drift-2" />
-        
-        {/* Warm Golden Glow Orb (Mid Left) */}
-        <div className="absolute top-2/3 -left-20 w-[480px] h-[480px] rounded-full bg-gradient-to-r from-[#f7ba72]/60 to-[#df8e43]/50 blur-[90px] animate-pulse-subtle" />
+      {glassBg.showAmbientOrbs !== false && (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          {/* Warm Caramel Amber Orb (Top Left) */}
+          <div className="absolute -top-32 -left-32 w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-[#df934e]/70 via-[#f4bd80]/60 to-[#fedbb9]/45 blur-[100px] animate-orb-drift-1" />
+          
+          {/* Rich Espresso Mocha Orb (Mid Right) */}
+          <div className="absolute top-1/4 -right-32 w-[600px] h-[600px] rounded-full bg-gradient-to-bl from-[#b86d32]/65 via-[#d48c4e]/55 to-[#f3cfad]/45 blur-[110px] animate-orb-drift-2" />
+          
+          {/* Warm Golden Glow Orb (Mid Left) */}
+          <div className="absolute top-2/3 -left-20 w-[480px] h-[480px] rounded-full bg-gradient-to-r from-[#f7ba72]/60 to-[#df8e43]/50 blur-[90px] animate-pulse-subtle" />
 
-        {/* Roasted Hazelnut Glow Orb (Mid-Bottom Right) */}
-        <div className="absolute bottom-1/4 -right-20 w-[520px] h-[520px] rounded-full bg-gradient-to-l from-[#d49457]/55 to-[#f5caa1]/45 blur-[100px] animate-orb-drift-2" />
+          {/* Roasted Hazelnut Glow Orb (Mid-Bottom Right) */}
+          <div className="absolute bottom-1/4 -right-20 w-[520px] h-[520px] rounded-full bg-gradient-to-l from-[#d49457]/55 to-[#f5caa1]/45 blur-[100px] animate-orb-drift-2" />
 
-        {/* Creamy Oat Foam Orb (Bottom Center) */}
-        <div className="absolute -bottom-40 left-1/3 w-[720px] h-[720px] rounded-full bg-gradient-to-t from-[#dec5ab]/75 via-[#eed8c2]/65 to-[#fdf4ea]/55 blur-[125px] animate-orb-drift-3" />
-      </div>
+          {/* Creamy Oat Foam Orb (Bottom Center) */}
+          <div className="absolute -bottom-40 left-1/3 w-[720px] h-[720px] rounded-full bg-gradient-to-t from-[#dec5ab]/75 via-[#eed8c2]/65 to-[#fdf4ea]/55 blur-[125px] animate-orb-drift-3" />
+        </div>
+      )}
 
-      {/* Elegant Frosted Header with Brand Logo */}
-      <div className="relative z-40 shrink-0">
+      {/* Floating Frosted Header (Overlays 16:9 Banner on Home, Floats Fixed on All Pages) */}
+      <div className="fixed top-0 inset-x-0 z-40 pointer-events-none">
         <Header currentPath={currentPath} navigate={navigate} />
       </div>
 
@@ -143,7 +181,7 @@ export default function App() {
       <SideBanners config={siteConfig} navigate={navigate} />
 
       {/* Main Page Content with Smooth iOS 2-Phase Page Transitions */}
-      <main className={`flex-1 relative z-10 ${currentPath === '/' ? 'overflow-hidden h-[calc(100vh-76px)]' : ''}`}>
+      <main className={`flex-1 relative z-10 ${currentPath !== '/' ? 'pt-20 sm:pt-24' : ''}`}>
         <div 
           key={currentPath} 
           className={`h-full ${isTransitioning ? 'animate-page-exit pointer-events-none' : 'animate-page-enter'}`}
@@ -152,12 +190,10 @@ export default function App() {
         </div>
       </main>
 
-      {/* Footer - Chỉ render ở các trang con, riêng trang chủ HomePage đã tích hợp slide Footer toàn màn hình */}
-      {currentPath !== '/' && (
-        <div className="relative z-10">
-          <Footer navigate={navigate} />
-        </div>
-      )}
+      {/* Footer - Hiển thị chân trang ở cuối dòng cuộn */}
+      <div className="relative z-10">
+        <Footer currentPath={currentPath} navigate={navigate} />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Menu, 
   X, 
@@ -10,37 +10,89 @@ import { getSiteConfig } from '../data/siteConfig';
 export default function Header({ currentPath, navigate }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
+  const lastScrollY = useRef(0);
 
+  // Khi chuyển trang con, luôn luôn hiện header lại ở đỉnh trang
   useEffect(() => {
+    setIsVisible(true);
+    setMobileMenuOpen(false);
+  }, [currentPath]);
+
+  // Lắng nghe sự kiện cuộn trang để tự động ẩn/hiện Header (Headroom pattern)
+  useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = Math.max(0, window.scrollY);
+
+          setScrolled(currentScrollY > 15);
+
+          // Nếu menu mobile đang mở, giữ nguyên không ẩn header
+          if (mobileMenuOpen) {
+            setIsVisible(true);
+            lastScrollY.current = currentScrollY;
+            ticking = false;
+            return;
+          }
+
+          // Luôn hiển thị khi ở đỉnh trang (scrollY <= 40px)
+          if (currentScrollY <= 40) {
+            setIsVisible(true);
+          } else {
+            const diff = currentScrollY - lastScrollY.current;
+            // Khi lướt lên xem nội dung trang (cuộn xuống > 8px): ẩn header
+            if (diff > 8 && currentScrollY > 70) {
+              setIsVisible(false);
+            } 
+            // Khi lướt ngược lại (cuộn lên > 8px): hiện header
+            else if (diff < -8) {
+              setIsVisible(true);
+            }
+          }
+
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
+
     const handleConfigUpdate = () => {
       setSiteConfig(getSiteConfig());
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('site-config-updated', handleConfigUpdate);
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('site-config-updated', handleConfigUpdate);
     };
-  }, []);
+  }, [mobileMenuOpen]);
 
   const navLinks = (siteConfig.navMenu || []).filter(item => item.visible !== false);
 
   const handleNav = (path) => {
     navigate(path);
     setMobileMenuOpen(false);
+    setIsVisible(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="sticky top-0 z-50 transition-all duration-300 w-full px-3 sm:px-6 lg:px-8 pt-3 pb-2">
+    <header className={`w-full px-3 sm:px-6 lg:px-8 pt-3 pb-2 transition-all duration-300 ease-out transform ${
+      isVisible 
+        ? 'translate-y-0 opacity-100 pointer-events-auto' 
+        : '-translate-y-full opacity-0 pointer-events-none'
+    }`}>
       {/* iOS Frosted Glass Capsule Bar with Specular Highlights */}
-      <div className={`max-w-7xl mx-auto rounded-full transition-all duration-300 border border-white/75 bg-white/45 backdrop-blur-3xl shadow-[0_16px_45px_rgba(60,35,15,0.06)] px-4 sm:px-7 ${
-        scrolled ? 'py-2 sm:py-2.5 bg-white/70 shadow-lg' : 'py-3 sm:py-3.5'
+      <div className={`max-w-7xl mx-auto rounded-full transition-all duration-300 border backdrop-blur-3xl px-4 sm:px-7 pointer-events-auto ${
+        scrolled 
+          ? 'py-2 sm:py-2.5 bg-white/85 shadow-lg border-white/90' 
+          : 'py-3 sm:py-3.5 bg-white/70 shadow-[0_14px_40px_rgba(43,23,14,0.12)] border-white/85'
       }`}>
         <div className="flex items-center justify-between gap-4">
           
@@ -121,7 +173,7 @@ export default function Header({ currentPath, navigate }) {
 
       {/* Mobile Dropdown Menu (Frosted Glass Panel) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden mt-2 max-w-7xl mx-auto rounded-3xl border border-white/80 bg-white/80 backdrop-blur-2xl shadow-xl p-4 space-y-1.5 animate-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden mt-2 max-w-7xl mx-auto rounded-3xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-xl p-4 space-y-1.5 pointer-events-auto max-h-[80vh] overflow-y-auto animate-in slide-in-from-top-2 duration-200">
           {navLinks.map((link) => {
             const isActive = currentPath === link.path;
             return (

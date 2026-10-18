@@ -12,6 +12,151 @@ export const DEFAULT_SITE_CONFIG = {
     text: '⚡ Thưởng thức bộ sưu tập cà phê mộc & specialty mới nhất tại Coffee 24/24!',
     linkPath: '/dathang'
   },
+  // 1. Ảnh Bìa / GIF / Video Hero 16:9 & Thiết Kế Trực Quan (Canvas Studio)
+  heroBanner16x9: {
+    type: 'auto', // 'auto' | 'image' | 'gif' | 'video'
+    mediaUrl: '/images/hero_banner.jpg',
+    link: '/dathang',
+    alt: 'COFFEE 24/24 - Không Gian Cà Phê 24/7',
+    fixedBackground: false,
+    filter: {
+      brightness: 100,
+      contrast: 100,
+      saturation: 100,
+      blur: 0,
+      overlayDarkness: 10,
+      overlayColor: '#000000',
+      vignette: true
+    },
+    layers: []
+  },
+  // Quản lý chi tiết Hero Slide (Dữ liệu cũ dự phòng)
+  heroSection: {
+    enabled: true,
+    badge: {
+      enabled: true,
+      text: 'COFFEE 24/24 · ENJOY YOUR LIFE',
+      textColor: '#704f38',
+      bgColor: 'rgba(255, 255, 255, 0.75)',
+      showDot: true,
+      dotColor: '#10b981'
+    },
+    headline: {
+      enabled: true,
+      line1: 'Coffee',
+      line2: 'The Best For You',
+      size: 'large', // 'normal' | 'medium' | 'large' | 'huge'
+      colorScheme: 'classic', // 'classic' | 'amber_gold' | 'pure_dark' | 'gradient_sunset' | 'custom'
+      colorLine1: '#2b170e',
+      colorLine2: '#3d2215',
+      effect: 'none', // 'none' | 'glow' | 'shadow' | 'shine'
+      animation: 'fade_in' // 'none' | 'fade_in' | 'slide_up'
+    },
+    description: {
+      enabled: true,
+      text: 'Robusta & Arabica rang mộc nguyên chất, hòa quyện lớp bọt sữa thanh trùng sánh mịn vẽ hình trái tim nghệ thuật.',
+      size: 'normal', // 'small' | 'normal' | 'large'
+      color: '#5a4233'
+    },
+    ctaButton: {
+      enabled: true,
+      text: 'Xem Menu',
+      link: '/dathang',
+      colorScheme: 'espresso', // 'espresso' | 'amber' | 'gradient_rich' | 'dark'
+      shimmer: true
+    },
+    originBadge: {
+      enabled: true,
+      text: 'Cầu Đất Farm',
+      showIcon: true
+    },
+    ratingBadge: {
+      enabled: true,
+      rating: '4.9 ★',
+      subtext: '(1.2k+ đánh giá)',
+      animation: 'float_reverse'
+    },
+    freshBadge: {
+      enabled: true,
+      text: 'Pha Tươi 24/7',
+      animation: 'float_slow'
+    },
+    drinkPill: {
+      enabled: true,
+      drinkName: 'CAPPUCCINO LATTE ART',
+      priceText: '45.000đ • Signature',
+      animation: 'float_reverse'
+    },
+    imageStyle: {
+      scale: 100, // 70 to 140
+      opacity: 100, // 20 to 100
+      brightness: 100, // 50 to 150
+      contrast: 100, // 50 to 150
+      saturation: 115, // 0 to 200
+      blur: 0, // 0 to 10
+      shape: 'cup_saucer', // 'cup_saucer' | 'squircle' | 'circle_plain' | 'rounded_card'
+      animation: 'float_slow', // 'none' | 'float_slow' | 'pulse' | 'steam_drift' | 'tilt'
+      showSteam: true,
+      showSaucer: true,
+      showGlowAura: true
+    },
+    items: [
+      {
+        id: 1,
+        title: 'Coffee',
+        subtitle: 'The Best For You',
+        drinkName: 'Cappuccino Latte Art',
+        desc: 'Robusta & Arabica rang mộc nguyên chất, hòa quyện lớp bọt sữa thanh trùng sánh mịn vẽ hình trái tim nghệ thuật.',
+        image: '/images/signature_drinks.jpg',
+        price: '45.000đ',
+        badge: 'Signature',
+        rating: '4.9 ★',
+        origin: 'Cầu Đất Farm'
+      },
+      {
+        id: 2,
+        title: 'Cold Brew',
+        subtitle: 'Pure & Refreshing',
+        drinkName: 'Cold Brew Cam Vàng',
+        desc: 'Ủ lạnh 24 giờ thơm hương hoa quả nhiệt đới, hòa cùng cam vàng mọng nước mang đến vị chua ngọt thanh khiết.',
+        image: '/images/promo_banner.jpg',
+        price: '49.000đ',
+        badge: 'Món Mới',
+        rating: '5.0 ★',
+        origin: 'Đắk Lắk Blend'
+      },
+      {
+        id: 3,
+        title: 'Espresso',
+        subtitle: 'Wake Up Your Passion',
+        drinkName: 'Cà Phê Sữa Đá 24/24',
+        desc: 'Hạt cà phê nguyên bản Đắk Lắk đậm đà, phối sữa đặc béo ngậy ngọt sâu, tiếp lửa làm việc và sáng tạo xuyên đêm.',
+        image: '/images/journey_espresso.jpg',
+        price: '35.000đ',
+        badge: 'Bestseller',
+        rating: '4.9 ★',
+        origin: 'Rang Mộc 100%'
+      }
+    ]
+  },
+  // 2. Quản lý Hình Nền Phía Sau Lớp Kính Mờ & Độ Trong Suốt Nhìn Thấu
+  glassBackground: {
+    enabled: true,
+    image: '/images/hero_banner.jpg',
+    preset: 'warm_cafe',
+    opacity: 0.38,
+    blur: 6,
+    brightness: 95,
+    contrast: 105,
+    saturate: 110,
+    overlayColor: '#ede6dc',
+    overlayOpacity: 0.30,
+    glassBlur: 24,
+    glassBgOpacity: 0.28,
+    glassBorderOpacity: 0.65,
+    showAmbientOrbs: true,
+    animation: 'none'
+  },
   // 2 Side Vertical Promotional Posters
   sideBanners: {
     enabled: true,
@@ -40,6 +185,36 @@ export const DEFAULT_SITE_CONFIG = {
       link: '/khuyenmai'
     }
   },
+  // 3 Poster Dọc 3x4 Trang Chủ (Món mới & Chương trình nổi bật)
+  homePosters: [
+    {
+      id: 'poster-1',
+      tag: 'MÓN MỚI',
+      title: 'Matcha MK4 Latte & Cold Brew Cam Vàng',
+      discount: 'GIẢM 20%',
+      image: '/images/promo_banner.jpg',
+      cta: 'Thử Món Mới',
+      link: '/dathang'
+    },
+    {
+      id: 'poster-2',
+      tag: 'COMBO HOT',
+      title: 'Combo Sáng & Đêm Khuya 69K',
+      discount: 'CHỈ 69.000đ',
+      image: '/images/signature_drinks.jpg',
+      cta: 'Đặt Combo 69K',
+      link: '/dathang'
+    },
+    {
+      id: 'poster-3',
+      tag: 'GIỜ VÀNG',
+      title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày',
+      discount: 'GIẢM 40%',
+      image: '/images/journey_espresso.jpg',
+      cta: 'Lấy Mã Giảm',
+      link: '/khuyenmai'
+    }
+  ],
   // Bonus Promotional Banner in Home Page (Khối Ưu Đãi Đêm & Học Nhóm)
   bonusPromoBanner: {
     enabled: true,
@@ -132,6 +307,18 @@ export const DEFAULT_SITE_CONFIG = {
         badge: 'Sắp ra mắt',
         color: '#FF0000',
         desc: 'Podcast, âm nhạc lofi & câu chuyện cà phê'
+      },
+      {
+        id: 'zalo',
+        name: 'Zalo OA',
+        handle: 'COFFEE 24/24',
+        url: 'https://zalo.me/197464281190102692',
+        embedUrl: '',
+        visible: true,
+        isPlaceholder: false,
+        badge: 'Chính thức',
+        color: '#0068FF',
+        desc: 'Quan tâm Zalo OA để nhận voucher thành viên & giải đáp 24/7'
       }
     ]
   },
@@ -306,6 +493,69 @@ export function getSiteConfig() {
       });
     }
 
+    // Restore custom glass background image if stored
+    const customGlassBgImg = localStorage.getItem('coffee2424_glass_bg_img');
+    const glassBgConfig = {
+      ...DEFAULT_SITE_CONFIG.glassBackground,
+      ...(parsed.glassBackground || {})
+    };
+    if (customGlassBgImg && (glassBgConfig.image === '__STORED_GLASS_BG__' || !glassBgConfig.image)) {
+      glassBgConfig.image = customGlassBgImg;
+    }
+
+    const heroConfig = {
+      ...DEFAULT_SITE_CONFIG.heroSection,
+      ...(parsed.heroSection || {}),
+      badge: {
+        ...DEFAULT_SITE_CONFIG.heroSection.badge,
+        ...(parsed.heroSection?.badge || {})
+      },
+      headline: {
+        ...DEFAULT_SITE_CONFIG.heroSection.headline,
+        ...(parsed.heroSection?.headline || {})
+      },
+      description: {
+        ...DEFAULT_SITE_CONFIG.heroSection.description,
+        ...(parsed.heroSection?.description || {})
+      },
+      ctaButton: {
+        ...DEFAULT_SITE_CONFIG.heroSection.ctaButton,
+        ...(parsed.heroSection?.ctaButton || {})
+      },
+      originBadge: {
+        ...DEFAULT_SITE_CONFIG.heroSection.originBadge,
+        ...(parsed.heroSection?.originBadge || {})
+      },
+      ratingBadge: {
+        ...DEFAULT_SITE_CONFIG.heroSection.ratingBadge,
+        ...(parsed.heroSection?.ratingBadge || {})
+      },
+      freshBadge: {
+        ...DEFAULT_SITE_CONFIG.heroSection.freshBadge,
+        ...(parsed.heroSection?.freshBadge || {})
+      },
+      drinkPill: {
+        ...DEFAULT_SITE_CONFIG.heroSection.drinkPill,
+        ...(parsed.heroSection?.drinkPill || {})
+      },
+      imageStyle: {
+        ...DEFAULT_SITE_CONFIG.heroSection.imageStyle,
+        ...(parsed.heroSection?.imageStyle || {})
+      },
+      items: (parsed.heroSection?.items && parsed.heroSection.items.length > 0)
+        ? parsed.heroSection.items
+        : DEFAULT_SITE_CONFIG.heroSection.items
+    };
+
+    const customHeroBannerMedia = localStorage.getItem('coffee2424_hero_banner_media');
+    const heroBannerConfig = {
+      ...DEFAULT_SITE_CONFIG.heroBanner16x9,
+      ...(parsed.heroBanner16x9 || {})
+    };
+    if (customHeroBannerMedia && (heroBannerConfig.mediaUrl === '__STORED_HERO_MEDIA__' || !heroBannerConfig.mediaUrl)) {
+      heroBannerConfig.mediaUrl = customHeroBannerMedia;
+    }
+
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
@@ -313,6 +563,9 @@ export function getSiteConfig() {
       slogan: updatedSlogan,
       socialMedia: socialConfig,
       zaloOA: zaloConfig,
+      heroSection: heroConfig,
+      heroBanner16x9: heroBannerConfig,
+      glassBackground: glassBgConfig,
       aboutPage: {
         ...DEFAULT_SITE_CONFIG.aboutPage,
         ...(parsed.aboutPage || {})
@@ -342,6 +595,7 @@ export function saveSiteConfig(newConfig) {
     const leftImg = newConfig.sideBanners?.left?.image;
     const rightImg = newConfig.sideBanners?.right?.image;
     const zaloQr = newConfig.zaloOA?.qrImage;
+    const glassBgImg = newConfig.glassBackground?.image;
 
     // 1. Save data URLs into dedicated keys to ensure isolation and quota safety
     if (leftImg && leftImg.startsWith('data:image')) {
@@ -364,6 +618,26 @@ export function saveSiteConfig(newConfig) {
       } catch (qrErr) {
         console.warn('Could not save Zalo QR image into dedicated key:', qrErr);
       }
+    }
+    if (glassBgImg && glassBgImg.startsWith('data:image')) {
+      try {
+        localStorage.setItem('coffee2424_glass_bg_img', glassBgImg);
+      } catch (glassErr) {
+        console.warn('Could not save glass background image into dedicated key:', glassErr);
+      }
+    }
+
+    const heroMedia = newConfig.heroBanner16x9?.mediaUrl;
+    if (heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video'))) {
+      try {
+        localStorage.setItem('coffee2424_hero_banner_media', heroMedia);
+      } catch (heroMediaErr) {
+        console.warn('Could not save hero banner media into dedicated key:', heroMediaErr);
+      }
+    } else {
+      try {
+        localStorage.removeItem('coffee2424_hero_banner_media');
+      } catch (_) {}
     }
 
     // 2. Try saving full configuration
@@ -388,6 +662,14 @@ export function saveSiteConfig(newConfig) {
         zaloOA: {
           ...newConfig.zaloOA,
           qrImage: zaloQr && zaloQr.startsWith('data:image') ? '__STORED_ZALO_QR__' : zaloQr
+        },
+        glassBackground: {
+          ...newConfig.glassBackground,
+          image: glassBgImg && glassBgImg.startsWith('data:image') ? '__STORED_GLASS_BG__' : glassBgImg
+        },
+        heroBanner16x9: {
+          ...newConfig.heroBanner16x9,
+          mediaUrl: heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video')) ? '__STORED_HERO_MEDIA__' : heroMedia
         }
       };
       localStorage.setItem('coffee2424_site_config', JSON.stringify(safeConfig));

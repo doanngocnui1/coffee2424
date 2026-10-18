@@ -21,8 +21,6 @@ import {
   Compass,
   PhoneCall,
   Check,
-  ToggleLeft,
-  ToggleRight,
   Sliders,
   Image as ImageIcon,
   Upload,
@@ -30,7 +28,6 @@ import {
   Briefcase,
   XCircle,
   Star,
-  MessageSquare,
   Menu,
   X,
   Home,
@@ -38,9 +35,7 @@ import {
   ChevronDown,
   ArrowRight,
   Users,
-  Zap,
   Lock,
-  Unlock,
   LogOut,
   UserPlus,
   ShieldCheck,
@@ -48,14 +43,18 @@ import {
   Key,
   Shield,
   Share2,
-  QrCode
+  Flame,
+  Quote,
+  RotateCcw,
+  MessageSquare,
+  Heart
 } from 'lucide-react';
-import { BrandIcons } from '../components/SocialFollowSection';
+import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
 import { getBranches, saveBranches } from '../data/branches';
 import { getSiteConfig, saveSiteConfig } from '../data/siteConfig';
 import { getJobs, saveJobs } from '../data/jobs';
-import { getReviews, saveReviews } from '../data/reviews';
+import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
   getAccounts, 
   saveAccounts, 
@@ -65,6 +64,8 @@ import {
   hasPermission, 
   ALL_PERMISSIONS 
 } from '../data/auth';
+import AdminHeroSlideManager from '../components/admin/AdminHeroSlideManager';
+import AdminGlassBackgroundManager from '../components/admin/AdminGlassBackgroundManager';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -97,7 +98,7 @@ export default function AdminPage({ navigate }) {
 
   // Automatically expand group containing activeTab when activeTab changes
   useEffect(() => {
-    if (['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+    if (['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, home: true }));
     } else if (activeTab === 'about') {
       setOpenGroups(prev => ({ ...prev, about: true }));
@@ -147,7 +148,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['sideBanners', 'bannerSections', 'theme', 'reviews', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
+      const allTabs = ['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
@@ -257,6 +258,22 @@ export default function AdminPage({ navigate }) {
   const [reviewsList, setReviewsList] = useState(getReviews);
   const [reviewSearchQuery, setReviewSearchQuery] = useState('');
   const [reviewFilterStatus, setReviewFilterStatus] = useState('ALL');
+  const [reviewFilterRating, setReviewFilterRating] = useState('ALL');
+  const [reviewFilterBranch, setReviewFilterBranch] = useState('ALL');
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null); // null = thêm mới, string = sửa
+  const [reviewFormData, setReviewFormData] = useState({
+    author: '',
+    role: 'Khách hàng thân thiết',
+    rating: 5,
+    branch: 'Chi nhánh 96 D5, Bình Thạnh',
+    favoriteItem: 'Cold Brew Cam Vàng & Croissant bơ tỏi',
+    content: '',
+    avatar: '',
+    date: 'Hôm nay',
+    verified: true,
+    active: true
+  });
 
   // Save articles helper
   const handleSaveArticle = (e) => {
@@ -455,6 +472,135 @@ export default function AdminPage({ navigate }) {
     }
   };
 
+  // Helper Mở modal Thêm đánh giá mới
+  const handleOpenAddReview = () => {
+    setEditingReviewId(null);
+    setReviewFormData({
+      author: '',
+      role: 'Khách hàng thân thiết',
+      rating: 5,
+      branch: 'Chi nhánh 96 D5, Bình Thạnh',
+      favoriteItem: 'Cold Brew Cam Vàng & Croissant bơ tỏi',
+      content: '',
+      avatar: '',
+      date: 'Hôm nay',
+      verified: true,
+      active: true
+    });
+    setIsReviewModalOpen(true);
+  };
+
+  // Helper Mở modal Chỉnh sửa đánh giá hiện có
+  const handleOpenEditReview = (rev) => {
+    setEditingReviewId(rev.id);
+    setReviewFormData({
+      author: rev.author || '',
+      role: rev.role || 'Khách hàng',
+      rating: Number(rev.rating) || 5,
+      branch: rev.branch || 'Chi nhánh 96 D5, Bình Thạnh',
+      favoriteItem: rev.favoriteItem || '',
+      content: rev.content || '',
+      avatar: rev.avatar || '',
+      date: rev.date || 'Hôm nay',
+      verified: rev.verified !== false,
+      active: rev.active !== false
+    });
+    setIsReviewModalOpen(true);
+  };
+
+  // Helper Lưu form Thêm / Sửa đánh giá
+  const handleSaveReviewForm = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!reviewFormData.author.trim()) {
+      alert('Vui lòng nhập họ tên khách hàng!');
+      return;
+    }
+    if (!reviewFormData.content.trim()) {
+      alert('Vui lòng nhập nội dung đánh giá!');
+      return;
+    }
+
+    let updated;
+    const authorName = reviewFormData.author.trim();
+    if (editingReviewId) {
+      updated = reviewsList.map(r => {
+        if (r.id === editingReviewId) {
+          return {
+            ...r,
+            ...reviewFormData,
+            author: authorName,
+            initial: authorName.charAt(0).toUpperCase(),
+            rating: Number(reviewFormData.rating) || 5
+          };
+        }
+        return r;
+      });
+      triggerAlert(`✓ Đã cập nhật đánh giá của "${authorName}"!`);
+    } else {
+      const newReview = {
+        id: 'rev-' + Date.now(),
+        ...reviewFormData,
+        author: authorName,
+        initial: authorName.charAt(0).toUpperCase(),
+        rating: Number(reviewFormData.rating) || 5
+      };
+      updated = [newReview, ...reviewsList];
+      triggerAlert(`✓ Đã thêm đánh giá mới của "${authorName}" thành công!`);
+    }
+
+    setReviewsList(updated);
+    saveReviews(updated);
+    setIsReviewModalOpen(false);
+  };
+
+  // Helper Tải avatar khách hàng từ máy và nén nhẹ
+  const handleUploadReviewAvatar = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      const raw = loadEvt.target.result;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 160;
+        let w = img.width;
+        let h = img.height;
+        if (w > h) {
+          if (w > maxDim) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          }
+        } else {
+          if (h > maxDim) {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.85);
+        setReviewFormData(prev => ({ ...prev, avatar: compressed }));
+      };
+      img.src = raw;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Helper Khôi phục danh sách đánh giá mặc định
+  const handleResetDefaultReviews = () => {
+    if (window.confirm('Khôi phục danh sách đánh giá mẫu ban đầu (6 đánh giá 5 sao chuẩn)? Mọi thay đổi tùy chỉnh sẽ được đặt lại.')) {
+      setReviewsList(DEFAULT_REVIEWS);
+      saveReviews(DEFAULT_REVIEWS);
+      triggerAlert('Đã khôi phục 6 đánh giá khách hàng mặc định ban đầu!');
+    }
+  };
+
   // Helper nén tự động và tải ảnh poster từ máy tính
   const handleUploadBannerImage = (side, file) => {
     if (!file) return;
@@ -511,6 +657,100 @@ export default function AdminPage({ navigate }) {
       img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
+  };
+
+  // Helper nén tự động và tải ảnh poster dọc 3x4 Trang Chủ từ máy tính
+  const handleUploadHomePoster = (index, file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP, GIF...)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawDataUrl = e.target.result;
+      const img = new Image();
+      img.onload = () => {
+        // Tối ưu hóa kích thước poster dọc 3:4 (chuẩn max 600x800px, dung lượng ~80-120KB)
+        const maxW = 600;
+        const maxH = 800;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.86);
+
+        const currentPosters = config.homePosters && config.homePosters.length > 0 
+          ? [...config.homePosters] 
+          : [
+              { id: 'poster-1', tag: 'MÓN MỚI', title: 'Matcha MK4 Latte & Cold Brew Cam Vàng', discount: 'GIẢM 20%', image: '/images/promo_banner.jpg', cta: 'Thử Món Mới', link: '/dathang' },
+              { id: 'poster-2', tag: 'COMBO HOT', title: 'Combo Sáng & Đêm Khuya 69K', discount: 'CHỈ 69.000đ', image: '/images/signature_drinks.jpg', cta: 'Đặt Combo 69K', link: '/dathang' },
+              { id: 'poster-3', tag: 'GIỜ VÀNG', title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày', discount: 'GIẢM 40%', image: '/images/journey_espresso.jpg', cta: 'Lấy Mã Giảm', link: '/khuyenmai' }
+            ];
+
+        if (!currentPosters[index]) {
+          currentPosters[index] = { id: `poster-${index + 1}` };
+        }
+        currentPosters[index] = {
+          ...currentPosters[index],
+          image: compressedDataUrl
+        };
+
+        const updatedConfig = {
+          ...config,
+          homePosters: currentPosters
+        };
+
+        setConfig(updatedConfig);
+        const ok = saveSiteConfig(updatedConfig);
+        if (ok) {
+          triggerAlert(`✓ Đã đổi ảnh poster 3x4 số ${index + 1} thành công! Trang chủ đã tự động cập nhật.`);
+        } else {
+          alert('Không thể lưu ảnh vào bộ nhớ trình duyệt. Vui lòng chọn ảnh có kích thước nhẹ hơn.');
+        }
+      };
+      img.onerror = () => {
+        alert('Không thể đọc file ảnh này. Vui lòng thử chọn file ảnh khác.');
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpdateHomePoster = (index, field, value) => {
+    const currentPosters = config.homePosters && config.homePosters.length > 0 
+      ? [...config.homePosters] 
+      : [
+          { id: 'poster-1', tag: 'MÓN MỚI', title: 'Matcha MK4 Latte & Cold Brew Cam Vàng', discount: 'GIẢM 20%', image: '/images/promo_banner.jpg', cta: 'Thử Món Mới', link: '/dathang' },
+          { id: 'poster-2', tag: 'COMBO HOT', title: 'Combo Sáng & Đêm Khuya 69K', discount: 'CHỈ 69.000đ', image: '/images/signature_drinks.jpg', cta: 'Đặt Combo 69K', link: '/dathang' },
+          { id: 'poster-3', tag: 'GIỜ VÀNG', title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày', discount: 'GIẢM 40%', image: '/images/journey_espresso.jpg', cta: 'Lấy Mã Giảm', link: '/khuyenmai' }
+        ];
+
+    if (!currentPosters[index]) {
+      currentPosters[index] = { id: `poster-${index + 1}` };
+    }
+    currentPosters[index] = {
+      ...currentPosters[index],
+      [field]: value
+    };
+
+    const updatedConfig = {
+      ...config,
+      homePosters: currentPosters
+    };
+
+    setConfig(updatedConfig);
+    saveSiteConfig(updatedConfig);
   };
 
   // Helper bật/tắt hiển thị từng trường chữ (showBadge, showTitle, showSubtitle, showDesc)
@@ -888,8 +1128,8 @@ export default function AdminPage({ navigate }) {
         <div className="absolute -bottom-40 left-1/3 w-[720px] h-[720px] rounded-full bg-gradient-to-t from-[#dec5ab]/65 via-[#eed8c2]/55 to-[#fdf4ea]/45 blur-[125px] animate-orb-drift-3" />
       </div>
 
-      {/* ADMIN TOPBAR */}
-      <header className="sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between backdrop-blur-3xl bg-white/65 border-b border-white/75 shadow-xs relative shrink-0">
+      {/* ADMIN TOPBAR (EDGE-TO-EDGE) */}
+      <header className="sticky top-0 z-40 px-3 sm:px-4 lg:px-5 py-2.5 flex items-center justify-between backdrop-blur-3xl bg-white/65 border-b border-white/75 shadow-xs relative shrink-0">
         <div className="flex items-center gap-3">
           {/* Mobile Sidebar Toggle Button */}
           <button
@@ -962,8 +1202,8 @@ export default function AdminPage({ navigate }) {
         </div>
       )}
 
-      {/* 2-COLUMN DASHBOARD: LEFT SIDEBAR + RIGHT CONTENT */}
-      <div className="flex-1 flex w-full max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-5 gap-6 lg:gap-8 items-start relative overflow-hidden h-[calc(100vh-68px)]">
+      {/* 2-COLUMN DASHBOARD: LEFT SIDEBAR + RIGHT CONTENT (FULL-WIDTH FLUID LAYOUT) */}
+      <div className="flex-1 flex w-full px-2 sm:px-3.5 lg:px-4 py-2 sm:py-2.5 gap-3 sm:gap-4 items-start relative overflow-hidden h-[calc(100vh-64px)]">
         
         {/* MOBILE BACKDROP */}
         {mobileSidebarOpen && (
@@ -973,11 +1213,11 @@ export default function AdminPage({ navigate }) {
           />
         )}
 
-        {/* LEFT SIDEBAR MENU (CỐ ĐỊNH VĨNH VIỄN TRÊN MÀN HÌNH) */}
+        {/* LEFT SIDEBAR MENU (SÁT VÀO BÊN TRÁI MÀN HÌNH) */}
         <aside className={`
           admin-sidebar-refined
           fixed lg:static z-50 lg:z-10
-          inset-y-0 left-0 w-80 sm:w-84 lg:w-80 xl:w-[350px] shrink-0
+          inset-y-0 left-0 w-72 sm:w-80 lg:w-72 xl:w-[295px] shrink-0
           bg-white/50 backdrop-blur-3xl
           border-r lg:border border-white/80 lg:rounded-3xl
           flex flex-col
@@ -1005,9 +1245,9 @@ export default function AdminPage({ navigate }) {
           <div className="p-3 sm:p-3.5 space-y-2.5 flex-1 overflow-y-auto">
             
             {/* NHÓM 1: 🏠 TRANG CHỦ */}
-            {['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
+            {['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                ['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                ['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                   ? 'bg-amber-500/10 border-amber-600/40 shadow-xs'
                   : 'bg-white/70 hover:bg-white/90 border-white/80'
               }`}>
@@ -1016,15 +1256,15 @@ export default function AdminPage({ navigate }) {
                   type="button"
                   onClick={() => {
                     toggleGroup('home');
-                    if (!['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
-                      setActiveTab('sideBanners');
+                    if (!['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+                      setActiveTab('heroSlide');
                     }
                   }}
                   className="w-full px-3.5 py-3 text-left flex items-center justify-between cursor-pointer select-none transition-colors group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      ['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                      ['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                         ? 'bg-[#2b170e] text-amber-300 shadow-xs'
                         : 'bg-white/90 text-[#8c5932] group-hover:bg-[#2b170e] group-hover:text-amber-300'
                     }`}>
@@ -1035,13 +1275,13 @@ export default function AdminPage({ navigate }) {
                         Trang Chủ
                       </span>
                       <span className="text-[11.5px] font-medium text-[#7a5843] block truncate mt-0.5">
-                        5 phân mục tùy biến
+                        7 phân mục tùy biến
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[11px] font-bold text-[#7a5843] bg-white/90 px-2 py-0.5 rounded-full border border-stone-200/60 shadow-2xs">
-                      5 mục
+                      7 mục
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openGroups.home ? 'rotate-180 text-amber-600' : 'text-stone-400 group-hover:text-stone-600'}`} />
                   </div>
@@ -1050,6 +1290,53 @@ export default function AdminPage({ navigate }) {
                 {/* Accordion Sub-items (Sổ xuống) */}
                 {openGroups.home && (
                   <div className="px-2 pb-2.5 pt-1 space-y-1.5 border-t border-amber-900/10 bg-white/40">
+                    {/* 1.1: Hero Slide 1 & Hình Ảnh */}
+                    {hasPermission(currentUser, 'heroSlide') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('heroSlide'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'heroSlide'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Sparkles className={`w-4 h-4 shrink-0 ${activeTab === 'heroSlide' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Ảnh Bìa / Video 16:9 Đầu Trang</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'heroSlide' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Tải ảnh, gif hoặc video 16:9
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'heroSlide' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                      </button>
+                    )}
+
+                    {/* 1.2: Hình Nền & Kính Mờ */}
+                    {hasPermission(currentUser, 'glassBg') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('glassBg'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'glassBg'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Palette className={`w-4 h-4 shrink-0 ${activeTab === 'glassBg' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Hình Nền & Kính Mờ</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'glassBg' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Đổi nền sau kính, độ mờ
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'glassBg' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                      </button>
+                    )}
                     {/* 1.1: 2 Poster Dọc 2 Bên */}
                     {hasPermission(currentUser, 'sideBanners') && (
                       <button
@@ -1743,7 +2030,7 @@ export default function AdminPage({ navigate }) {
               </span>
               <span className="text-neutral-700">/</span>
               <span className="text-neutral-400 font-bold">
-                {['sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab) 
+                {['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab) 
                   ? 'Trang Chủ' 
                   : activeTab === 'about'
                     ? 'Trang Giới Thiệu'
@@ -1759,6 +2046,8 @@ export default function AdminPage({ navigate }) {
               </span>
               <span className="text-neutral-700">/</span>
               <span className="text-amber-400 font-black flex items-center gap-1.5">
+                {activeTab === 'heroSlide' && <><span>✨</span> Ảnh Bìa / Video 16:9 Đầu Trang</>}
+                {activeTab === 'glassBg' && <><span>🎨</span> Hình Nền & Kính Mờ</>}
                 {activeTab === 'sideBanners' && <><span>📢</span> 2 Poster Dọc 2 Bên</>}
                 {activeTab === 'bannerSections' && <><span>🖼️</span> Khối Banner & Check-in</>}
                 {activeTab === 'theme' && <><span>⚙️</span> Slogan & Trang Chủ</>}
@@ -1779,6 +2068,30 @@ export default function AdminPage({ navigate }) {
               </span>
             </div>
           </div>
+
+        {/* TAB HERO SLIDE 1 & HÌNH ẢNH */}
+        {activeTab === 'heroSlide' && (
+          <AdminHeroSlideManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
+        )}
+
+        {/* TAB HÌNH NỀN & HIỆU ỨNG KÍNH MỜ */}
+        {activeTab === 'glassBg' && (
+          <AdminGlassBackgroundManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
+        )}
 
         {/* TAB 1: 2 POSTER DỌC 2 BÊN */}
         {activeTab === 'sideBanners' && (
@@ -2584,13 +2897,142 @@ export default function AdminPage({ navigate }) {
 
             </div>
 
-            <div className="pt-2">
+            {/* PHẦN 2: 3 POSTER DỌC 3x4 TRANG CHỦ (MÓN MỚI & ƯU ĐÃI) */}
+            <div className="pt-8 border-t border-neutral-800 space-y-6">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  <span>Quản Lý 3 Poster Dọc 3x4 Trang Chủ (Món Mới & Ưu Đãi)</span>
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Chuẩn tỉ lệ dọc 3:4. Tải poster trực tiếp từ máy tính (ảnh được tự động nén tối ưu hiển thị) hoặc nhập liên kết, chỉnh sửa tiêu đề và nút bấm.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[0, 1, 2].map((idx) => {
+                  const posters = (config.homePosters && config.homePosters.length > 0)
+                    ? config.homePosters
+                    : [
+                        { id: 'poster-1', tag: 'MÓN MỚI', title: 'Matcha MK4 Latte & Cold Brew Cam Vàng', discount: 'GIẢM 20%', image: '/images/promo_banner.jpg', cta: 'Thử Món Mới', link: '/dathang' },
+                        { id: 'poster-2', tag: 'COMBO HOT', title: 'Combo Sáng & Đêm Khuya 69K', discount: 'CHỈ 69.000đ', image: '/images/signature_drinks.jpg', cta: 'Đặt Combo 69K', link: '/dathang' },
+                        { id: 'poster-3', tag: 'GIỜ VÀNG', title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày', discount: 'GIẢM 40%', image: '/images/journey_espresso.jpg', cta: 'Lấy Mã Giảm', link: '/khuyenmai' }
+                      ];
+                  const p = posters[idx] || {};
+
+                  return (
+                    <div key={idx} className="bg-neutral-950 p-5 rounded-3xl border border-neutral-800 space-y-4 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
+                          <span className="text-xs font-black text-amber-400 uppercase">
+                            POSTER #{idx + 1}
+                          </span>
+                          <span className="text-[11px] text-neutral-400 font-mono">Tỉ lệ dọc 3:4</span>
+                        </div>
+
+                        {/* Preview Box: Tỉ lệ chuẩn 3x4 */}
+                        <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 group shadow-inner">
+                          <img 
+                            src={p.image || '/images/promo_banner.jpg'} 
+                            alt={p.title || ''}
+                            className="w-full h-full object-cover" 
+                          />
+                          {p.tag && (
+                            <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-white text-[10px] font-black uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/20">
+                              {p.tag}
+                            </span>
+                          )}
+                          {p.discount && (
+                            <span className="absolute bottom-2 right-2 px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-mono text-[11px] font-black shadow-md">
+                              {p.discount}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Upload Button */}
+                        <div>
+                          <input
+                            type="file"
+                            id={`home-poster-file-${idx}`}
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleUploadHomePoster(idx, e.target.files[0]);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById(`home-poster-file-${idx}`)?.click()}
+                            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Tải Poster 3:4 Lên Từ Máy</span>
+                          </button>
+                        </div>
+
+                        {/* Fields */}
+                        <div className="space-y-2.5 pt-1">
+                          <div>
+                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Nhãn góc trên (Tag)</label>
+                            <input
+                              type="text"
+                              value={p.tag || ''}
+                              onChange={(e) => handleUpdateHomePoster(idx, 'tag', e.target.value)}
+                              placeholder="MÓN MỚI, COMBO HOT..."
+                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Tiêu đề poster</label>
+                            <input
+                              type="text"
+                              value={p.title || ''}
+                              onChange={(e) => handleUpdateHomePoster(idx, 'title', e.target.value)}
+                              placeholder="Tiêu đề hiển thị..."
+                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Huy hiệu giá / giảm giá</label>
+                            <input
+                              type="text"
+                              value={p.discount || ''}
+                              onChange={(e) => handleUpdateHomePoster(idx, 'discount', e.target.value)}
+                              placeholder="GIẢM 20%, CHỈ 69K..."
+                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Đường dẫn khi bấm (Link đích)</label>
+                            <input
+                              type="text"
+                              value={p.link || ''}
+                              onChange={(e) => handleUpdateHomePoster(idx, 'link', e.target.value)}
+                              placeholder="/dathang, /khuyenmai..."
+                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-4">
               <button
                 onClick={handleSaveConfig}
                 className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-2 shadow-lg cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>LƯU CẤU HÌNH 2 POSTER DỌC</span>
+                <span>LƯU CẤU HÌNH TẤT CẢ POSTER QUẢNG CÁO</span>
               </button>
             </div>
           </div>
@@ -4006,7 +4448,7 @@ export default function AdminPage({ navigate }) {
                       type="button"
                       onClick={() => {
                         handleUpdateZaloOA('qrImage', '/images/qr_zalo_oa.png');
-                        try { localStorage.removeItem('coffee2424_zalo_qr_img'); } catch(e){}
+                        try { localStorage.removeItem('coffee2424_zalo_qr_img'); } catch {}
                         triggerAlert('Đã khôi phục ảnh QR Zalo gốc ban đầu!');
                       }}
                       className="w-full py-2 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-semibold transition-all cursor-pointer"
@@ -4018,7 +4460,7 @@ export default function AdminPage({ navigate }) {
               </div>
             </div>
 
-            {/* KHỐI 2: QUẢN LÝ 5 NỀN TẢNG MẠNG XÃ HỘI (Facebook, TikTok, Instagram, Threads, YouTube) */}
+            {/* KHỐI 2: QUẢN LÝ 6 NỀN TẢNG MẠNG XÃ HỘI (Facebook, TikTok, Instagram, Threads, YouTube, Zalo) */}
             <div className="bg-neutral-950 p-6 sm:p-8 rounded-3xl border border-neutral-800 space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-neutral-800/80 gap-3">
                 <div className="flex items-center gap-3">
@@ -4027,20 +4469,20 @@ export default function AdminPage({ navigate }) {
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                      Kết Nối Mạng Xã Hội (5 Nền Tảng)
+                      Kết Nối Mạng Xã Hội (6 Nền Tảng)
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-extrabold border border-pink-500/30">
                         Top Slide 5 & Chân Trang
                       </span>
                     </h3>
                     <p className="text-xs text-neutral-400">
-                      Đã nhúng Facebook & TikTok; Chừa sẵn các ô nhúng cho Instagram, Threads, YouTube.
+                      Đã kết nối Facebook, TikTok & Zalo OA; Chừa sẵn các ô nhúng cho Instagram, Threads, YouTube.
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
-                    {(config.socialMedia?.platforms || []).filter(p => p.visible !== false).length}/5 Kênh Hiển Thị
+                    {(config.socialMedia?.platforms || []).filter(p => p.visible !== false).length}/6 Kênh Hiển Thị
                   </span>
                 </div>
               </div>
@@ -4079,7 +4521,7 @@ export default function AdminPage({ navigate }) {
                 </div>
               </div>
 
-              {/* Danh sách 5 nền tảng */}
+              {/* Danh sách 6 nền tảng */}
               <div className="space-y-4">
                 {(config.socialMedia?.platforms || []).map((platform) => {
                   const IconComp = BrandIcons[platform.id] || BrandIcons.facebook;
@@ -4106,6 +4548,8 @@ export default function AdminPage({ navigate }) {
                               ? 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600'
                               : platform.id === 'threads'
                               ? 'bg-black border border-white/20'
+                              : platform.id === 'zalo'
+                              ? 'bg-[#0068FF]'
                               : 'bg-red-600'
                           }`}>
                             <IconComp />
@@ -4203,71 +4647,21 @@ export default function AdminPage({ navigate }) {
               </div>
             </div>
 
-            {/* LIVE PREVIEW KHỐI (XEM TRƯỚC GIAO DIỆN CLIENT) */}
+            {/* LIVE PREVIEW KHỐI (XEM TRƯỚC GIAO DIỆN CLIENT ĐỒNG BỘ 100%) */}
             <div className="bg-neutral-950 p-6 sm:p-8 rounded-3xl border border-neutral-800 space-y-4">
-              <h3 className="text-sm font-black text-white flex items-center gap-2 uppercase tracking-wider">
-                <Eye className="w-4 h-4 text-amber-500" />
-                <span>Xem Trước Hiển Thị Trên Website (Live Preview)</span>
-              </h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="text-sm font-black text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Eye className="w-4 h-4 text-amber-500" />
+                  <span>Xem Trước Hiển Thị Trên Website (Live Preview Đồng Bộ 100%)</span>
+                </h3>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1.5 w-fit">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Khớp Tuyệt Đối Với Trang Chủ
+                </span>
+              </div>
               
-              <div className="p-6 rounded-2xl bg-[#f5ede3] border border-white/60 space-y-6">
-                {/* Social Bar Preview */}
-                <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-md border border-white/90 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div>
-                    <span className="text-[10px] font-mono tracking-widest text-[#8c5932] font-black uppercase block">
-                      {config.socialMedia?.sectionTitle || 'FOLLOW OUR JOURNEY · #ENJOYYOURLIFE'}
-                    </span>
-                    <span className="text-sm font-black text-[#2b170e]">
-                      {config.socialMedia?.sectionSubtitle || 'Kết nối cùng cộng đồng COFFEE 24/24'}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    {(config.socialMedia?.platforms || []).filter(p => p.visible !== false).map((p) => {
-                      const IconC = BrandIcons[p.id] || BrandIcons.facebook;
-                      return (
-                        <div
-                          key={p.id}
-                          className="w-10 h-10 rounded-full bg-white border border-stone-200 text-[#2b170e] flex items-center justify-center shadow-xs hover:scale-110 transition-transform relative group cursor-pointer"
-                          title={`${p.name}: ${p.handle}`}
-                        >
-                          <IconC />
-                          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-neutral-900 text-white text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity z-10 shadow-md">
-                            {p.name} ({p.badge || 'Online'})
-                          </span>
-                        </div>
-                      );
-                    })}
-                    <div className="h-9 px-3 rounded-full bg-white/80 border border-stone-200 text-xs font-bold text-[#1877F2] flex items-center gap-1.5 shadow-2xs">
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Plugin Fanpage</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Zalo OA Column Preview */}
-                <div className="max-w-xs mx-auto p-4 rounded-2xl bg-white/80 border border-white/95 shadow-md text-center space-y-2">
-                  <span className="text-xs font-black text-[#2b170e] uppercase tracking-wider block">
-                    {config.zaloOA?.title || 'Zalo Official Account'}
-                  </span>
-                  <div className="relative inline-block p-1.5 bg-white rounded-xl border border-stone-200">
-                    <img
-                      src={config.zaloOA?.qrImage || '/images/qr_zalo_oa.png'}
-                      alt="Zalo QR"
-                      className="w-20 h-20 object-contain mx-auto"
-                    />
-                  </div>
-                  <p className="text-xs font-black text-[#2b170e]">{config.zaloOA?.oaName || 'COFFEE 24/24'}</p>
-                  <p className="text-[10.5px] text-[#704f38] leading-tight">
-                    {config.zaloOA?.desc || 'Quét mã QR bằng ứng dụng Zalo để nhận ưu đãi 24/7.'}
-                  </p>
-                  <button
-                    type="button"
-                    className="w-full py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-xs"
-                  >
-                    {config.zaloOA?.buttonText || 'Mở Zalo OA Nhận Ưu Đãi'}
-                  </button>
-                </div>
+              <div className="p-4 sm:p-8 rounded-3xl bg-[#f5ede3] border border-white/60 shadow-inner">
+                <SocialFollowSection config={config} />
               </div>
             </div>
 
@@ -4519,223 +4913,651 @@ export default function AdminPage({ navigate }) {
           </div>
         )}
 
-        {/* TAB 8: QUẢN LÝ ĐÁNH GIÁ KHÁCH HÀNG */}
-        {activeTab === 'reviews' && (
-          <div className="space-y-6">
-            {/* Header Box */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                    <Star className="w-5 h-5 fill-amber-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-white flex items-center gap-2">
-                      Quản Lý Đánh Giá Khách Hàng
-                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                        {reviewsList.filter(r => r.active !== false).length} Đang Hiển Thị
-                      </span>
-                    </h2>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      Kiểm duyệt các cảm nhận và đánh giá từ khách hàng hiển thị trên Trang Chủ. Bạn có thể Bật / Tắt hiển thị hoặc xóa đánh giá.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        {/* TAB 8: QUẢN LÝ ĐÁNH GIÁ KHÁCH HÀNG (CUSTOMER REVIEWS REDESIGN) */}
+        {activeTab === 'reviews' && (() => {
+          const avgReviewRating = reviewsList.length > 0 
+            ? (reviewsList.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / reviewsList.length).toFixed(1) 
+            : '5.0';
+          const activeReviewsCount = reviewsList.filter(r => r.active !== false).length;
+          const fiveStarCount = reviewsList.filter(r => (Number(r.rating) || 5) === 5).length;
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => navigate('/')}
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Xem Trên Trang Chủ</span>
-                </button>
-              </div>
-            </div>
+          const filteredReviews = reviewsList.filter(r => {
+            if (reviewFilterStatus === 'ACTIVE' && r.active === false) return false;
+            if (reviewFilterStatus === 'INACTIVE' && r.active !== false) return false;
+            if (reviewFilterRating !== 'ALL' && (Number(r.rating) || 5) !== Number(reviewFilterRating)) return false;
+            if (reviewFilterBranch !== 'ALL' && !r.branch.toLowerCase().includes(reviewFilterBranch.toLowerCase())) return false;
+            if (reviewSearchQuery.trim()) {
+              const q = reviewSearchQuery.toLowerCase();
+              return r.author.toLowerCase().includes(q) ||
+                     (r.favoriteItem && r.favoriteItem.toLowerCase().includes(q)) ||
+                     r.content.toLowerCase().includes(q) ||
+                     r.branch.toLowerCase().includes(q);
+            }
+            return true;
+          });
 
-            {/* 3 KPI Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xl">
-                  {reviewsList.length}
-                </div>
+          return (
+            <div className="space-y-6">
+              {/* Header Box */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-neutral-950 p-6 rounded-3xl border border-neutral-800 shadow-xl">
                 <div>
-                  <span className="text-xs text-neutral-400 block font-medium">Tổng số đánh giá</span>
-                  <span className="text-base font-black text-white">{reviewsList.length} Phản Hồi</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-emerald-500/20 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-black text-xl">
-                  {reviewsList.filter(r => r.active !== false).length}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-emerald-400 font-bold block">Đang Hiển Thị Trang Chủ</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  </div>
-                  <span className="text-base font-black text-white">Xuất hiện trước Mạng Xã Hội</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#faf8f5]/10 border border-stone-700 text-amber-400 flex items-center justify-center font-black text-xl">
-                  4.9
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-400 block font-medium">Điểm đánh giá trung bình</span>
-                  <div className="flex items-center gap-1 text-amber-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                    ))}
-                    <span className="text-xs font-bold text-white ml-1">4.9/5.0</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                      <Star className="w-6 h-6 fill-amber-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-black text-white flex flex-wrap items-center gap-2">
+                        <span>Quản Lý Đánh Giá Khách Hàng</span>
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                          {activeReviewsCount} Đang Hiển Thị
+                        </span>
+                      </h2>
+                      <p className="text-xs sm:text-sm text-neutral-400 mt-1 max-w-2xl">
+                        Thêm mới, chỉnh sửa và kiểm duyệt các phản hồi thực tế từ khách hàng để tạo uy tín cho COFFEE 24/24 trên Trang Chủ.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Filter and Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-neutral-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={reviewSearchQuery}
-                  onChange={(e) => setReviewSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm đánh giá theo tên, món yêu thích, nội dung..."
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-10 pr-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500"
-                />
+                {/* Primary Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleOpenAddReview}
+                    className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-[0_8px_25px_rgba(245,158,11,0.35)] active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 stroke-[3]" />
+                    <span>+ THÊM ĐÁNH GIÁ MỚI</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResetDefaultReviews}
+                    className="px-4 py-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Khôi phục lại danh sách 6 đánh giá chuẩn ban đầu"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Khôi Phục Gốc</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="px-4 py-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Xem Trang Chủ</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <select
-                  value={reviewFilterStatus}
-                  onChange={(e) => setReviewFilterStatus(e.target.value)}
-                  className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 font-medium"
-                >
-                  <option value="ALL">Tất cả trạng thái</option>
-                  <option value="ACTIVE">Chỉ đánh giá ĐANG BẬT</option>
-                  <option value="INACTIVE">Chỉ đánh giá ĐÃ ẨN</option>
-                </select>
-              </div>
-            </div>
+              {/* 4 KPI Summary Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-black text-lg shrink-0">
+                    {reviewsList.length}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-neutral-400 block truncate font-medium">Tổng số phản hồi</span>
+                    <span className="text-sm sm:text-base font-black text-white truncate block">{reviewsList.length} Đánh Giá</span>
+                  </div>
+                </div>
 
-            {/* Reviews List */}
-            <div className="space-y-3">
-              {reviewsList
-                .filter(r => {
-                  if (reviewFilterStatus === 'ACTIVE' && r.active === false) return false;
-                  if (reviewFilterStatus === 'INACTIVE' && r.active !== false) return false;
-                  if (reviewSearchQuery.trim()) {
-                    const q = reviewSearchQuery.toLowerCase();
-                    return r.author.toLowerCase().includes(q) ||
-                           (r.favoriteItem && r.favoriteItem.toLowerCase().includes(q)) ||
-                           r.content.toLowerCase().includes(q) ||
-                           r.branch.toLowerCase().includes(q);
-                  }
-                  return true;
-                })
-                .map((rev) => {
-                  const isActive = rev.active !== false;
-                  return (
-                    <div
-                      key={rev.id}
-                      className={`p-5 rounded-2xl transition-all border ${
-                        isActive
-                          ? 'bg-neutral-950 border-neutral-800 hover:border-amber-500/40'
-                          : 'bg-neutral-950/50 border-neutral-900 opacity-60 hover:opacity-90'
-                      }`}
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3.5">
-                          {rev.avatar ? (
-                            <img 
-                              src={rev.avatar} 
-                              alt={rev.author} 
-                              className="w-10 h-10 rounded-xl object-cover border border-neutral-800 shrink-0"
+                <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-emerald-500/30 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-black text-lg shrink-0">
+                    {activeReviewsCount}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-emerald-400 font-bold truncate">Đang Hiển Thị</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                    </div>
+                    <span className="text-sm sm:text-base font-black text-white truncate block">{activeReviewsCount} Xuất Hiện</span>
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center font-black text-lg shrink-0">
+                    {avgReviewRating}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-neutral-400 block truncate font-medium">Điểm đánh giá TB</span>
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-amber-400 stroke-amber-400 shrink-0" />
+                      ))}
+                      <span className="text-xs font-bold text-white ml-1">{avgReviewRating}/5.0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-3.5 shadow-sm">
+                  <div className="w-11 h-11 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-black text-lg shrink-0">
+                    {fiveStarCount}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-neutral-400 block truncate font-medium">Đánh giá 5 sao</span>
+                    <span className="text-sm sm:text-base font-black text-white truncate block">
+                      {reviewsList.length > 0 ? Math.round((fiveStarCount / reviewsList.length) * 100) : 100}% Tuyệt Đối
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter and Search Bar */}
+              <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-neutral-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={reviewSearchQuery}
+                    onChange={(e) => setReviewSearchQuery(e.target.value)}
+                    placeholder="Tìm kiếm theo tên khách, món yêu thích, chi nhánh, nội dung..."
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={reviewFilterStatus}
+                    onChange={(e) => setReviewFilterStatus(e.target.value)}
+                    className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 font-medium"
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="ACTIVE">Chỉ đánh giá ĐANG BẬT ({activeReviewsCount})</option>
+                    <option value="INACTIVE">Chỉ đánh giá ĐÃ ẨN ({reviewsList.length - activeReviewsCount})</option>
+                  </select>
+
+                  <select
+                    value={reviewFilterRating}
+                    onChange={(e) => setReviewFilterRating(e.target.value)}
+                    className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 font-medium"
+                  >
+                    <option value="ALL">Tất cả số sao</option>
+                    <option value="5">5 Sao ★★★★★</option>
+                    <option value="4">4 Sao ★★★★☆</option>
+                    <option value="3">3 Sao ★★★☆☆</option>
+                  </select>
+
+                  <select
+                    value={reviewFilterBranch}
+                    onChange={(e) => setReviewFilterBranch(e.target.value)}
+                    className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 font-medium"
+                  >
+                    <option value="ALL">Tất cả chi nhánh</option>
+                    <option value="96 D5">Chi nhánh 96 D5 (Bình Thạnh)</option>
+                    <option value="413 Phan Huy Ích">Chi nhánh 413 Phan Huy Ích (Gò Vấp)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Reviews List */}
+              <div className="space-y-3">
+                {filteredReviews.length === 0 ? (
+                  <div className="p-12 text-center bg-neutral-950 rounded-3xl border border-neutral-800 space-y-3">
+                    <MessageSquare className="w-10 h-10 text-neutral-600 mx-auto" />
+                    <h4 className="text-base font-bold text-white">Không tìm thấy đánh giá nào phù hợp</h4>
+                    <p className="text-xs text-neutral-400">Thử thay đổi từ khóa tìm kiếm hoặc bấm nút "Thêm Đánh Giá Mới" phía trên.</p>
+                  </div>
+                ) : (
+                  filteredReviews.map((rev) => {
+                    const isActive = rev.active !== false;
+                    return (
+                      <div
+                        key={rev.id}
+                        className={`p-5 rounded-2xl transition-all border ${
+                          isActive
+                            ? 'bg-neutral-950 border-neutral-800 hover:border-amber-500/40 shadow-sm'
+                            : 'bg-neutral-950/50 border-neutral-900 opacity-60 hover:opacity-90'
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4 min-w-0">
+                            {rev.avatar ? (
+                              <img 
+                                src={rev.avatar} 
+                                alt={rev.author} 
+                                className="w-12 h-12 rounded-2xl object-cover border border-neutral-800 shrink-0 shadow-md"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-stone-950 flex items-center justify-center font-black text-base shrink-0 shadow-md">
+                                {rev.initial || rev.author.charAt(0)}
+                              </div>
+                            )}
+
+                            <div className="space-y-1.5 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className={`text-base font-black ${isActive ? 'text-white' : 'text-neutral-400 line-through'}`}>
+                                  {rev.author}
+                                </h4>
+                                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 font-medium">
+                                  {rev.role}
+                                </span>
+                                {rev.verified !== false && (
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    <span>Xác thực</span>
+                                  </span>
+                                )}
+                                <div className="flex items-center gap-0.5 text-amber-400">
+                                  {[...Array(Number(rev.rating) || 5)].map((_, i) => (
+                                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
+                                  ))}
+                                  <span className="text-xs font-bold text-amber-400 ml-1">{rev.rating || 5}.0</span>
+                                </div>
+                                <span className="text-[11px] text-neutral-500">
+                                  • {rev.date}
+                                </span>
+                              </div>
+
+                              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed italic max-w-3xl">
+                                "{rev.content}"
+                              </p>
+
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-400 pt-0.5">
+                                <span className="flex items-center gap-1">📍 {rev.branch}</span>
+                                {rev.favoriteItem && (
+                                  <>
+                                    <span className="text-neutral-600">•</span>
+                                    <span className="text-amber-400/90 font-medium flex items-center gap-1">☕ {rev.favoriteItem}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ACTION BUTTONS (SỬA, BẬT/ẨN, XÓA) */}
+                          <div className="flex items-center gap-2 self-end md:self-center shrink-0 pt-2 md:pt-0">
+                            {/* Nút Chỉnh Sửa */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditReview(rev)}
+                              className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-amber-500/20 text-neutral-300 hover:text-amber-400 border border-neutral-800 hover:border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                              title="Chỉnh sửa nội dung đánh giá này"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Sửa</span>
+                            </button>
+
+                            {/* Nút Bật / Ẩn */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleReviewActive(rev.id)}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                                isActive
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
+                                  : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:bg-neutral-800'
+                              }`}
+                              title={isActive ? 'Nhấn để ẩn khỏi trang chủ' : 'Nhấn để bật hiển thị trên trang chủ'}
+                            >
+                              {isActive ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                                  <span>HIỂN THỊ</span>
+                                </>
+                              ) : (
+                                <>
+                                  <EyeOff className="w-3.5 h-3.5 text-neutral-500 stroke-[2.5]" />
+                                  <span>ĐÃ ẨN</span>
+                                </>
+                              )}
+                            </button>
+
+                            {/* Nút Xóa */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReview(rev.id)}
+                              className="p-2 rounded-xl bg-neutral-900 hover:bg-rose-500/20 text-neutral-400 hover:text-rose-400 border border-neutral-800 hover:border-rose-500/40 transition-colors cursor-pointer text-xs"
+                              title="Xóa vĩnh viễn đánh giá này"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* MODAL THÊM / CHỈNH SỬA ĐÁNH GIÁ KHÁCH HÀNG */}
+              {isReviewModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+                  <div className="w-full max-w-3xl bg-neutral-950 border border-neutral-800 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 my-auto text-white">
+                    {/* Modal Header */}
+                    <div className="flex items-center justify-between pb-4 border-b border-neutral-800">
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                          <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                          <span>{editingReviewId ? 'Chỉnh Sửa Đánh Giá Khách Hàng' : 'Thêm Đánh Giá Khách Hàng Mới'}</span>
+                        </h3>
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                          Đánh giá sẽ được hiển thị trực tiếp trong khối cảm nhận khách hàng trên Trang Chủ.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsReviewModalOpen(false)}
+                        className="p-2 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Modal Body / Form */}
+                    <form onSubmit={handleSaveReviewForm} className="space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* 1. Tên khách hàng */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-neutral-300 block">
+                            Họ và tên khách hàng <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={reviewFormData.author}
+                            onChange={(e) => setReviewFormData(prev => ({ ...prev, author: e.target.value }))}
+                            placeholder="Ví dụ: Nguyễn Hoàng Minh"
+                            className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* 2. Nghề nghiệp / Danh xưng */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-neutral-300 block">
+                            Nghề nghiệp / Danh xưng
+                          </label>
+                          <input
+                            type="text"
+                            value={reviewFormData.role}
+                            onChange={(e) => setReviewFormData(prev => ({ ...prev, role: e.target.value }))}
+                            placeholder="Ví dụ: Freelance Designer / Sinh viên ĐH"
+                            className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-amber-400 focus:outline-none"
+                          />
+                          {/* Quick suggestions */}
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {['Sinh viên ĐH', 'Freelance Designer', 'Senior Developer', 'Khách quen ca đêm', 'Content Creator'].map((tag) => (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => setReviewFormData(prev => ({ ...prev, role: tag }))}
+                                className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-amber-300 border border-neutral-800 cursor-pointer"
+                              >
+                                + {tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Số sao đánh giá (Clickable Star Picker) */}
+                      <div className="p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-2">
+                        <label className="text-xs font-black text-amber-300 uppercase tracking-wider block">
+                          Số sao đánh giá:
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((starVal) => {
+                            const isSelected = (reviewFormData.rating || 5) >= starVal;
+                            return (
+                              <button
+                                key={starVal}
+                                type="button"
+                                onClick={() => setReviewFormData(prev => ({ ...prev, rating: starVal }))}
+                                className="p-2 rounded-xl hover:bg-neutral-800 transition-transform active:scale-90 cursor-pointer"
+                                title={`${starVal} sao`}
+                              >
+                                <Star 
+                                  className={`w-7 h-7 transition-colors ${
+                                    isSelected 
+                                      ? 'text-amber-400 fill-amber-400' 
+                                      : 'text-neutral-600 hover:text-neutral-400'
+                                  }`} 
+                                />
+                              </button>
+                            );
+                          })}
+                          <span className="text-sm font-black text-amber-300 ml-2">
+                            {reviewFormData.rating || 5} Sao ({
+                              reviewFormData.rating === 5 ? 'Tuyệt vời / Xuất sắc' :
+                              reviewFormData.rating === 4 ? 'Rất tốt' :
+                              reviewFormData.rating === 3 ? 'Bình thường' : 'Cần cải thiện'
+                            })
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 4. Chi nhánh */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-neutral-300 block">
+                          Chi nhánh khách hàng đã trải nghiệm
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {[
+                            'Chi nhánh 96 D5, Bình Thạnh',
+                            'Chi nhánh 413 Phan Huy Ích, Gò Vấp'
+                          ].map((b) => (
+                            <button
+                              key={b}
+                              type="button"
+                              onClick={() => setReviewFormData(prev => ({ ...prev, branch: b }))}
+                              className={`p-3 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer flex items-center justify-between ${
+                                reviewFormData.branch === b
+                                  ? 'bg-amber-500/15 border-amber-400 text-amber-300'
+                                  : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
+                              }`}
+                            >
+                              <span>📍 {b}</span>
+                              {reviewFormData.branch === b && <Check className="w-4 h-4 text-amber-400" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 5. Món nước & Đồ ăn yêu thích */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-neutral-300 block">
+                          Món nước & Thức ăn khách yêu thích (Favorite Item)
+                        </label>
+                        <input
+                          type="text"
+                          value={reviewFormData.favoriteItem}
+                          onChange={(e) => setReviewFormData(prev => ({ ...prev, favoriteItem: e.target.value }))}
+                          placeholder="Ví dụ: Cold Brew Cam Vàng & Croissant bơ tỏi"
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-amber-400 focus:outline-none"
+                        />
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {[
+                            'Cold Brew Cam Vàng & Croissant bơ tỏi',
+                            'Cà Phê Muối Kem Béo & Trà Đào Cam Sả',
+                            'Espresso Rang Mộc & Bạc Xỉu 3 Tầng',
+                            'Mì Xào Bò Trứng Ốp La Lòng Đào',
+                            'Trà Trái Cây Nhiệt Đới & Tiramisu',
+                            'Caramel Macchiato & Khoai Tây Chiên'
+                          ].map((fav) => (
+                            <button
+                              key={fav}
+                              type="button"
+                              onClick={() => setReviewFormData(prev => ({ ...prev, favoriteItem: fav }))}
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-amber-300 border border-neutral-800 cursor-pointer"
+                            >
+                              ☕ {fav}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 6. Avatar Khách hàng */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-neutral-300 block">
+                          Ảnh đại diện Avatar (Tùy chọn)
+                        </label>
+                        <div className="flex flex-wrap items-center gap-3">
+                          {reviewFormData.avatar ? (
+                            <img
+                              src={reviewFormData.avatar}
+                              alt="Avatar Preview"
+                              className="w-12 h-12 rounded-2xl object-cover border-2 border-amber-400 shrink-0 shadow-md"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-amber-500 text-black flex items-center justify-center font-black text-sm shrink-0">
-                              {rev.initial || rev.author.charAt(0)}
+                            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-stone-950 font-black text-lg flex items-center justify-center shrink-0">
+                              {reviewFormData.author ? reviewFormData.author.trim().charAt(0).toUpperCase() : '?'}
                             </div>
                           )}
 
-                          <div className="space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h4 className={`text-base font-black ${isActive ? 'text-white' : 'text-neutral-400 line-through'}`}>
-                                {rev.author}
-                              </h4>
-                              <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-400 border border-neutral-800 font-medium">
-                                {rev.role}
-                              </span>
-                              <div className="flex items-center gap-1 text-amber-400">
-                                {[...Array(rev.rating || 5)].map((_, i) => (
-                                  <Star key={i} className="w-3 h-3 fill-amber-400" />
-                                ))}
-                              </div>
-                              <span className="text-[11px] text-neutral-500">
-                                • {rev.date}
-                              </span>
+                          <label className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs font-bold border border-neutral-700 hover:border-amber-400 flex items-center gap-1.5 cursor-pointer transition-all">
+                            <Upload className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Tải ảnh từ máy tính</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleUploadReviewAvatar(e.target.files?.[0])}
+                              className="hidden"
+                            />
+                          </label>
+
+                          {reviewFormData.avatar && (
+                            <button
+                              type="button"
+                              onClick={() => setReviewFormData(prev => ({ ...prev, avatar: '' }))}
+                              className="text-xs text-rose-400 hover:underline cursor-pointer"
+                            >
+                              Xóa ảnh (dùng chữ cái viết tắt)
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Sample Avatars */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[11px] text-neutral-500">Hoặc chọn avatar mẫu:</span>
+                          {[
+                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+                            'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80',
+                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+                            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80'
+                          ].map((imgUrl, idx) => (
+                            <img
+                              key={idx}
+                              src={imgUrl}
+                              alt={`Sample ${idx}`}
+                              onClick={() => setReviewFormData(prev => ({ ...prev, avatar: imgUrl }))}
+                              className="w-8 h-8 rounded-xl object-cover border border-neutral-700 hover:border-amber-400 hover:scale-110 transition-all cursor-pointer"
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 7. Nội dung cảm nhận */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-neutral-300 block">
+                          Nội dung đánh giá & cảm nhận <span className="text-rose-500">*</span>
+                        </label>
+                        <textarea
+                          required
+                          rows={4}
+                          value={reviewFormData.content}
+                          onChange={(e) => setReviewFormData(prev => ({ ...prev, content: e.target.value }))}
+                          placeholder="Chia sẻ cảm nhận về không gian cà phê, đồ uống, wifi, đồ ăn bếp đêm, phong cách phục vụ của nhân viên..."
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3.5 text-xs sm:text-sm text-white focus:border-amber-400 focus:outline-none leading-relaxed"
+                        />
+                      </div>
+
+                      {/* 8. Thời gian & Tùy chọn hiển thị */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-neutral-300 block">Thời gian hiển thị</label>
+                          <input
+                            type="text"
+                            value={reviewFormData.date}
+                            onChange={(e) => setReviewFormData(prev => ({ ...prev, date: e.target.value }))}
+                            placeholder="Hôm nay / 2 ngày trước"
+                            className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2 flex flex-col justify-end gap-2">
+                          <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl bg-neutral-900 border border-neutral-800">
+                            <input
+                              type="checkbox"
+                              checked={reviewFormData.active !== false}
+                              onChange={(e) => setReviewFormData(prev => ({ ...prev, active: e.target.checked }))}
+                              className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                            />
+                            <span className="text-xs font-bold text-neutral-300">Bật hiển thị ngay trên Trang Chủ</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl bg-neutral-900 border border-neutral-800">
+                            <input
+                              type="checkbox"
+                              checked={reviewFormData.verified !== false}
+                              onChange={(e) => setReviewFormData(prev => ({ ...prev, verified: e.target.checked }))}
+                              className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                            />
+                            <span className="text-xs font-bold text-neutral-300">Gắn huy hiệu "Khách hàng đã xác thực"</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* LIVE CARD PREVIEW TRONG MODAL */}
+                      <div className="p-4 rounded-2xl bg-[#f5ede3] text-[#2b170e] space-y-2 border border-white/60 shadow-inner">
+                        <span className="text-[10px] font-mono tracking-widest text-[#8c5932] font-black uppercase block">
+                          XEM TRƯỚC HIỂN THỊ TRÊN GIAO DIỆN KHÁCH HÀNG:
+                        </span>
+                        <div className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-white/80 shadow-md space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-0.5 text-amber-500">
+                              {[...Array(Number(reviewFormData.rating) || 5)].map((_, i) => (
+                                <Star key={i} className="w-3.5 h-3.5 fill-amber-500 stroke-amber-500" />
+                              ))}
                             </div>
-
-                            <p className="text-xs text-neutral-300 max-w-3xl leading-relaxed">
-                              "{rev.content}"
-                            </p>
-
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-neutral-500 pt-0.5">
-                              <span>📍 {rev.branch}</span>
-                              {rev.favoriteItem && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-amber-400/90 font-medium">☕ {rev.favoriteItem}</span>
-                                </>
-                              )}
+                            <Quote className="w-4 h-4 text-[#8c5932]/30" />
+                          </div>
+                          <p className="text-xs sm:text-sm font-medium italic text-[#3d2719] line-clamp-3">
+                            "{reviewFormData.content || 'Nội dung cảm nhận sẽ hiển thị ở đây...'}"
+                          </p>
+                          <div className="flex items-center gap-2.5 pt-1">
+                            {reviewFormData.avatar ? (
+                              <img src={reviewFormData.avatar} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-amber-300" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-[#2b170e] text-amber-200 flex items-center justify-center font-black text-xs">
+                                {reviewFormData.author ? reviewFormData.author.trim().charAt(0).toUpperCase() : 'M'}
+                              </div>
+                            )}
+                            <div>
+                              <div className="text-xs font-black text-[#2b170e]">
+                                {reviewFormData.author || 'Tên Khách Hàng'}
+                              </div>
+                              <div className="text-[10px] text-[#704f38]">
+                                {reviewFormData.role || 'Khách hàng'} • {reviewFormData.branch}
+                              </div>
                             </div>
                           </div>
                         </div>
-
-                        {/* TOGGLE & DELETE ACTIONS */}
-                        <div className="flex items-center gap-2.5 self-end md:self-center shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteReview(rev.id)}
-                            className="p-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-rose-400 border border-neutral-800 transition-colors cursor-pointer text-xs"
-                            title="Xóa đánh giá này"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleToggleReviewActive(rev.id)}
-                            className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
-                              isActive
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
-                                : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:bg-neutral-800'
-                            }`}
-                          >
-                            {isActive ? (
-                              <>
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
-                                <span>ĐANG HIỂN THỊ</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-4 h-4 text-neutral-500 stroke-[2.5]" />
-                                <span>ĐÃ ẨN</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+
+                      {/* Modal Footer */}
+                      <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-800">
+                        <button
+                          type="button"
+                          onClick={() => setIsReviewModalOpen(false)}
+                          className="px-5 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Hủy Bỏ
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg active:scale-95 transition-all cursor-pointer"
+                        >
+                          <Check className="w-4 h-4 stroke-[3]" />
+                          <span>{editingReviewId ? 'Lưu Thay Đổi Đánh Giá' : 'Thêm Đánh Giá Ngay'}</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* TAB: QUẢN LÝ TÀI KHOẢN & PHÂN QUYỀN (USERS & RBAC) */}
         {activeTab === 'users' && (

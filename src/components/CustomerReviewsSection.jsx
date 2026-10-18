@@ -78,65 +78,60 @@ export default function CustomerReviewsSection({ className = '' }) {
 
   return (
     <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-sans ${className}`}>
-      <div className="rounded-[36px] sm:rounded-[44px] ios-glass-panel p-8 sm:p-12 space-y-10">
-        
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-4 border-b border-[#2b170e]/10">
-          <div className="space-y-1">
-            <span className="text-xs sm:text-sm font-bold tracking-widest uppercase text-[#8c5932] block">
-              CUSTOMER VOICES · 4.9 ★ ON GOOGLE MAPS
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#2b170e] uppercase tracking-tight">
-              Trải Nghiệm Khách Hàng
-            </h2>
-          </div>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="ios-btn-primary text-sm font-bold px-6 py-3 rounded-full cursor-pointer self-start sm:self-auto flex items-center gap-2 shadow-md"
+      {/* 3 Clean Quote Cards (Frosted Glass, Large Readable Text) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+        {featuredReviews.map((rev) => (
+          <div 
+            key={rev.id}
+            className="ios-glass-card rounded-[32px] p-7 sm:p-8 flex flex-col justify-between space-y-6 border border-white/85 shadow-lg hover:shadow-2xl transition-all duration-300 relative group"
           >
-            <Plus className="w-4 h-4 text-white stroke-[2.5]" />
-            <span>Gửi Đánh Giá Của Bạn</span>
-          </button>
-        </div>
-
-        {/* 3 Clean Quote Cards (Frosted Glass, Large Readable Text) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          {featuredReviews.map((rev) => (
-            <div 
-              key={rev.id}
-              className="ios-glass-card rounded-[28px] p-7 flex flex-col justify-between space-y-6"
-            >
-              <div className="space-y-4">
-                {/* 5 Stars Rating */}
+            <div className="space-y-4">
+              {/* 5 Stars Rating & Subtle Quote Accent */}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 text-amber-500">
                   {[...Array(rev.rating || 5)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-amber-500 stroke-amber-500" />
                   ))}
                 </div>
-
-                {/* Concise Review Text - To, Rõ, Đọc sướng mắt */}
-                <p className="text-base sm:text-lg text-[#3d2719] font-medium leading-relaxed italic">
-                  "{rev.content}"
-                </p>
+                <Quote className="w-6 h-6 text-[#8c5932]/25 group-hover:text-[#8c5932]/45 transition-colors" />
               </div>
 
-              {/* Author & Favorite Drink */}
-              <div className="pt-4 border-t border-[#2b170e]/10 flex items-center justify-between text-sm">
-                <div>
-                  <span className="font-bold text-[#2b170e] block">{rev.author}</span>
-                  <span className="text-xs text-[#7d5d48] font-medium">{rev.role}</span>
-                </div>
-                {rev.favoriteItem && (
-                  <span className="text-xs text-[#8c5932] font-bold bg-white/90 px-3 py-1 rounded-full border border-white shadow-2xs">
-                    {rev.favoriteItem}
-                  </span>
-                )}
-              </div>
+              {/* Concise Review Text - To, Rõ, Đọc sướng mắt */}
+              <p className="text-base sm:text-lg text-[#3d2719] font-medium leading-relaxed italic">
+                "{rev.content}"
+              </p>
             </div>
-          ))}
+
+            {/* Author & Favorite Drink */}
+            <div className="pt-5 border-t border-[#2b170e]/10 flex items-center justify-between gap-3 text-sm">
+              <div>
+                <span className="font-bold text-[#2b170e] block text-base">{rev.author}</span>
+                <span className="text-xs text-[#7d5d48] font-medium">{rev.role}</span>
+              </div>
+              {rev.favoriteItem && (
+                <span className="text-xs text-[#8c5932] font-bold bg-white/90 px-3 py-1.5 rounded-full border border-white shadow-xs text-right whitespace-nowrap">
+                  {rev.favoriteItem}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Elegant Action & Trust Bar */}
+      <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+        <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-xs text-[#5c3d2e] text-xs sm:text-sm font-bold">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>4.9 / 5.0 ⭐ trên Google Maps (1.200+ đánh giá)</span>
         </div>
 
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="ios-btn-primary text-sm font-bold px-7 py-3 rounded-full cursor-pointer flex items-center gap-2 shadow-md hover:shadow-lg"
+        >
+          <Plus className="w-4 h-4 text-white stroke-[2.5]" />
+          <span>Gửi Đánh Giá Của Bạn</span>
+        </button>
       </div>
 
       {/* Writing Modal (Frosted Glass) */}

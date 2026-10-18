@@ -192,7 +192,7 @@ export default function CoffeeJourneyScroller({ onOrderClick }) {
 
             {/* Stage Title */}
             <div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight uppercase leading-none drop-shadow-2xl">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight uppercase leading-[1.25] sm:leading-[1.3] drop-shadow-2xl">
                 {current.title}
               </h2>
               <p className="text-base sm:text-xl font-bold text-amber-400 mt-2">

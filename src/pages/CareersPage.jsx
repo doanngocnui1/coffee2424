@@ -113,9 +113,9 @@ export default function CareersPage({ navigate }) {
                 <span>Cơ Hội Nghề Nghiệp 24/24</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] uppercase leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] uppercase leading-[1.3] sm:leading-[1.35] tracking-tight">
                 Gia Nhập Đội Ngũ <br />
-                <span className="text-[#5a3825]">COFFEE 24/24</span>
+                <span className="text-[#5a3825] inline-block mt-1 sm:mt-2">COFFEE 24/24</span>
               </h1>
 
               <p className="text-base sm:text-lg text-[#523d2f] font-medium max-w-xl leading-relaxed">

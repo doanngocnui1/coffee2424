@@ -123,7 +123,7 @@ export default function AboutPage({ navigate }) {
             {about.heroBadge || 'Câu Chuyện Thương Hiệu COFFEE 24/24'}
           </span>
           
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] uppercase tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] uppercase tracking-tight leading-[1.3] sm:leading-[1.35]">
             {about.heroTitle || 'COFFEE 24/24 Sinh Ra Là Để Giải Quyết Vấn Đề Gì Cho Bạn?'}
           </h1>
           

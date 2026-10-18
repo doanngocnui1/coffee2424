@@ -3,7 +3,7 @@ import { MapPin, Mail, BookOpen, QrCode, PhoneCall, ArrowUpRight, ExternalLink }
 import { getSiteConfig } from '../data/siteConfig';
 import SocialFollowSection from './SocialFollowSection';
 
-export default function Footer({ navigate }) {
+export default function Footer({ currentPath = '/', navigate }) {
   const [config, setConfig] = useState(getSiteConfig);
 
   useEffect(() => {
@@ -16,10 +16,16 @@ export default function Footer({ navigate }) {
     };
   }, []);
 
+  const isHome = currentPath === '/' || currentPath === '';
+
   return (
     <div className="w-full">
-      {/* NỀN TẢNG MẠNG XÃ HỘI - THEO DÕI COFFEE 24/24 (BÊN TRÊN CHÂN TRANG) */}
-      <SocialFollowSection />
+      {/* NỀN TẢNG MẠNG XÃ HỘI - THEO DÕI COFFEE 24/24 (Hiển thị trên các trang phụ nếu trang chủ đã có riêng) */}
+      {!isHome && (
+        <div className="py-6 sm:py-8 px-4 sm:px-6 max-w-7xl mx-auto">
+          <SocialFollowSection />
+        </div>
+      )}
 
       {/* MAIN FOOTER - FROSTED GLASSMORPHISM */}
       <footer className="bg-white/45 backdrop-blur-3xl text-[#2b170e] border-t border-white/70 pt-16 pb-12 font-sans shadow-[0_-10px_35px_rgba(60,35,15,0.03)]">
