@@ -1,4 +1,6 @@
-import { saveCloudSiteConfig, fetchCloudSiteConfig } from '../lib/supabase.js';
+import { saveCloudSiteConfig, fetchCloudSiteConfig, isLocalhost } from '../lib/supabase.js';
+
+export const STORAGE_KEY = isLocalhost ? 'coffee2424_local_site_config' : 'coffee2424_site_config';
 
 export const DEFAULT_SITE_CONFIG = {
   brandName: 'COFFEE 24/24',
@@ -647,7 +649,15 @@ export const DEFAULT_SITE_CONFIG = {
 
 export function getSiteConfig() {
   try {
-    const saved = localStorage.getItem('coffee2424_site_config');
+    let saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved && isLocalhost) {
+      saved = localStorage.getItem('coffee2424_site_config');
+      if (saved) {
+        try {
+          localStorage.setItem(STORAGE_KEY, saved);
+        } catch (_) {}
+      }
+    }
     let parsed = {};
     if (saved) {
       try {
@@ -883,9 +893,9 @@ export function saveSiteConfig(newConfig) {
       } catch (_) {}
     }
 
-    // 2. Try saving full configuration
+    // 2. Try saving full configuration into active STORAGE_KEY
     try {
-      localStorage.setItem('coffee2424_site_config', JSON.stringify(newConfig));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
     } catch (quotaErr) {
       console.warn('Storage quota exceeded with embedded images. Saving config with image references:', quotaErr);
       // Strip large data URLs so all toggles, text, and settings are 100% guaranteed to save
@@ -915,15 +925,19 @@ export function saveSiteConfig(newConfig) {
           mediaUrl: heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video')) ? '__STORED_HERO_MEDIA__' : heroMedia
         }
       };
-      localStorage.setItem('coffee2424_site_config', JSON.stringify(safeConfig));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safeConfig));
     }
 
     window.dispatchEvent(new Event('site-config-updated'));
 
-    // Đồng bộ tức thời lên Supabase Cloud (chạy nền, không chặn giao diện)
-    saveCloudSiteConfig(newConfig).catch(err => {
-      console.warn('Không thể đồng bộ Supabase Cloud:', err);
-    });
+    // Chỉ đồng bộ lên Supabase Cloud khi KHÔNG PHẢI Localhost (môi trường Production)
+    if (!isLocalhost) {
+      saveCloudSiteConfig(newConfig).catch(err => {
+        console.warn('Không thể đồng bộ Supabase Cloud:', err);
+      });
+    } else {
+      console.info('💻 Đã lưu vào bộ nhớ Localhost cục bộ (hoàn toàn tách biệt Supabase Cloud).');
+    }
 
     return true;
   } catch (e) {
@@ -934,8 +948,15 @@ export function saveSiteConfig(newConfig) {
 
 /**
  * Đồng bộ cấu hình từ Supabase Cloud về máy client khi khởi động web
+ * @param {boolean} force - Ép buộc kéo về ngay cả khi đang chạy trên localhost
  */
-export async function syncSiteConfigWithCloud() {
+export async function syncSiteConfigWithCloud(force = false) {
+  // Trên localhost: Tuyệt đối không tự động kéo từ Supabase Cloud về đè local
+  if (isLocalhost && !force) {
+    console.info('💻 Chế độ Localhost: Bỏ qua tự động tải từ Supabase Cloud để tối ưu tốc độ & không đè dữ liệu.');
+    return null;
+  }
+
   try {
     const cloudConfig = await fetchCloudSiteConfig();
     if (cloudConfig && typeof cloudConfig === 'object') {
@@ -954,7 +975,7 @@ export async function syncSiteConfigWithCloud() {
           ...(cloudConfig.offeringsSection || {})
         }
       };
-      localStorage.setItem('coffee2424_site_config', JSON.stringify(mergedConfig));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedConfig));
       window.dispatchEvent(new Event('site-config-updated'));
       console.info('✓ Đã đồng bộ cấu hình thành công từ Supabase Cloud!');
       return mergedConfig;
@@ -963,5 +984,20 @@ export async function syncSiteConfigWithCloud() {
     console.warn('Lỗi khi tải cấu hình từ Supabase:', err);
   }
   return null;
+}
+
+/**
+ * Đẩy toàn bộ cấu hình Local hiện tại lên Supabase Cloud (Thủ công theo lệnh Admin)
+ */
+export async function pushLocalConfigToCloud() {
+  const currentConfig = getSiteConfig();
+  return await saveCloudSiteConfig(currentConfig);
+}
+
+/**
+ * Kéo toàn bộ cấu hình từ Supabase Cloud về ghi đè Local (Thủ công theo lệnh Admin)
+ */
+export async function pullCloudConfigToLocal() {
+  return await syncSiteConfigWithCloud(true);
 }
 

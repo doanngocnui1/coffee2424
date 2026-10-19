@@ -5,6 +5,12 @@ const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env?.
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+export const isLocalhost = (() => {
+  if (typeof window === 'undefined') return true;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host.endsWith('.local');
+})();
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -101,7 +107,7 @@ export async function saveCloudSiteConfig(config) {
  * Lắng nghe thay đổi Realtime từ Supabase
  */
 export function subscribeToCloudSiteConfig(onUpdate) {
-  if (!isSupabaseConfigured) return () => {};
+  if (!isSupabaseConfigured || isLocalhost) return () => {};
 
   try {
     const channel = supabase

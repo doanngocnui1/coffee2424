@@ -55,7 +55,13 @@ import {
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
 import { getBranches, saveBranches } from '../data/branches';
-import { getSiteConfig, saveSiteConfig } from '../data/siteConfig';
+import { 
+  getSiteConfig, 
+  saveSiteConfig, 
+  pushLocalConfigToCloud, 
+  pullCloudConfigToLocal 
+} from '../data/siteConfig';
+import { isLocalhost } from '../lib/supabase';
 import { getJobs, saveJobs } from '../data/jobs';
 import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
@@ -2213,7 +2219,55 @@ export default function AdminPage({ navigate }) {
               </span>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+              {isLocalhost ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Localhost (Dữ liệu Độc Lập Siêu Tốc)</span>
+                  <div className="h-3 w-px bg-emerald-500/30 mx-1" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm('Bạn có muốn ĐẨY toàn bộ cấu hình Localhost hiện tại lên Supabase Cloud không?')) {
+                        const res = await pushLocalConfigToCloud();
+                        if (res?.success) {
+                          triggerAlert('✓ Đã đẩy thành công toàn bộ cấu hình Local lên Supabase Cloud!');
+                        } else {
+                          triggerAlert('⚠️ Lỗi khi đẩy lên Supabase: ' + (res?.error || 'Không xác định'));
+                        }
+                      }
+                    }}
+                    title="Sao chép toàn bộ cấu hình đang có ở Localhost lên Supabase Cloud"
+                    className="hover:bg-emerald-800/50 px-2 py-0.5 rounded text-[11px] text-emerald-200 hover:text-white transition-colors cursor-pointer"
+                  >
+                    ☁️ Đẩy lên Cloud
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm('CẢNH BÁO: Thao tác này sẽ tải cấu hình từ Supabase Cloud về GHI ĐÈ dữ liệu Localhost. Bạn có muốn tiếp tục?')) {
+                        const res = await pullCloudConfigToLocal();
+                        if (res) {
+                          setConfig(res);
+                          triggerAlert('✓ Đã kéo cấu hình từ Supabase Cloud về Localhost thành công!');
+                        } else {
+                          triggerAlert('⚠️ Không thể tải cấu hình từ Supabase Cloud.');
+                        }
+                      }
+                    }}
+                    title="Kéo cấu hình từ Supabase Cloud về ghi đè Localhost"
+                    className="hover:bg-emerald-800/50 px-2 py-0.5 rounded text-[11px] text-emerald-200 hover:text-white transition-colors cursor-pointer"
+                  >
+                    📥 Kéo từ Cloud
+                  </button>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-300 text-xs font-bold shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                  <span>Production Cloud</span>
+                </div>
+              )}
+
               <span className="text-[11px] text-neutral-400 font-mono bg-neutral-900 px-2.5 py-1 rounded-lg border border-neutral-800">
                 coffee2424.com/admin
               </span>
