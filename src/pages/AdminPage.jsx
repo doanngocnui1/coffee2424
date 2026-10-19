@@ -47,7 +47,8 @@ import {
   Quote,
   RotateCcw,
   MessageSquare,
-  Heart
+  Heart,
+  Armchair
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
@@ -100,7 +101,7 @@ export default function AdminPage({ navigate }) {
 
   // Automatically expand group containing activeTab when activeTab changes
   useEffect(() => {
-    if (['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+    if (['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, home: true }));
     } else if (activeTab === 'about') {
       setOpenGroups(prev => ({ ...prev, about: true }));
@@ -150,7 +151,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
+      const allTabs = ['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
