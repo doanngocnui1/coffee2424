@@ -185,7 +185,83 @@ export const DEFAULT_SITE_CONFIG = {
       link: '/khuyenmai'
     }
   },
-  // Khối Món Mới Trình Làng & Ưu Đãi Đặc Quyền (Trang Chủ)
+  // Khối 1: Món Mới Trình Làng (Trang Chủ)
+  newDishesSection: {
+    enabled: true,
+    badge: 'MENU MỚI TRÌNH LÀNG',
+    showBadge: true,
+    title: 'Món Mới Nổi Bật',
+    highlightTitle: 'Đánh Thức Vị Giác',
+    subtitle: 'Khám phá các thức uống sáng tạo và bánh nướng tươi ngon vừa ra mắt tại COFFEE 24/24.'
+  },
+  newDishesList: [
+    {
+      id: 'dish-1',
+      tag: 'MÓN MỚI',
+      title: 'Matcha MK4 Latte & Cold Brew Cam Vàng',
+      price: '45.000đ',
+      image: '/images/promo_banner.jpg',
+      cta: 'Thử Món Mới',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-2',
+      tag: 'SIGNATURE',
+      title: 'Cà Phê Muối Kem Béo & Bạc Xỉu 3 Tầng',
+      price: '39.000đ',
+      image: '/images/signature_drinks.jpg',
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-3',
+      tag: 'BÁNH TƯƠI',
+      title: 'Croissant Bơ Pháp Nướng & Bánh Mì Que',
+      price: '29.000đ',
+      image: '/images/journey_espresso.jpg',
+      cta: 'Thưởng Thức',
+      link: '/dathang'
+    }
+  ],
+  // Khối 2: Chương Trình Ưu Đãi & Combo (Trang Chủ)
+  promotionsSection: {
+    enabled: true,
+    badge: 'ƯU ĐÃI ĐẶC QUYỀN',
+    showBadge: true,
+    title: 'Chương Trình Ưu Đãi',
+    highlightTitle: 'Dành Riêng Cho Bạn',
+    subtitle: 'Tổng hợp các voucher giảm giá, combo tiết kiệm và giờ vàng ưu đãi dành cho học sinh, sinh viên và cộng đồng chạy deadline.'
+  },
+  promotionsList: [
+    {
+      id: 'promo-1',
+      tag: 'COMBO HOT',
+      title: 'Combo Sáng & Đêm Khuya 69K',
+      discount: 'CHỈ 69.000đ',
+      image: '/images/signature_drinks.jpg',
+      cta: 'Đặt Combo 69K',
+      link: '/dathang'
+    },
+    {
+      id: 'promo-2',
+      tag: 'GIỜ VÀNG',
+      title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày',
+      discount: 'GIẢM 40%',
+      image: '/images/journey_espresso.jpg',
+      cta: 'Lấy Mã Giảm',
+      link: '/khuyenmai'
+    },
+    {
+      id: 'promo-3',
+      tag: 'HỌC NHÓM',
+      title: 'Đi 4 Tính Tiền 3 - Cày Deadline Thâu Đêm',
+      discount: 'MUA 3 TẶNG 1',
+      image: '/images/promo_banner.jpg',
+      cta: 'Xem Chi Tiết',
+      link: '/khuyenmai'
+    }
+  ],
+  // Khối Món Mới Trình Làng & Ưu Đãi Đặc Quyền (Tương thích ngược)
   whatsNewSection: {
     enabled: true,
     badge: 'Món Mới & Ưu Đãi',

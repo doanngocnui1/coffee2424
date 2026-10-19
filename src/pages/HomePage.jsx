@@ -68,14 +68,16 @@ export default function HomePage({ navigate, onSelectBranch }) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeNavSection, setActiveNavSection] = useState('hero');
   const [scrollY, setScrollY] = useState(0);
-  const [whatsNewIndex, setWhatsNewIndex] = useState(0);
+  const [newDishesIndex, setNewDishesIndex] = useState(0);
+  const [promotionsIndex, setPromotionsIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
     }
     return false;
   });
-  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchDishesStartX, setTouchDishesStartX] = useState(null);
+  const [touchPromosStartX, setTouchPromosStartX] = useState(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -115,7 +117,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
       // Detect active section based on scroll offset
       const sections = [
         { id: 'hero', offset: 0 },
-        { id: 'whats-new', el: document.getElementById('whats-new') },
+        { id: 'new-dishes', el: document.getElementById('new-dishes') },
+        { id: 'promotions', el: document.getElementById('promotions') },
         { id: 'amenities', el: document.getElementById('amenities') },
         { id: 'menu', el: document.getElementById('menu') },
         { id: 'reviews', el: document.getElementById('reviews') },
@@ -242,19 +245,41 @@ export default function HomePage({ navigate, onSelectBranch }) {
     }
   ];
 
-  // 3 Highlight Posters Dọc 3x4 (Món mới & Chương trình nổi bật)
-  const defaultPosters = [
+  // 3 Highlight Posters Món Mới Dọc 3x4
+  const defaultNewDishes = [
     {
-      id: 'item-new-1',
+      id: 'dish-1',
       tag: 'MÓN MỚI',
       title: 'Matcha MK4 Latte & Cold Brew Cam Vàng',
-      discount: 'GIẢM 20%',
+      price: '45.000đ',
       image: '/images/promo_banner.jpg',
       cta: 'Thử Món Mới',
       link: '/dathang'
     },
     {
-      id: 'item-new-2',
+      id: 'dish-2',
+      tag: 'SIGNATURE',
+      title: 'Cà Phê Muối Kem Béo & Bạc Xỉu 3 Tầng',
+      price: '39.000đ',
+      image: '/images/signature_drinks.jpg',
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-3',
+      tag: 'BÁNH TƯƠI',
+      title: 'Croissant Bơ Pháp Nướng & Bánh Mì Que',
+      price: '29.000đ',
+      image: '/images/journey_espresso.jpg',
+      cta: 'Thưởng Thức',
+      link: '/dathang'
+    }
+  ];
+
+  // 3 Highlight Posters Chương Trình Ưu Đãi Dọc 3x4
+  const defaultPromotions = [
+    {
+      id: 'promo-1',
       tag: 'COMBO HOT',
       title: 'Combo Sáng & Đêm Khuya 69K',
       discount: 'CHỈ 69.000đ',
@@ -263,19 +288,32 @@ export default function HomePage({ navigate, onSelectBranch }) {
       link: '/dathang'
     },
     {
-      id: 'item-new-3',
+      id: 'promo-2',
       tag: 'GIỜ VÀNG',
       title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày',
       discount: 'GIẢM 40%',
       image: '/images/journey_espresso.jpg',
       cta: 'Lấy Mã Giảm',
       link: '/khuyenmai'
+    },
+    {
+      id: 'promo-3',
+      tag: 'HỌC NHÓM',
+      title: 'Đi 4 Tính Tiền 3 - Cày Deadline Thâu Đêm',
+      discount: 'MUA 3 TẶNG 1',
+      image: '/images/promo_banner.jpg',
+      cta: 'Xem Chi Tiết',
+      link: '/khuyenmai'
     }
   ];
 
-  const whatsNewItems = (siteConfig.homePosters && siteConfig.homePosters.length > 0)
-    ? siteConfig.homePosters
-    : defaultPosters;
+  const newDishesItems = (siteConfig.newDishesList && siteConfig.newDishesList.length > 0)
+    ? siteConfig.newDishesList
+    : (siteConfig.homePosters && siteConfig.homePosters.length > 0 ? siteConfig.homePosters : defaultNewDishes);
+
+  const promotionsItems = (siteConfig.promotionsList && siteConfig.promotionsList.length > 0)
+    ? siteConfig.promotionsList
+    : defaultPromotions;
 
   const activeOffering = ALL_STORY_OFFERINGS[selectedOfferingIndex] || ALL_STORY_OFFERINGS[0];
   const ActiveIcon = activeOffering.icon;
@@ -352,11 +390,12 @@ export default function HomePage({ navigate, onSelectBranch }) {
           <div className="flex flex-col items-center gap-2 pt-1 pb-1">
             {[
               { id: 'hero', label: '01 Trang Đầu' },
-              { id: 'whats-new', label: '02 Có Gì Mới' },
-              { id: 'amenities', label: '03 Không Gian' },
-              { id: 'menu', label: '04 Thực Đơn' },
-              { id: 'reviews', label: '05 Đánh Giá' },
-              { id: 'social', label: '06 Kết Nối' }
+              { id: 'new-dishes', label: '02 Món Mới' },
+              { id: 'promotions', label: '03 Ưu Đãi' },
+              { id: 'amenities', label: '04 Không Gian' },
+              { id: 'menu', label: '05 Thực Đơn' },
+              { id: 'reviews', label: '06 Đánh Giá' },
+              { id: 'social', label: '07 Kết Nối' }
             ].map(dot => (
               <button
                 key={dot.id}
@@ -554,57 +593,56 @@ export default function HomePage({ navigate, onSelectBranch }) {
       </section>
 
       {/* =========================================================================
-          2. SECTION: CÓ GÌ MỚI TUẦN NÀY / THÁNG NÀY?
-          (MÓN MỚI TRÌNH LÀNG & ƯU ĐÃI ĐẶC QUYỀN)
+          2A. SECTION: MÓN MỚI TRÌNH LÀNG (POSTER DỌC 3:4)
           ========================================================================= */}
-      {siteConfig.whatsNewSection?.enabled !== false && (
+      {siteConfig.newDishesSection?.enabled !== false && (
         <section 
-          id="whats-new" 
+          id="new-dishes" 
           className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16"
         >
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-8 sm:mb-12">
-            {siteConfig.whatsNewSection?.badge && (
+            {siteConfig.newDishesSection?.showBadge !== false && (siteConfig.newDishesSection?.badge || 'MENU MỚI TRÌNH LÀNG') && (
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-white/90 text-[#8c5932] text-xs sm:text-sm font-black uppercase tracking-wider shadow-xs">
-                <Flame className="w-4 h-4 text-orange-600" />
-                <span>{siteConfig.whatsNewSection.badge}</span>
+                <UtensilsCrossed className="w-4 h-4 text-orange-600" />
+                <span>{siteConfig.newDishesSection?.badge || 'MENU MỚI TRÌNH LÀNG'}</span>
               </div>
             )}
 
             <h2 className="text-3xl sm:text-5xl font-black text-[#2b170e] tracking-tight uppercase leading-[1.3] sm:leading-[1.35]">
-              {siteConfig.whatsNewSection?.title || 'Món Mới Trình Làng &'}{' '}
+              {siteConfig.newDishesSection?.title || 'Món Mới Nổi Bật'}{' '}
               <br className="hidden sm:inline" />
               <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">
-                {siteConfig.whatsNewSection?.highlightTitle || 'Ưu Đãi Đặc Quyền'}
+                {siteConfig.newDishesSection?.highlightTitle || 'Đánh Thức Vị Giác'}
               </span>
             </h2>
 
             <p className="text-sm sm:text-base text-[#5c3d2e] font-medium leading-relaxed max-w-xl mx-auto">
-              {siteConfig.whatsNewSection?.subtitle || 'Cập nhật món mới và ưu đãi nổi bật dành cho học tập & làm việc.'}
+              {siteConfig.newDishesSection?.subtitle || 'Khám phá các thức uống sáng tạo và bánh nướng tươi ngon vừa ra mắt tại COFFEE 24/24.'}
             </p>
           </div>
 
           {/* Carousel Container: 3 món trên máy tính, 1 món trên điện thoại */}
           {(() => {
             const visibleCount = isMobile ? 1 : 3;
-            const maxWhatsNewIndex = Math.max(0, whatsNewItems.length - visibleCount);
-            const safeWhatsNewIndex = Math.min(whatsNewIndex, maxWhatsNewIndex);
-            const showNavButtons = whatsNewItems.length > visibleCount;
+            const maxIndex = Math.max(0, newDishesItems.length - visibleCount);
+            const safeIndex = Math.min(newDishesIndex, maxIndex);
+            const showNav = newDishesItems.length > visibleCount;
 
-            const handlePrevWhatsNew = () => {
-              setWhatsNewIndex(prev => (prev <= 0 ? maxWhatsNewIndex : prev - 1));
+            const handlePrev = () => {
+              setNewDishesIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
             };
 
-            const handleNextWhatsNew = () => {
-              setWhatsNewIndex(prev => (prev >= maxWhatsNewIndex ? 0 : prev + 1));
+            const handleNext = () => {
+              setNewDishesIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
             };
 
             return (
               <div className="relative group/carousel px-0 sm:px-2">
                 {/* Navigation Arrow Left */}
-                {showNavButtons && (
+                {showNav && (
                   <button
                     type="button"
-                    onClick={handlePrevWhatsNew}
+                    onClick={handlePrev}
                     className="absolute -left-2 sm:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
                     aria-label="Xem món mới trước đó"
                   >
@@ -613,10 +651,10 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 )}
 
                 {/* Navigation Arrow Right */}
-                {showNavButtons && (
+                {showNav && (
                   <button
                     type="button"
-                    onClick={handleNextWhatsNew}
+                    onClick={handleNext}
                     className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
                     aria-label="Xem món mới tiếp theo"
                   >
@@ -627,64 +665,64 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {/* Carousel Overflow Track */}
                 <div 
                   className="overflow-hidden w-full py-2"
-                  onTouchStart={(e) => setTouchStartX(e.targetTouches[0].clientX)}
+                  onTouchStart={(e) => setTouchDishesStartX(e.targetTouches[0].clientX)}
                   onTouchEnd={(e) => {
-                    if (touchStartX === null) return;
-                    const diff = touchStartX - e.changedTouches[0].clientX;
-                    if (diff > 45) handleNextWhatsNew();
-                    else if (diff < -45) handlePrevWhatsNew();
-                    setTouchStartX(null);
+                    if (touchDishesStartX === null) return;
+                    const diff = touchDishesStartX - e.changedTouches[0].clientX;
+                    if (diff > 45) handleNext();
+                    else if (diff < -45) handlePrev();
+                    setTouchDishesStartX(null);
                   }}
                 >
                   <div 
                     className="flex transition-transform duration-500 ease-out"
                     style={{
-                      transform: `translateX(-${safeWhatsNewIndex * (100 / visibleCount)}%)`
+                      transform: `translateX(-${safeIndex * (100 / visibleCount)}%)`
                     }}
                   >
-                    {whatsNewItems.map((promo, idx) => (
+                    {newDishesItems.map((dish, idx) => (
                       <div 
-                        key={promo.id || idx}
+                        key={dish.id || idx}
                         className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
                       >
                         <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
-                          {/* 3:4 Vertical Poster Container (Chuẩn Tỉ Lệ Dọc 3x4) */}
+                          {/* 3:4 Vertical Poster Container */}
                           <div 
-                            onClick={() => navigate(promo.link || '/dathang')}
+                            onClick={() => navigate(dish.link || '/dathang')}
                             className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
                           >
                             <img 
-                              src={promo.image} 
-                              alt={promo.title}
+                              src={dish.image} 
+                              alt={dish.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                             />
-                            {promo.tag && (
+                            {dish.tag && (
                               <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
-                                {promo.tag}
+                                {dish.tag}
                               </span>
                             )}
-                            {promo.discount && (
+                            {(dish.price || dish.discount) && (
                               <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-amber-400 text-[#1a0a04] font-mono text-xs font-black shadow-md">
-                                {promo.discount}
+                                {dish.price || dish.discount}
                               </span>
                             )}
                           </div>
 
-                          {/* Minimal Text: Tiêu đề gọn gàng & Nút hành động */}
+                          {/* Minimal Text: Tiêu đề & Nút đặt món */}
                           <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
                             <h3 
-                              onClick={() => navigate(promo.link || '/dathang')}
+                              onClick={() => navigate(dish.link || '/dathang')}
                               className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
-                              title={promo.title}
+                              title={dish.title}
                             >
-                              {promo.title}
+                              {dish.title}
                             </h3>
                             <button
                               type="button"
-                              onClick={() => navigate(promo.link || '/dathang')}
+                              onClick={() => navigate(dish.link || '/dathang')}
                               className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                             >
-                              <span>{promo.cta || 'Xem Thêm'}</span>
+                              <span>{dish.cta || 'Thử Ngay'}</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -695,15 +733,15 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 </div>
 
                 {/* Dots Indicator */}
-                {showNavButtons && maxWhatsNewIndex > 0 && (
+                {showNav && maxIndex > 0 && (
                   <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
-                    {Array.from({ length: maxWhatsNewIndex + 1 }).map((_, dotIdx) => (
+                    {Array.from({ length: maxIndex + 1 }).map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         type="button"
-                        onClick={() => setWhatsNewIndex(dotIdx)}
+                        onClick={() => setNewDishesIndex(dotIdx)}
                         className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                          safeWhatsNewIndex === dotIdx 
+                          safeIndex === dotIdx 
                             ? 'w-8 bg-[#8c5932] shadow-xs' 
                             : 'w-2.5 bg-stone-300 hover:bg-stone-400'
                         }`}
@@ -716,13 +754,190 @@ export default function HomePage({ navigate, onSelectBranch }) {
             );
           })()}
 
-          {/* Bonus Link to Promotions Page */}
+          {/* Section Footer CTA */}
+          <div className="mt-8 sm:mt-10 text-center">
+            <button
+              onClick={() => navigate('/dathang')}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/70 hover:bg-white text-[#2b170e] text-xs sm:text-sm font-bold border border-white/90 shadow-sm transition-all cursor-pointer"
+            >
+              <UtensilsCrossed className="w-4 h-4 text-[#8c5932]" />
+              <span>Xem Toàn Bộ Thực Đơn & Đặt Món Trực Tiếp</span>
+              <ChevronRight className="w-4 h-4 text-[#8c5932]" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* =========================================================================
+          2B. SECTION: CHƯƠNG TRÌNH ƯU ĐÃI (POSTER DỌC 3:4)
+          ========================================================================= */}
+      {siteConfig.promotionsSection?.enabled !== false && (
+        <section 
+          id="promotions" 
+          className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16"
+        >
+          <div className="text-center max-w-3xl mx-auto space-y-3 mb-8 sm:mb-12">
+            {siteConfig.promotionsSection?.showBadge !== false && (siteConfig.promotionsSection?.badge || 'ƯU ĐÃI ĐẶC QUYỀN') && (
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-white/90 text-rose-700 text-xs sm:text-sm font-black uppercase tracking-wider shadow-xs">
+                <Percent className="w-4 h-4 text-rose-600" />
+                <span>{siteConfig.promotionsSection?.badge || 'ƯU ĐÃI ĐẶC QUYỀN'}</span>
+              </div>
+            )}
+
+            <h2 className="text-3xl sm:text-5xl font-black text-[#2b170e] tracking-tight uppercase leading-[1.3] sm:leading-[1.35]">
+              {siteConfig.promotionsSection?.title || 'Chương Trình Ưu Đãi'}{' '}
+              <br className="hidden sm:inline" />
+              <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">
+                {siteConfig.promotionsSection?.highlightTitle || 'Dành Riêng Cho Bạn'}
+              </span>
+            </h2>
+
+            <p className="text-sm sm:text-base text-[#5c3d2e] font-medium leading-relaxed max-w-xl mx-auto">
+              {siteConfig.promotionsSection?.subtitle || 'Tổng hợp các voucher giảm giá, combo tiết kiệm và giờ vàng ưu đãi dành cho học sinh, sinh viên và cộng đồng chạy deadline.'}
+            </p>
+          </div>
+
+          {/* Carousel Container: 3 ưu đãi trên máy tính, 1 trên điện thoại */}
+          {(() => {
+            const visibleCount = isMobile ? 1 : 3;
+            const maxIndex = Math.max(0, promotionsItems.length - visibleCount);
+            const safeIndex = Math.min(promotionsIndex, maxIndex);
+            const showNav = promotionsItems.length > visibleCount;
+
+            const handlePrev = () => {
+              setPromotionsIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
+            };
+
+            const handleNext = () => {
+              setPromotionsIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
+            };
+
+            return (
+              <div className="relative group/carousel px-0 sm:px-2">
+                {/* Navigation Arrow Left */}
+                {showNav && (
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    className="absolute -left-2 sm:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
+                    aria-label="Xem ưu đãi trước đó"
+                  >
+                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:-translate-x-0.5" />
+                  </button>
+                )}
+
+                {/* Navigation Arrow Right */}
+                {showNav && (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
+                    aria-label="Xem ưu đãi tiếp theo"
+                  >
+                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                )}
+
+                {/* Carousel Overflow Track */}
+                <div 
+                  className="overflow-hidden w-full py-2"
+                  onTouchStart={(e) => setTouchPromosStartX(e.targetTouches[0].clientX)}
+                  onTouchEnd={(e) => {
+                    if (touchPromosStartX === null) return;
+                    const diff = touchPromosStartX - e.changedTouches[0].clientX;
+                    if (diff > 45) handleNext();
+                    else if (diff < -45) handlePrev();
+                    setTouchPromosStartX(null);
+                  }}
+                >
+                  <div 
+                    className="flex transition-transform duration-500 ease-out"
+                    style={{
+                      transform: `translateX(-${safeIndex * (100 / visibleCount)}%)`
+                    }}
+                  >
+                    {promotionsItems.map((promo, idx) => (
+                      <div 
+                        key={promo.id || idx}
+                        className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
+                      >
+                        <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
+                          {/* 3:4 Vertical Poster Container */}
+                          <div 
+                            onClick={() => navigate(promo.link || '/khuyenmai')}
+                            className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
+                          >
+                            <img 
+                              src={promo.image} 
+                              alt={promo.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                            />
+                            {promo.tag && (
+                              <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
+                                {promo.tag}
+                              </span>
+                            )}
+                            {(promo.discount || promo.price) && (
+                              <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-rose-500 text-white font-mono text-xs font-black shadow-md">
+                                {promo.discount || promo.price}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Minimal Text: Tiêu đề & Nút xem ưu đãi */}
+                          <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
+                            <h3 
+                              onClick={() => navigate(promo.link || '/khuyenmai')}
+                              className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
+                              title={promo.title}
+                            >
+                              {promo.title}
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => navigate(promo.link || '/khuyenmai')}
+                              className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-rose-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                            >
+                              <span>{promo.cta || 'Xem Ưu Đãi'}</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dots Indicator */}
+                {showNav && maxIndex > 0 && (
+                  <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
+                    {Array.from({ length: maxIndex + 1 }).map((_, dotIdx) => (
+                      <button
+                        key={dotIdx}
+                        type="button"
+                        onClick={() => setPromotionsIndex(dotIdx)}
+                        className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                          safeIndex === dotIdx 
+                            ? 'w-8 bg-[#8c5932] shadow-xs' 
+                            : 'w-2.5 bg-stone-300 hover:bg-stone-400'
+                        }`}
+                        aria-label={`Chuyển đến trang ưu đãi ${dotIdx + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Section Footer CTA */}
           <div className="mt-8 sm:mt-10 text-center">
             <button
               onClick={() => navigate('/khuyenmai')}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/70 hover:bg-white text-[#2b170e] text-xs sm:text-sm font-bold border border-white/90 shadow-sm transition-all cursor-pointer"
             >
-              <span>Khám phá thêm các chương trình tại Trang Khuyến Mãi</span>
+              <Percent className="w-4 h-4 text-rose-600" />
+              <span>Khám Phá Tất Cả Chương Trình Tại Trang Khuyến Mãi</span>
               <ChevronRight className="w-4 h-4 text-[#8c5932]" />
             </button>
           </div>

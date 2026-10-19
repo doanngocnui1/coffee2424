@@ -48,7 +48,9 @@ import {
   RotateCcw,
   MessageSquare,
   Heart,
-  Armchair
+  Armchair,
+  UtensilsCrossed,
+  Percent
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
@@ -68,6 +70,8 @@ import {
 import AdminHeroSlideManager from '../components/admin/AdminHeroSlideManager';
 import AdminGlassBackgroundManager from '../components/admin/AdminGlassBackgroundManager';
 import AdminWhatsNewManager from '../components/admin/AdminWhatsNewManager';
+import AdminNewDishesManager from '../components/admin/AdminNewDishesManager';
+import AdminPromotionsManager from '../components/admin/AdminPromotionsManager';
 import AdminSpaceAmenitiesManager from '../components/admin/AdminSpaceAmenitiesManager';
 import AdminReviewsHeaderCard from '../components/admin/AdminReviewsHeaderCard';
 
@@ -102,7 +106,7 @@ export default function AdminPage({ navigate }) {
 
   // Automatically expand group containing activeTab when activeTab changes
   useEffect(() => {
-    if (['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+    if (['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, home: true }));
     } else if (activeTab === 'about') {
       setOpenGroups(prev => ({ ...prev, about: true }));
@@ -152,7 +156,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
+      const allTabs = ['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
@@ -1249,9 +1253,9 @@ export default function AdminPage({ navigate }) {
           <div className="p-3 sm:p-3.5 space-y-2.5 flex-1 overflow-y-auto">
             
             {/* NHÓM 1: 🏠 TRANG CHỦ */}
-            {['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
+            {['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                ['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                ['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                   ? 'bg-amber-500/10 border-amber-600/40 shadow-xs'
                   : 'bg-white/70 hover:bg-white/90 border-white/80'
               }`}>
@@ -1260,7 +1264,7 @@ export default function AdminPage({ navigate }) {
                   type="button"
                   onClick={() => {
                     toggleGroup('home');
-                    if (!['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+                    if (!['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
                       setActiveTab('heroSlide');
                     }
                   }}
@@ -1268,7 +1272,7 @@ export default function AdminPage({ navigate }) {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      ['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                      ['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                         ? 'bg-[#2b170e] text-amber-300 shadow-xs'
                         : 'bg-white/90 text-[#8c5932] group-hover:bg-[#2b170e] group-hover:text-amber-300'
                     }`}>
@@ -1365,30 +1369,58 @@ export default function AdminPage({ navigate }) {
                       </button>
                     )}
 
-                    {/* 1.1b: Món Mới & Ưu Đãi Trang Chủ (Poster 3x4) */}
-                    {hasPermission(currentUser, 'whatsNew') && (
+                    {/* 1.1b: Món Mới Trình Làng (Poster 3:4) */}
+                    {hasPermission(currentUser, 'newDishes') && (
                       <button
                         type="button"
-                        onClick={() => { setActiveTab('whatsNew'); setMobileSidebarOpen(false); }}
+                        onClick={() => { setActiveTab('newDishes'); setMobileSidebarOpen(false); }}
                         className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
-                          activeTab === 'whatsNew'
+                          activeTab === 'newDishes'
                             ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
                             : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <Flame className={`w-4 h-4 shrink-0 ${activeTab === 'whatsNew' ? 'text-amber-300' : 'text-orange-600'}`} />
+                          <UtensilsCrossed className={`w-4 h-4 shrink-0 ${activeTab === 'newDishes' ? 'text-amber-300' : 'text-orange-600'}`} />
                           <div className="truncate">
-                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Món Mới & Ưu Đãi</span>
-                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'whatsNew' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
-                              Poster dọc 3:4 trang chủ
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Món Mới Trình Làng</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'newDishes' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Poster món mới 3:4
                             </span>
                           </div>
                         </div>
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
-                          activeTab === 'whatsNew' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
+                          activeTab === 'newDishes' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
                         }`}>
-                          {(config.homePosters || []).length || 3}
+                          {(config.newDishesList || []).length || 3}
+                        </span>
+                      </button>
+                    )}
+
+                    {/* 1.1c: Chương Trình Ưu Đãi (Poster 3:4) */}
+                    {hasPermission(currentUser, 'promotions') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('promotions'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'promotions'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Percent className={`w-4 h-4 shrink-0 ${activeTab === 'promotions' ? 'text-amber-300' : 'text-rose-600'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Chương Trình Ưu Đãi</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'promotions' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Poster khuyến mãi 3:4
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
+                          activeTab === 'promotions' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
+                        }`}>
+                          {(config.promotionsList || []).length || 3}
                         </span>
                       </button>
                     )}
@@ -2149,9 +2181,33 @@ export default function AdminPage({ navigate }) {
           />
         )}
 
-        {/* TAB MÓN MỚI & ƯU ĐÃI TRANG CHỦ */}
+        {/* TAB MÓN MỚI TRÌNH LÀNG TRANG CHỦ */}
+        {activeTab === 'newDishes' && (
+          <AdminNewDishesManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
+        )}
+
+        {/* TAB CHƯƠNG TRÌNH ƯU ĐÃI TRANG CHỦ */}
+        {activeTab === 'promotions' && (
+          <AdminPromotionsManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
+        )}
+
+        {/* TAB MÓN MỚI & ƯU ĐÃI TRANG CHỦ (LEGACY FALLBACK) */}
         {activeTab === 'whatsNew' && (
-          <AdminWhatsNewManager 
+          <AdminNewDishesManager 
             config={config} 
             onSaveConfig={(newConf) => {
               setConfig(newConf);
@@ -2986,25 +3042,37 @@ export default function AdminPage({ navigate }) {
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                      <span>Quản Lý Món Mới Trình Làng & Ưu Đãi (Poster Dọc 3:4)</span>
+                      <span>Quản Lý Món Mới & Chương Trình Ưu Đãi (Poster Dọc 3:4)</span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30">
-                        Mục Quản Lý Riêng
+                        2 Mục Riêng Biệt
                       </span>
                     </h3>
                     <p className="text-xs text-neutral-400 mt-0.5">
-                      Đã được chuyển sang tab chuyên biệt riêng để thêm món mới không giới hạn, nén ảnh tự động và trượt trái/phải trên máy tính & điện thoại.
+                      Đã được tách thành 2 tab chuyên biệt: Món Mới Trình Làng và Chương Trình Ưu Đãi để quản lý riêng rẽ, nén ảnh tự động và trượt xem tiện lợi.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('whatsNew')}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-all whitespace-nowrap"
-                >
-                  <span>Mở Quản Lý Món Mới</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('newDishes')}
+                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                  >
+                    <UtensilsCrossed className="w-3.5 h-3.5" />
+                    <span>Quản Lý Món Mới</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('promotions')}
+                    className="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                  >
+                    <Percent className="w-3.5 h-3.5" />
+                    <span>Quản Lý Ưu Đãi</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
