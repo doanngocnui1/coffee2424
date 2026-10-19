@@ -1,3 +1,5 @@
+import { saveCloudSiteConfig, fetchCloudSiteConfig } from '../lib/supabase';
+
 export const DEFAULT_SITE_CONFIG = {
   brandName: 'COFFEE 24/24',
   slogan: 'Enjoy Your Life',
@@ -791,9 +793,36 @@ export function saveSiteConfig(newConfig) {
     }
 
     window.dispatchEvent(new Event('site-config-updated'));
+
+    // Đồng bộ tức thời lên Supabase Cloud (chạy nền, không chặn giao diện)
+    saveCloudSiteConfig(newConfig).catch(err => {
+      console.warn('Không thể đồng bộ Supabase Cloud:', err);
+    });
+
     return true;
   } catch (e) {
     console.error('Error saving config:', e);
     return false;
   }
 }
+
+/**
+ * Đồng bộ cấu hình từ Supabase Cloud về máy client khi khởi động web
+ */
+export async function syncSiteConfigWithCloud() {
+  try {
+    const cloudConfig = await fetchCloudSiteConfig();
+    if (cloudConfig && typeof cloudConfig === 'object') {
+      const currentConfig = getSiteConfig();
+      const mergedConfig = { ...currentConfig, ...cloudConfig };
+      localStorage.setItem('coffee2424_site_config', JSON.stringify(mergedConfig));
+      window.dispatchEvent(new Event('site-config-updated'));
+      console.info('✓ Đã đồng bộ cấu hình thành công từ Supabase Cloud!');
+      return mergedConfig;
+    }
+  } catch (err) {
+    console.warn('Lỗi khi tải cấu hình từ Supabase:', err);
+  }
+  return null;
+}
+

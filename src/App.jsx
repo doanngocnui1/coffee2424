@@ -10,14 +10,15 @@ import BlogPage from './pages/BlogPage';
 import AdminPage from './pages/AdminPage';
 
 import SideBanners from './components/SideBanners';
-import { getSiteConfig } from './data/siteConfig';
+import { getSiteConfig, syncSiteConfigWithCloud } from './data/siteConfig';
+import { subscribeToCloudSiteConfig } from './lib/supabase';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
 
-  // Sync with browser back/forward buttons & site config updates
+  // Sync with browser back/forward buttons, local events & Supabase Cloud
   useEffect(() => {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname || '/');
@@ -30,10 +31,19 @@ export default function App() {
     window.addEventListener('site-config-updated', handleConfigUpdate);
     window.addEventListener('storage', handleConfigUpdate);
 
+    // Tự động kéo cấu hình mới nhất từ Supabase Cloud khi mở trang
+    syncSiteConfigWithCloud();
+
+    // Lắng nghe cập nhật Realtime từ Supabase (khi có ai sửa từ máy khác)
+    const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData) => {
+      setSiteConfig(prev => ({ ...prev, ...newCloudData }));
+    });
+
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('site-config-updated', handleConfigUpdate);
       window.removeEventListener('storage', handleConfigUpdate);
+      if (typeof unsubscribeCloud === 'function') unsubscribeCloud();
     };
   }, []);
 
