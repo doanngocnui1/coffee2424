@@ -357,7 +357,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
       {mounted && typeof document !== 'undefined' && createPortal(
         <aside 
           aria-label="Thanh tiến trình cuộn trang"
-          className="fixed right-3.5 sm:right-6 bottom-8 z-50 hidden md:flex flex-col items-center gap-2.5 p-2 rounded-full bg-white/75 backdrop-blur-2xl border border-white/90 shadow-[0_12px_40px_rgba(43,23,14,0.15)] transition-all duration-300 group hover:shadow-2xl pointer-events-auto"
+          className="fixed right-3.5 sm:right-6 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-2.5 p-2 rounded-full bg-white/75 backdrop-blur-2xl border border-white/90 shadow-[0_12px_40px_rgba(43,23,14,0.15)] transition-all duration-300 group hover:shadow-2xl pointer-events-auto"
         >
           {/* Animated Rotating Cup with Steam */}
           <div 
