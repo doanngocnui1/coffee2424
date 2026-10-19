@@ -193,6 +193,26 @@ export const DEFAULT_SITE_CONFIG = {
     highlightTitle: 'Ưu Đãi Đặc Quyền',
     subtitle: 'Cập nhật món mới và ưu đãi nổi bật dành cho học tập & làm việc.'
   },
+  // Khối Không Gian Lý Tưởng Cho Học Tập & Làm Việc (Trang Chủ)
+  spaceAmenities: {
+    enabled: true,
+    title: 'Không Gian Lý Tưởng Cho',
+    highlightTitle: 'Học Tập & Làm Việc',
+    quote: 'Với không gian rộng rãi, ánh sáng dịu nhẹ, âm thanh yên tĩnh, nhiệt độ phòng mát mẻ, và hệ thống ổ điện được trang bị ở tất cả các vị trí có bàn ghế, đảm bảo không gian làm việc và học tập thuận tiện cho khách hàng.',
+    chips: [
+      { id: 'chip-1', title: 'Ổ Điện 100% Bàn Ghế', icon: 'zap', color: 'amber' },
+      { id: 'chip-2', title: 'Không Gian Rộng Rãi', icon: 'compass', color: 'emerald' },
+      { id: 'chip-3', title: 'Ánh Sáng Dịu Nhẹ', icon: 'sun', color: 'orange' },
+      { id: 'chip-4', title: 'Âm Thanh Yên Tĩnh', icon: 'volume2', color: 'indigo' },
+      { id: 'chip-5', title: 'Nhiệt Độ Mát Mẻ', icon: 'wind', color: 'teal' }
+    ],
+    photos: [
+      { id: 'photo-1', title: 'Bàn Dài Học Nhóm 8-12 Bạn', image: '/images/branch_downtown.jpg' },
+      { id: 'photo-2', title: 'Góc Chạy Deadline Yên Tĩnh', image: '/images/blog_workspace.jpg' },
+      { id: 'photo-3', title: 'Ánh Sáng Chuẩn Công Thái Học', image: '/images/blog_student_study.jpg' },
+      { id: 'photo-4', title: 'Sofa Thư Giãn & Xả Stress', image: '/images/blog_gaming_chill.jpg' }
+    ]
+  },
   // Danh Sách Poster Dọc 3x4 Trang Chủ (Món mới & Chương trình nổi bật)
   homePosters: [
     {

@@ -38,6 +38,28 @@ import {
   getLayerBadgeClass 
 } from '../data/bannerDesignerPresets';
 
+const AMENITY_ICONS = {
+  zap: Zap,
+  compass: Compass,
+  sun: Sun,
+  volume2: Volume2,
+  wind: Wind,
+  armchair: Armchair,
+  wifi: Wifi,
+  coffee: Coffee
+};
+
+const AMENITY_COLORS = {
+  amber: 'bg-amber-500/15 text-amber-700',
+  emerald: 'bg-emerald-500/15 text-emerald-700',
+  orange: 'bg-orange-500/15 text-orange-600',
+  indigo: 'bg-indigo-500/15 text-indigo-600',
+  teal: 'bg-teal-500/15 text-teal-700',
+  rose: 'bg-rose-500/15 text-rose-600',
+  cyan: 'bg-cyan-500/15 text-cyan-700',
+  purple: 'bg-purple-500/15 text-purple-700'
+};
+
 export default function HomePage({ navigate, onSelectBranch }) {
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
   const [selectedOfferingIndex, setSelectedOfferingIndex] = useState(0);
@@ -698,95 +720,82 @@ export default function HomePage({ navigate, onSelectBranch }) {
       )}
 
       {/* =========================================================================
-          3. SECTION: KHÔNG GIAN & TIỆN NGHI 24/7
+          3. SECTION: KHÔNG GIAN & TIỆN NGHI 24/7 (ĐIỀU KHIỂN TỪ TRANG ADMIN)
           ========================================================================= */}
-      <section 
-        id="amenities" 
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16"
-      >
-        <div className="relative rounded-[40px] sm:rounded-[56px] ios-glass-panel p-6 sm:p-10 lg:p-12 border border-white/90 shadow-[0_24px_70px_rgba(60,35,15,0.07)] space-y-8 sm:space-y-10">
-          
-          {/* Section Header */}
-          <div className="max-w-3xl mx-auto text-center space-y-4">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2b170e] tracking-tight uppercase leading-[1.3] sm:leading-[1.35]">
-              Không Gian Lý Tưởng Cho <br className="hidden sm:inline" />
-              <span className="text-[#8c5932] inline-block mt-1">Học Tập & Làm Việc</span>
-            </h2>
+      {(siteConfig.spaceAmenities?.enabled !== false) && (
+        <section 
+          id="amenities" 
+          className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16"
+        >
+          <div className="relative rounded-[40px] sm:rounded-[56px] ios-glass-panel p-6 sm:p-10 lg:p-12 border border-white/90 shadow-[0_24px_70px_rgba(60,35,15,0.07)] space-y-8 sm:space-y-10">
+            
+            {/* Section Header */}
+            <div className="max-w-3xl mx-auto text-center space-y-4">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2b170e] tracking-tight uppercase leading-[1.3] sm:leading-[1.35]">
+                {siteConfig.spaceAmenities?.title || 'Không Gian Lý Tưởng Cho'}{' '}
+                <br className="hidden sm:inline" />
+                <span className="text-[#8c5932] inline-block mt-1">
+                  {siteConfig.spaceAmenities?.highlightTitle || 'Học Tập & Làm Việc'}
+                </span>
+              </h2>
 
-            {/* Exactly User's Provided Paragraph in an Elegant Compact Box */}
-            <p className="text-sm sm:text-base md:text-lg text-[#3d2417] font-medium leading-relaxed p-5 sm:p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white/90 shadow-2xs italic">
-              “Với không gian rộng rãi, ánh sáng dịu nhẹ, âm thanh yên tĩnh, nhiệt độ phòng mát mẻ, và hệ thống ổ điện được trang bị ở tất cả các vị trí có bàn ghế, đảm bảo không gian làm việc và học tập thuận tiện cho khách hàng.”
-            </p>
+              {/* Exactly User's Provided Paragraph in an Elegant Compact Box */}
+              {siteConfig.spaceAmenities?.quote && (
+                <p className="text-sm sm:text-base md:text-lg text-[#3d2417] font-medium leading-relaxed p-5 sm:p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white/90 shadow-2xs italic">
+                  “{siteConfig.spaceAmenities.quote}”
+                </p>
+              )}
+            </div>
+
+            {/* Sleek Compact Highlight Chips (Được cấu hình trong Admin) */}
+            {(siteConfig.spaceAmenities?.chips || []).length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
+                {siteConfig.spaceAmenities.chips.map((chip, idx) => {
+                  const IconComp = AMENITY_ICONS[chip.icon] || Zap;
+                  const colorClass = AMENITY_COLORS[chip.color] || 'bg-amber-500/15 text-amber-700';
+                  const isLastOdd = idx === (siteConfig.spaceAmenities.chips.length - 1) && (siteConfig.spaceAmenities.chips.length % 2 !== 0);
+
+                  return (
+                    <div 
+                      key={chip.id || idx}
+                      className={`flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-white/75 border border-white/90 shadow-2xs hover:bg-white transition-all ${
+                        isLastOdd ? 'col-span-2 sm:col-span-1' : ''
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}>
+                        <IconComp className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                      <span className="text-xs sm:text-sm font-bold text-[#2b170e] truncate">{chip.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Photo Gallery Grid of Coffee Shop Spaces (Được cấu hình & upload từ Admin) */}
+            {(siteConfig.spaceAmenities?.photos || []).length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                {siteConfig.spaceAmenities.photos.map((photo, idx) => (
+                  <div key={photo.id || idx} className="h-52 sm:h-56 rounded-3xl overflow-hidden relative shadow-md group">
+                    <img 
+                      src={photo.image} 
+                      alt={photo.title || `Không gian ${idx + 1}`} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      onError={(e) => {
+                        e.currentTarget.src = '/images/branch_downtown.jpg';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+                      <span className="text-xs font-bold text-white line-clamp-1">{photo.title}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
           </div>
-
-          {/* 5 Sleek Compact Highlight Chips (Gọn gàng, ít chữ lại) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
-            <div className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-white/75 border border-white/90 shadow-2xs hover:bg-white transition-all">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0">
-                <Zap className="w-4 h-4 stroke-[2.5]" />
-              </div>
-              <span className="text-xs sm:text-sm font-bold text-[#2b170e]">Ổ Điện 100% Bàn Ghế</span>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-white/75 border border-white/90 shadow-2xs hover:bg-white transition-all">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-700 flex items-center justify-center shrink-0">
-                <Compass className="w-4 h-4 stroke-[2.5]" />
-              </div>
-              <span className="text-xs sm:text-sm font-bold text-[#2b170e]">Không Gian Rộng Rãi</span>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-white/75 border border-white/90 shadow-2xs hover:bg-white transition-all">
-              <div className="w-8 h-8 rounded-xl bg-orange-500/15 text-orange-600 flex items-center justify-center shrink-0">
-                <Sun className="w-4 h-4 stroke-[2.5]" />
-              </div>
-              <span className="text-xs sm:text-sm font-bold text-[#2b170e]">Ánh Sáng Dịu Nhẹ</span>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-white/75 border border-white/90 shadow-2xs hover:bg-white transition-all">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/15 text-indigo-600 flex items-center justify-center shrink-0">
-                <Volume2 className="w-4 h-4 stroke-[2.5]" />
-              </div>
-              <span className="text-xs sm:text-sm font-bold text-[#2b170e]">Âm Thanh Yên Tĩnh</span>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-white/75 border border-white/90 shadow-2xs hover:bg-white transition-all col-span-2 sm:col-span-1">
-              <div className="w-8 h-8 rounded-xl bg-teal-500/15 text-teal-700 flex items-center justify-center shrink-0">
-                <Wind className="w-4 h-4 stroke-[2.5]" />
-              </div>
-              <span className="text-xs sm:text-sm font-bold text-[#2b170e]">Nhiệt Độ Mát Mẻ</span>
-            </div>
-          </div>
-
-          {/* Photo Gallery Grid of Coffee Shop Spaces */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-            <div className="h-52 sm:h-56 rounded-3xl overflow-hidden relative shadow-md group">
-              <img src="/images/branch_downtown.jpg" alt="Không gian học nhóm" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
-                <span className="text-xs font-bold text-white">Bàn Dài Học Nhóm 8-12 Bạn</span>
-              </div>
-            </div>
-            <div className="h-52 sm:h-56 rounded-3xl overflow-hidden relative shadow-md group">
-              <img src="/images/blog_workspace.jpg" alt="Ổ cắm điện riêng" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
-                <span className="text-xs font-bold text-white">Góc Chạy Deadline Yên Tĩnh</span>
-              </div>
-            </div>
-            <div className="h-52 sm:h-56 rounded-3xl overflow-hidden relative shadow-md group">
-              <img src="/images/blog_student_study.jpg" alt="Ánh sáng bảo vệ mắt" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
-                <span className="text-xs font-bold text-white">Ánh Sáng Chuẩn Công Thái Học</span>
-              </div>
-            </div>
-            <div className="h-52 sm:h-56 rounded-3xl overflow-hidden relative shadow-md group">
-              <img src="/images/blog_gaming_chill.jpg" alt="Sofa thư giãn" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
-                <span className="text-xs font-bold text-white">Sofa Thư Giãn & Xả Stress</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* =========================================================================
           4. SECTION: COFFEE 24/24 BÁN GÌ? (TRÌNH DIỄN ĐƠN NHẤT & LIỀN MẠCH)

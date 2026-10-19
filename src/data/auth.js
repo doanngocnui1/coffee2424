@@ -4,6 +4,7 @@ export const ALL_PERMISSIONS = [
   { id: 'heroSlide', label: 'Hero Slide 1 & Hình Ảnh', group: 'Trang Chủ', desc: 'Tùy chỉnh hình ảnh ly cà phê, chữ, màu sắc, hiệu ứng' },
   { id: 'glassBg', label: 'Hình Nền & Kính Mờ', group: 'Trang Chủ', desc: 'Đổi hình nền phía sau lớp kính mờ, độ mờ xuyên thấu' },
   { id: 'whatsNew', label: 'Món Mới & Ưu Đãi', group: 'Trang Chủ', desc: 'Quản lý danh sách poster món mới dọc 3x4 trang chủ' },
+  { id: 'spaceAmenities', label: 'Không Gian & Tiện Nghi', group: 'Trang Chủ', desc: 'Quản lý đoạn trích dẫn, 5 tiện ích và 4 hình ảnh góc quán' },
   { id: 'sideBanners', label: '2 Poster Dọc 2 Bên', group: 'Trang Chủ', desc: 'Đổi ảnh poster đứng trượt 2 bên màn hình' },
   { id: 'bannerSections', label: 'Khối Banner & Check-in', group: 'Trang Chủ', desc: 'Quản lý ưu đãi đêm & hashtag check-in' },
   { id: 'theme', label: 'Slogan & Thương Hiệu', group: 'Trang Chủ', desc: 'Đổi slogan "Enjoy Your Life", tên thương hiệu' },
@@ -36,7 +37,7 @@ export const INITIAL_ACCOUNTS = [
     name: 'Biên Tập Viên Marketing',
     role: 'marketing',
     roleName: 'Biên Tập & Marketing',
-    permissions: ['heroSlide', 'glassBg', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'about', 'articles'],
+    permissions: ['heroSlide', 'glassBg', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'about', 'articles'],
     active: true,
     createdAt: '16/10/2026'
   },
