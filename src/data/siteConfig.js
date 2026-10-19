@@ -185,7 +185,15 @@ export const DEFAULT_SITE_CONFIG = {
       link: '/khuyenmai'
     }
   },
-  // 3 Poster Dọc 3x4 Trang Chủ (Món mới & Chương trình nổi bật)
+  // Khối Món Mới Trình Làng & Ưu Đãi Đặc Quyền (Trang Chủ)
+  whatsNewSection: {
+    enabled: true,
+    badge: 'Món Mới & Ưu Đãi',
+    title: 'Món Mới Trình Làng &',
+    highlightTitle: 'Ưu Đãi Đặc Quyền',
+    subtitle: 'Cập nhật món mới và ưu đãi nổi bật dành cho học tập & làm việc.'
+  },
+  // Danh Sách Poster Dọc 3x4 Trang Chủ (Món mới & Chương trình nổi bật)
   homePosters: [
     {
       id: 'poster-1',

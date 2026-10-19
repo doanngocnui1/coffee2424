@@ -66,6 +66,7 @@ import {
 } from '../data/auth';
 import AdminHeroSlideManager from '../components/admin/AdminHeroSlideManager';
 import AdminGlassBackgroundManager from '../components/admin/AdminGlassBackgroundManager';
+import AdminWhatsNewManager from '../components/admin/AdminWhatsNewManager';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -1245,9 +1246,9 @@ export default function AdminPage({ navigate }) {
           <div className="p-3 sm:p-3.5 space-y-2.5 flex-1 overflow-y-auto">
             
             {/* NHÓM 1: 🏠 TRANG CHỦ */}
-            {['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
+            {['heroSlide', 'glassBg', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                ['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                ['heroSlide', 'glassBg', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                   ? 'bg-amber-500/10 border-amber-600/40 shadow-xs'
                   : 'bg-white/70 hover:bg-white/90 border-white/80'
               }`}>
@@ -1256,7 +1257,7 @@ export default function AdminPage({ navigate }) {
                   type="button"
                   onClick={() => {
                     toggleGroup('home');
-                    if (!['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+                    if (!['heroSlide', 'glassBg', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
                       setActiveTab('heroSlide');
                     }
                   }}
@@ -1358,6 +1359,34 @@ export default function AdminPage({ navigate }) {
                           </div>
                         </div>
                         <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'sideBanners' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                      </button>
+                    )}
+
+                    {/* 1.1b: Món Mới & Ưu Đãi Trang Chủ (Poster 3x4) */}
+                    {hasPermission(currentUser, 'whatsNew') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('whatsNew'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'whatsNew'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Flame className={`w-4 h-4 shrink-0 ${activeTab === 'whatsNew' ? 'text-amber-300' : 'text-orange-600'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Món Mới & Ưu Đãi</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'whatsNew' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Poster dọc 3:4 trang chủ
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
+                          activeTab === 'whatsNew' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
+                        }`}>
+                          {(config.homePosters || []).length || 3}
+                        </span>
                       </button>
                     )}
 
@@ -2084,6 +2113,18 @@ export default function AdminPage({ navigate }) {
         {/* TAB HÌNH NỀN & HIỆU ỨNG KÍNH MỜ */}
         {activeTab === 'glassBg' && (
           <AdminGlassBackgroundManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
+        )}
+
+        {/* TAB MÓN MỚI & ƯU ĐÃI TRANG CHỦ */}
+        {activeTab === 'whatsNew' && (
+          <AdminWhatsNewManager 
             config={config} 
             onSaveConfig={(newConf) => {
               setConfig(newConf);
@@ -2897,132 +2938,34 @@ export default function AdminPage({ navigate }) {
 
             </div>
 
-            {/* PHẦN 2: 3 POSTER DỌC 3x4 TRANG CHỦ (MÓN MỚI & ƯU ĐÃI) */}
-            <div className="pt-8 border-t border-neutral-800 space-y-6">
-              <div>
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  <span>Quản Lý 3 Poster Dọc 3x4 Trang Chủ (Món Mới & Ưu Đãi)</span>
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Chuẩn tỉ lệ dọc 3:4. Tải poster trực tiếp từ máy tính (ảnh được tự động nén tối ưu hiển thị) hoặc nhập liên kết, chỉnh sửa tiêu đề và nút bấm.
-                </p>
-              </div>
+            {/* THÔNG BÁO CHUYỂN TIẾP SANG TAB MÓN MỚI CHUYÊN BIỆT */}
+            <div className="pt-8 border-t border-neutral-800">
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-orange-950/40 via-neutral-900 to-neutral-950 border border-orange-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-orange-500 text-black shadow-lg">
+                    <Flame className="w-6 h-6 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                      <span>Quản Lý Món Mới Trình Làng & Ưu Đãi (Poster Dọc 3:4)</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30">
+                        Mục Quản Lý Riêng
+                      </span>
+                    </h3>
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      Đã được chuyển sang tab chuyên biệt riêng để thêm món mới không giới hạn, nén ảnh tự động và trượt trái/phải trên máy tính & điện thoại.
+                    </p>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[0, 1, 2].map((idx) => {
-                  const posters = (config.homePosters && config.homePosters.length > 0)
-                    ? config.homePosters
-                    : [
-                        { id: 'poster-1', tag: 'MÓN MỚI', title: 'Matcha MK4 Latte & Cold Brew Cam Vàng', discount: 'GIẢM 20%', image: '/images/promo_banner.jpg', cta: 'Thử Món Mới', link: '/dathang' },
-                        { id: 'poster-2', tag: 'COMBO HOT', title: 'Combo Sáng & Đêm Khuya 69K', discount: 'CHỈ 69.000đ', image: '/images/signature_drinks.jpg', cta: 'Đặt Combo 69K', link: '/dathang' },
-                        { id: 'poster-3', tag: 'GIỜ VÀNG', title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày', discount: 'GIẢM 40%', image: '/images/journey_espresso.jpg', cta: 'Lấy Mã Giảm', link: '/khuyenmai' }
-                      ];
-                  const p = posters[idx] || {};
-
-                  return (
-                    <div key={idx} className="bg-neutral-950 p-5 rounded-3xl border border-neutral-800 space-y-4 flex flex-col justify-between">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
-                          <span className="text-xs font-black text-amber-400 uppercase">
-                            POSTER #{idx + 1}
-                          </span>
-                          <span className="text-[11px] text-neutral-400 font-mono">Tỉ lệ dọc 3:4</span>
-                        </div>
-
-                        {/* Preview Box: Tỉ lệ chuẩn 3x4 */}
-                        <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 group shadow-inner">
-                          <img 
-                            src={p.image || '/images/promo_banner.jpg'} 
-                            alt={p.title || ''}
-                            className="w-full h-full object-cover" 
-                          />
-                          {p.tag && (
-                            <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-white text-[10px] font-black uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/20">
-                              {p.tag}
-                            </span>
-                          )}
-                          {p.discount && (
-                            <span className="absolute bottom-2 right-2 px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-mono text-[11px] font-black shadow-md">
-                              {p.discount}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Upload Button */}
-                        <div>
-                          <input
-                            type="file"
-                            id={`home-poster-file-${idx}`}
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                handleUploadHomePoster(idx, e.target.files[0]);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => document.getElementById(`home-poster-file-${idx}`)?.click()}
-                            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
-                          >
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>Tải Poster 3:4 Lên Từ Máy</span>
-                          </button>
-                        </div>
-
-                        {/* Fields */}
-                        <div className="space-y-2.5 pt-1">
-                          <div>
-                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Nhãn góc trên (Tag)</label>
-                            <input
-                              type="text"
-                              value={p.tag || ''}
-                              onChange={(e) => handleUpdateHomePoster(idx, 'tag', e.target.value)}
-                              placeholder="MÓN MỚI, COMBO HOT..."
-                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Tiêu đề poster</label>
-                            <input
-                              type="text"
-                              value={p.title || ''}
-                              onChange={(e) => handleUpdateHomePoster(idx, 'title', e.target.value)}
-                              placeholder="Tiêu đề hiển thị..."
-                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Huy hiệu giá / giảm giá</label>
-                            <input
-                              type="text"
-                              value={p.discount || ''}
-                              onChange={(e) => handleUpdateHomePoster(idx, 'discount', e.target.value)}
-                              placeholder="GIẢM 20%, CHỈ 69K..."
-                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-[11px] font-bold text-neutral-400 block mb-1">Đường dẫn khi bấm (Link đích)</label>
-                            <input
-                              type="text"
-                              value={p.link || ''}
-                              onChange={(e) => handleUpdateHomePoster(idx, 'link', e.target.value)}
-                              placeholder="/dathang, /khuyenmai..."
-                              className="w-full px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-medium focus:border-amber-500 focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-                  );
-                })}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('whatsNew')}
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                >
+                  <span>Mở Quản Lý Món Mới</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -3032,7 +2975,7 @@ export default function AdminPage({ navigate }) {
                 className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-2 shadow-lg cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>LƯU CẤU HÌNH TẤT CẢ POSTER QUẢNG CÁO</span>
+                <span>LƯU CẤU HÌNH 2 POSTER DỌC 2 BÊN</span>
               </button>
             </div>
           </div>
