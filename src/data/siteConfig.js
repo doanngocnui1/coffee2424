@@ -213,6 +213,17 @@ export const DEFAULT_SITE_CONFIG = {
       { id: 'photo-4', title: 'Sofa Thư Giãn & Xả Stress', image: '/images/blog_gaming_chill.jpg' }
     ]
   },
+  // Khối Tiêu Đề & Giới Thiệu Đánh Giá Khách Hàng (Trang Chủ)
+  reviewsSection: {
+    enabled: true,
+    badge: 'CẢM NHẬN THỰC TẾ',
+    showBadge: true,
+    title: 'Khách Hàng Đánh Giá',
+    highlightTitle: 'Như Thế Nào Về Chúng Tôi?',
+    subtitle: 'Hơn 1.200 đánh giá 5 sao từ cộng đồng học sinh, sinh viên các trường đại học lân cận, lập trình viên và giới freelancer chạy deadline thâu đêm.',
+    googleRatingText: '4.9 / 5.0 ⭐ trên Google Maps (1.200+ đánh giá)',
+    showGoogleRating: true
+  },
   // Danh Sách Poster Dọc 3x4 Trang Chủ (Món mới & Chương trình nổi bật)
   homePosters: [
     {

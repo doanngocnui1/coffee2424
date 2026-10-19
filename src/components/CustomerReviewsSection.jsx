@@ -10,11 +10,26 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { getReviews, saveReviews } from '../data/reviews';
+import { getSiteConfig } from '../data/siteConfig';
 
-export default function CustomerReviewsSection({ className = '' }) {
+export default function CustomerReviewsSection({ className = '', reviewsConfig }) {
   const [reviews, setReviews] = useState(getReviews);
+  const [siteConfig, setSiteConfig] = useState(getSiteConfig);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+
+  // Sync siteConfig updates
+  useEffect(() => {
+    const handleConfigSync = () => setSiteConfig(getSiteConfig());
+    window.addEventListener('site-config-updated', handleConfigSync);
+    window.addEventListener('storage', handleConfigSync);
+    return () => {
+      window.removeEventListener('site-config-updated', handleConfigSync);
+      window.removeEventListener('storage', handleConfigSync);
+    };
+  }, []);
+
+  const currentReviewsConfig = reviewsConfig || siteConfig?.reviewsSection;
 
   // Carousel slider state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -236,10 +251,12 @@ export default function CustomerReviewsSection({ className = '' }) {
 
       {/* Elegant Action & Trust Bar */}
       <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-        <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-xs text-[#5c3d2e] text-xs sm:text-sm font-bold">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>4.9 / 5.0 ⭐ trên Google Maps (1.200+ đánh giá)</span>
-        </div>
+        {currentReviewsConfig?.showGoogleRating !== false && (
+          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-xs text-[#5c3d2e] text-xs sm:text-sm font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{currentReviewsConfig?.googleRatingText || '4.9 / 5.0 ⭐ trên Google Maps (1.200+ đánh giá)'}</span>
+          </div>
+        )}
 
         <button
           onClick={() => setIsModalOpen(true)}

@@ -991,33 +991,42 @@ export default function HomePage({ navigate, onSelectBranch }) {
       </section>
 
       {/* =========================================================================
-          5. SECTION: KHÁCH HÀNG ĐÁNH GIÁ NHƯ THẾ NÀO VỀ CHÚNG TÔI?
+          5. SECTION: KHÁCH HÀNG ĐÁNH GIÁ NHƯ THẾ NÀO VỀ CHÚNG TÔI? (ĐIỀU KHIỂN TỪ ADMIN)
           ========================================================================= */}
-      <section 
-        id="reviews" 
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20"
-      >
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-white/90 text-[#8c5932] text-xs sm:text-sm font-black uppercase tracking-wider shadow-xs">
-            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <span>CẢM NHẬN THỰC TẾ</span>
+      {siteConfig.reviewsSection?.enabled !== false && (
+        <section 
+          id="reviews" 
+          className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20"
+        >
+          <div className="text-center max-w-3xl mx-auto space-y-4 mb-10 sm:mb-14">
+            {siteConfig.reviewsSection?.showBadge !== false && (
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-white/90 text-[#8c5932] text-xs sm:text-sm font-black uppercase tracking-wider shadow-xs">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span>{siteConfig.reviewsSection?.badge || 'CẢM NHẬN THỰC TẾ'}</span>
+              </div>
+            )}
+
+            <h2 className="text-3xl sm:text-5xl font-black text-[#2b170e] tracking-tight uppercase leading-[1.3] sm:leading-[1.35]">
+              {siteConfig.reviewsSection?.title || 'Khách Hàng Đánh Giá'}{' '}
+              <br className="hidden sm:inline" />
+              <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">
+                {siteConfig.reviewsSection?.highlightTitle || 'Như Thế Nào Về Chúng Tôi?'}
+              </span>
+            </h2>
+
+            {siteConfig.reviewsSection?.subtitle && (
+              <p className="text-base sm:text-lg text-[#5c3d2e] font-medium leading-relaxed">
+                {siteConfig.reviewsSection.subtitle}
+              </p>
+            )}
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-black text-[#2b170e] tracking-tight uppercase leading-[1.3] sm:leading-[1.35]">
-            Khách Hàng Đánh Giá <br className="hidden sm:inline" />
-            <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">Như Thế Nào Về Chúng Tôi?</span>
-          </h2>
-
-          <p className="text-base sm:text-lg text-[#5c3d2e] font-medium leading-relaxed">
-            Hơn 1.200 đánh giá 5 sao từ cộng đồng học sinh, sinh viên các trường đại học lân cận, lập trình viên và giới freelancer chạy deadline thâu đêm.
-          </p>
-        </div>
-
-        {/* Embed Customer Reviews Component */}
-        <div className="w-full">
-          <CustomerReviewsSection />
-        </div>
-      </section>
+          {/* Embed Customer Reviews Component */}
+          <div className="w-full">
+            <CustomerReviewsSection reviewsConfig={siteConfig.reviewsSection} />
+          </div>
+        </section>
+      )}
 
       {/* =========================================================================
           6. SECTION: KẾT NỐI VỚI COFFEE 24/24 QUA MẠNG XÃ HỘI

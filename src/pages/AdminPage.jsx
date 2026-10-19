@@ -69,6 +69,7 @@ import AdminHeroSlideManager from '../components/admin/AdminHeroSlideManager';
 import AdminGlassBackgroundManager from '../components/admin/AdminGlassBackgroundManager';
 import AdminWhatsNewManager from '../components/admin/AdminWhatsNewManager';
 import AdminSpaceAmenitiesManager from '../components/admin/AdminSpaceAmenitiesManager';
+import AdminReviewsHeaderCard from '../components/admin/AdminReviewsHeaderCard';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -5024,6 +5025,16 @@ export default function AdminPage({ navigate }) {
                   </div>
                 </div>
               </div>
+
+              {/* KHỐI CẤU HÌNH TIÊU ĐỀ & GIỚI THIỆU KHỐI ĐÁNH GIÁ TRANG CHỦ */}
+              <AdminReviewsHeaderCard 
+                config={config} 
+                onSaveConfig={(newConf) => {
+                  setConfig(newConf);
+                  saveSiteConfig(newConf);
+                }} 
+                triggerAlert={triggerAlert} 
+              />
 
               {/* Filter and Search Bar */}
               <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
