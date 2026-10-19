@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Sparkles, Share2, Eye, X, Check, Globe } from 'lucide-react';
 import { getSiteConfig } from '../data/siteConfig';
 
 // Authentic Brand SVGs for Pixel-Perfect Social Media Appearance
@@ -111,89 +110,14 @@ export function SocialRoundButtons({ platforms = [] }) {
   );
 }
 
-// Modal Xem Nhanh Plugin Fanpage & Mạng Xã Hội
-export function SocialPluginModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div 
-        className="bg-[#fcfaf7] border border-stone-200 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between bg-white/80">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
-              <BrandIcons.facebook />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-[#2b170e]">COFFEE 24/24 Official Page</h3>
-              <p className="text-[11px] text-[#8c5932] font-semibold">Plugin nhúng Fanpage & Kênh truyền thông</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Modal Body - Facebook Plugin Iframe */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex flex-col items-center justify-center space-y-4">
-          <div className="w-full max-w-[360px] rounded-2xl overflow-hidden border border-stone-200 bg-white shadow-md flex justify-center py-2">
-            <iframe
-              src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fcoffee2424&tabs=timeline&width=340&height=460&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId"
-              width="340"
-              height="460"
-              style={{ border: 'none', overflow: 'hidden' }}
-              scrolling="no"
-              frameBorder="0"
-              allowFullScreen={true}
-              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              title="Facebook Fanpage Coffee 24/24"
-            />
-          </div>
-
-          {/* Quick Direct Links */}
-          <div className="w-full grid grid-cols-2 gap-2 pt-2">
-            <a
-              href="https://www.facebook.com/coffee2424"
-              target="_blank"
-              rel="noreferrer"
-              className="py-2 px-3 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-blue-700 transition-colors shadow-xs"
-            >
-              <span>Mở Fanpage</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-            <a
-              href="https://www.tiktok.com/@hethongcoffee2424"
-              target="_blank"
-              rel="noreferrer"
-              className="py-2 px-3 rounded-xl bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-stone-900 transition-colors shadow-xs"
-            >
-              <span>Mở TikTok</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="px-6 py-3 bg-stone-50 border-t border-stone-200 text-center">
-          <p className="text-[11px] text-stone-500">
-            Hệ thống COFFEE 24/24 phục vụ 24/7 tại 413 Phan Huy Ích & 96 đường D5, TP.HCM
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+// Modal placeholder for backward compatibility
+export function SocialPluginModal() {
+  return null;
 }
 
-// Component chính dùng tại Trang Chủ & Chân Trang
+// Component chính dùng tại Trang Chủ, Chân Trang & Admin Preview
 export default function SocialFollowSection({ config: propConfig } = {}) {
   const [internalConfig, setInternalConfig] = useState(getSiteConfig);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const handleUpdate = () => setInternalConfig(getSiteConfig());
@@ -225,74 +149,8 @@ export default function SocialFollowSection({ config: propConfig } = {}) {
   }
 
   return (
-    <div className="w-full relative font-sans space-y-6 sm:space-y-8">
-      {/* 1. Thanh Kênh Mạng Xã Hội Tròn + Plugin Fanpage */}
-      <div className="p-4 sm:p-6 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-md flex flex-col lg:flex-row items-center justify-between gap-5 sm:gap-6">
-        <div className="text-center lg:text-left">
-          <span className="text-[11px] font-mono tracking-widest text-[#8c5932] font-black uppercase block">
-            {socialConfig.sectionTitle || 'FOLLOW OUR JOURNEY · #ENJOYYOURLIFE'}
-          </span>
-          <h3 className="text-base sm:text-xl font-black text-[#2b170e] mt-1">
-            {socialConfig.sectionSubtitle || 'Kết nối cùng cộng đồng COFFEE 24/24'}
-          </h3>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-          <SocialRoundButtons platforms={platforms} />
-
-          {/* Nút Xem Plugin Fanpage */}
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="h-12 sm:h-14 px-4 sm:px-5 rounded-full bg-white/90 hover:bg-blue-600 text-[#1877F2] hover:text-white border border-blue-200 hover:border-transparent font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
-            title="Xem bảng tin Fanpage Facebook"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Plugin Fanpage</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Thẻ Zalo Official Account & Quét Mã QR Chính Thức */}
-      {config.zaloOA?.visible !== false && (
-        <div className="max-w-sm mx-auto p-5 sm:p-6 rounded-[28px] bg-white/85 backdrop-blur-xl border border-white/95 shadow-lg text-center space-y-3 hover:shadow-xl transition-all duration-300 group">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#0068FF] text-[10.5px] font-black tracking-wider uppercase">
-            <span className="w-2 h-2 rounded-full bg-[#0068FF] animate-pulse"></span>
-            <span>{config.zaloOA?.title || 'Zalo Official Account'}</span>
-          </div>
-
-          {/* QR Code Frame */}
-          <div className="relative inline-block p-2 bg-white rounded-2xl border border-stone-200 shadow-xs group-hover:scale-105 transition-transform duration-300">
-            <img
-              src={config.zaloOA?.qrImage || '/images/qr_zalo_oa.png'}
-              alt="QR Zalo Official Account"
-              className="w-28 h-28 sm:w-32 sm:h-32 object-contain mx-auto"
-            />
-          </div>
-
-          <div>
-            <h4 className="text-sm sm:text-base font-black text-[#2b170e]">
-              {config.zaloOA?.oaName || 'COFFEE 24/24'}
-            </h4>
-            <p className="text-[11px] sm:text-xs text-[#704f38] leading-relaxed max-w-xs mx-auto mt-1">
-              {config.zaloOA?.desc || 'Quét mã QR bằng ứng dụng Zalo để nhận voucher thành viên & hỗ trợ 24/7.'}
-            </p>
-          </div>
-
-          <a
-            href={config.zaloOA?.url || 'https://zalo.me/197464281190102692'}
-            target="_blank"
-            rel="noreferrer"
-            className="w-full py-2.5 px-4 rounded-xl bg-[#0068FF] hover:bg-blue-600 text-white font-black text-xs flex items-center justify-center gap-2 shadow-[0_6px_18px_rgba(0,104,255,0.3)] hover:shadow-[0_10px_24px_rgba(0,104,255,0.4)] transition-all active:scale-95 cursor-pointer block"
-          >
-            <span>{config.zaloOA?.buttonText || 'Mở Zalo OA Nhận Ưu Đãi'}</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      )}
-
-      {/* Fanpage Preview Modal */}
-      <SocialPluginModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    <div className="w-full flex items-center justify-center py-2 sm:py-3">
+      <SocialRoundButtons platforms={platforms} />
     </div>
   );
 }
