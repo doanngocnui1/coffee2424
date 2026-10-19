@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Coffee, 
   Sparkles, 
@@ -75,6 +76,11 @@ export default function HomePage({ navigate, onSelectBranch }) {
     return false;
   });
   const [touchStartX, setTouchStartX] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Responsive resize listener for Món Mới carousel (3 on desktop, 1 on mobile)
   useEffect(() => {
@@ -293,8 +299,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
   return (
     <div className="relative w-full font-sans select-none pb-12 overflow-hidden text-[#2b170e]">
 
-      {/* FLOATING TOAST COPIED VOUCHER FEEDBACK */}
-      {copiedCode && (
+      {/* FLOATING TOAST COPIED VOUCHER FEEDBACK (CỐ ĐỊNH TRÊN MÀN HÌNH QUA PORTAL) */}
+      {copiedCode && mounted && typeof document !== 'undefined' && createPortal(
         <div className="fixed bottom-6 right-6 z-50 bg-[#2b170e] text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/20 animate-in fade-in slide-in-from-bottom duration-300">
           <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
             <Check className="w-5 h-5 stroke-[3]" />
@@ -303,73 +309,77 @@ export default function HomePage({ navigate, onSelectBranch }) {
             <div className="text-sm font-bold text-amber-200">Đã sao chép mã: <span className="font-mono text-white text-base font-black">{copiedCode}</span></div>
             <div className="text-xs text-stone-300">Dán vào ô mã giảm giá khi đặt món để nhận ưu đãi ngay!</div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* =========================================================================
-          ANIMATED SCROLL COMPANION (BIỂU TƯỢNG VÀ TIẾN TRÌNH CUỘN CHUYỂN ĐỘNG CÙNG)
+          ANIMATED SCROLL COMPANION (BIỂU TƯỢNG VÀ TIẾN TRÌNH CUỘN CỐ ĐỊNH TRÊN MÀN HÌNH QUA PORTAL)
           ========================================================================= */}
-      <aside 
-        aria-label="Thanh tiến trình cuộn trang"
-        className="fixed right-3.5 sm:right-6 bottom-8 z-40 hidden md:flex flex-col items-center gap-2.5 p-2 rounded-full bg-white/70 backdrop-blur-2xl border border-white/90 shadow-[0_12px_40px_rgba(43,23,14,0.15)] transition-all duration-300 group hover:shadow-2xl"
-      >
-        {/* Animated Rotating Cup with Steam */}
-        <div 
-          className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2b170e] to-[#160a05] text-amber-200 flex items-center justify-center shadow-md relative cursor-pointer"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          title="Nhấn để cuộn lên đầu trang"
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <aside 
+          aria-label="Thanh tiến trình cuộn trang"
+          className="fixed right-3.5 sm:right-6 bottom-8 z-50 hidden md:flex flex-col items-center gap-2.5 p-2 rounded-full bg-white/75 backdrop-blur-2xl border border-white/90 shadow-[0_12px_40px_rgba(43,23,14,0.15)] transition-all duration-300 group hover:shadow-2xl pointer-events-auto"
         >
-          <Coffee 
-            className="w-5 h-5 text-amber-200 transition-transform duration-200" 
-            style={{ transform: `rotate(${scrollY * 0.12}deg)` }}
-          />
-          {/* Steam bubble */}
-          <span className="absolute -top-1 w-1.5 h-3 rounded-full bg-amber-300/80 blur-[0.5px] animate-steam" />
-        </div>
-
-        {/* Scroll Progress Indicator Pill */}
-        <div className="flex flex-col items-center gap-1 py-1">
-          <span className="text-[10px] font-black text-[#8c5932] tracking-tighter">
-            {scrollProgress}%
-          </span>
-          <div className="w-1.5 h-20 bg-stone-300/60 rounded-full overflow-hidden relative">
-            <div 
-              className="w-full bg-gradient-to-b from-amber-600 to-[#2b170e] rounded-full transition-all duration-150"
-              style={{ height: `${scrollProgress}%` }}
+          {/* Animated Rotating Cup with Steam */}
+          <div 
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2b170e] to-[#160a05] text-amber-200 flex items-center justify-center shadow-md relative cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="Nhấn để cuộn lên đầu trang"
+          >
+            <Coffee 
+              className="w-5 h-5 text-amber-200 transition-transform duration-200" 
+              style={{ transform: `rotate(${scrollY * 0.12}deg)` }}
             />
+            {/* Steam bubble */}
+            <span className="absolute -top-1 w-1.5 h-3 rounded-full bg-amber-300/80 blur-[0.5px] animate-steam" />
           </div>
-        </div>
 
-        {/* Quick Section Jump Dots */}
-        <div className="flex flex-col items-center gap-2 pt-1 pb-1">
-          {[
-            { id: 'hero', label: '01 Trang Đầu' },
-            { id: 'whats-new', label: '02 Có Gì Mới' },
-            { id: 'amenities', label: '03 Không Gian' },
-            { id: 'menu', label: '04 Thực Đơn' },
-            { id: 'reviews', label: '05 Đánh Giá' },
-            { id: 'social', label: '06 Kết Nối' }
-          ].map(dot => (
-            <button
-              key={dot.id}
-              onClick={() => scrollToSection(dot.id)}
-              className="group/dot relative p-1 cursor-pointer"
-              title={dot.label}
-            >
+          {/* Scroll Progress Indicator Pill */}
+          <div className="flex flex-col items-center gap-1 py-1">
+            <span className="text-[10px] font-black text-[#8c5932] tracking-tighter">
+              {scrollProgress}%
+            </span>
+            <div className="w-1.5 h-20 bg-stone-300/60 rounded-full overflow-hidden relative">
               <div 
-                className={`transition-all duration-300 rounded-full ${
-                  activeNavSection === dot.id
-                    ? 'w-2.5 h-5 bg-[#2b170e] shadow-xs ring-2 ring-amber-500/40'
-                    : 'w-2 h-2 bg-[#8c5932]/40 hover:bg-[#8c5932] hover:scale-125'
-                }`}
+                className="w-full bg-gradient-to-b from-amber-600 to-[#2b170e] rounded-full transition-all duration-150"
+                style={{ height: `${scrollProgress}%` }}
               />
-              <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#2b170e] text-white whitespace-nowrap opacity-0 group-hover/dot:opacity-100 pointer-events-none transition-opacity shadow-lg">
-                {dot.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </aside>
+            </div>
+          </div>
+
+          {/* Quick Section Jump Dots */}
+          <div className="flex flex-col items-center gap-2 pt-1 pb-1">
+            {[
+              { id: 'hero', label: '01 Trang Đầu' },
+              { id: 'whats-new', label: '02 Có Gì Mới' },
+              { id: 'amenities', label: '03 Không Gian' },
+              { id: 'menu', label: '04 Thực Đơn' },
+              { id: 'reviews', label: '05 Đánh Giá' },
+              { id: 'social', label: '06 Kết Nối' }
+            ].map(dot => (
+              <button
+                key={dot.id}
+                onClick={() => scrollToSection(dot.id)}
+                className="group/dot relative p-1 cursor-pointer"
+                title={dot.label}
+              >
+                <div 
+                  className={`transition-all duration-300 rounded-full ${
+                    activeNavSection === dot.id
+                      ? 'w-2.5 h-5 bg-[#2b170e] shadow-xs ring-2 ring-amber-500/40'
+                      : 'w-2 h-2 bg-[#8c5932]/40 hover:bg-[#8c5932] hover:scale-125'
+                  }`}
+                />
+                <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#2b170e] text-white whitespace-nowrap opacity-0 group-hover/dot:opacity-100 pointer-events-none transition-opacity shadow-lg">
+                  {dot.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </aside>,
+        document.body
+      )}
 
       {/* PARALLAX DRIFTING PARTICLES IN BACKGROUND */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
