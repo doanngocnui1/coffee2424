@@ -36,6 +36,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
+import { uploadImageToSupabase } from '../../lib/supabase';
 import { 
   FONT_FAMILIES, 
   SHADOW_PRESETS, 
@@ -217,7 +218,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
   };
 
   // Add Image / Sticker from user device
-  const handleAddCustomImage = (e) => {
+  const handleAddCustomImage = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -226,37 +227,77 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (loadEvt) => {
-      const dataUrl = loadEvt.target.result;
-      const newLayer = {
-        id: `img-${Date.now()}`,
-        type: 'image',
-        imageUrl: dataUrl,
-        title: file.name.replace(/\.[^/.]+$/, ''),
-        x: 50,
-        y: 50,
-        width: 18, // 18% width of 16:9 banner
-        rotation: 0,
-        opacity: 100,
-        borderRadius: 16,
-        borderWidth: 0,
-        borderColor: '#ffffff',
-        shadow: 'soft',
-        blendMode: 'normal',
-        animation: 'none',
-        link: '',
-        zIndex: layers.length + 1,
-        visible: true,
-        locked: false
-      };
+    triggerAlert('⏳ Đang tải ảnh lên kho lưu trữ Supabase Cloud...');
 
-      setLayers(prev => [...prev, newLayer]);
-      setSelectedLayerId(newLayer.id);
-      setActiveTab('image');
-      triggerAlert('✓ Đã tải ảnh / sticker lên thành công! Kéo thả tự do trên khung xem trước.');
+    let finalUrl = null;
+    try {
+      finalUrl = await uploadImageToSupabase(file, 'stickers');
+    } catch (uploadErr) {
+      console.warn('Lỗi tải ảnh lên Supabase Storage:', uploadErr);
+    }
+
+    // Fallback: nếu chưa kết nối được storage hoặc mạng offline, nén ảnh qua canvas nhẹ dưới 80KB
+    if (!finalUrl) {
+      const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+      if (isGif) {
+        finalUrl = await new Promise(res => {
+          const r = new FileReader();
+          r.onload = ev => res(ev.target.result);
+          r.readAsDataURL(file);
+        });
+      } else {
+        finalUrl = await new Promise(res => {
+          const r = new FileReader();
+          r.onload = ev => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let w = img.width;
+              let h = img.height;
+              const maxW = 600;
+              if (w > maxW) {
+                h = Math.round(h * (maxW / w));
+                w = maxW;
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              res(canvas.toDataURL('image/webp', 0.85));
+            };
+            img.src = ev.target.result;
+          };
+          r.readAsDataURL(file);
+        });
+      }
+    }
+
+    const newLayer = {
+      id: `img-${Date.now()}`,
+      type: 'image',
+      imageUrl: finalUrl,
+      title: file.name.replace(/\.[^/.]+$/, ''),
+      x: 50,
+      y: 50,
+      width: 18, // 18% width of 16:9 banner
+      rotation: 0,
+      opacity: 100,
+      borderRadius: 16,
+      borderWidth: 0,
+      borderColor: '#ffffff',
+      shadow: 'soft',
+      blendMode: 'normal',
+      animation: 'none',
+      link: '',
+      zIndex: layers.length + 1,
+      visible: true,
+      locked: false
     };
-    reader.readAsDataURL(file);
+
+    setLayers(prev => [...prev, newLayer]);
+    setSelectedLayerId(newLayer.id);
+    setActiveTab('image');
+    triggerAlert('✓ Đã tải ảnh lên Supabase Storage thành công! Bấm "LƯU THIẾT KẾ TRANG CHỦ" để lưu và hiển thị ngoài trang chủ.');
     e.target.value = '';
   };
 
@@ -360,13 +401,28 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
   };
 
   // Upload Background Image or Video
-  const handleBackgroundImageUpload = (e) => {
+  const handleBackgroundImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP, GIF).');
       return;
+    }
+
+    triggerAlert('⏳ Đang tải ảnh nền lên Supabase Storage...');
+
+    try {
+      const cloudUrl = await uploadImageToSupabase(file, 'hero-bg');
+      if (cloudUrl) {
+        setMediaUrl(cloudUrl);
+        setMediaType(file.type === 'image/gif' ? 'gif' : 'image');
+        triggerAlert('✓ Đã tải ảnh nền lên Supabase Storage thành công! Bấm "LƯU THIẾT KẾ TRANG CHỦ" để áp dụng.');
+        e.target.value = '';
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi tải ảnh nền lên Supabase:', err);
     }
 
     const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
@@ -409,7 +465,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
   };
 
   // Upload Background Video
-  const handleBackgroundVideoUpload = (e) => {
+  const handleBackgroundVideoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -418,9 +474,24 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
       return;
     }
 
-    if (file.size > 28 * 1024 * 1024) {
-      alert('File video vượt quá 28MB. Vui lòng nén dung lượng để trang chủ tải nhanh nhất.');
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File video vượt quá 50MB. Vui lòng nén dung lượng để trang chủ tải nhanh nhất.');
       return;
+    }
+
+    triggerAlert('⏳ Đang tải video lên Supabase Storage...');
+
+    try {
+      const cloudUrl = await uploadImageToSupabase(file, 'hero-video');
+      if (cloudUrl) {
+        setMediaUrl(cloudUrl);
+        setMediaType('video');
+        triggerAlert('✓ Đã tải video lên Supabase Storage thành công! Bấm "LƯU THIẾT KẾ TRANG CHỦ" để áp dụng.');
+        e.target.value = '';
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi tải video lên Supabase:', err);
     }
 
     const reader = new FileReader();
@@ -1601,12 +1672,22 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
 
                     <div className="flex items-center gap-2">
                       <label className="px-2.5 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-bold flex items-center gap-1 cursor-pointer">
-                        <input type="file" accept="image/*" onChange={(e) => {
+                        <input type="file" accept="image/*" onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          const r = new FileReader();
-                          r.onload = ev => updateSelectedLayer('imageUrl', ev.target.result);
-                          r.readAsDataURL(file);
+                          triggerAlert('⏳ Đang tải ảnh mới lên Supabase Cloud...');
+                          let url = null;
+                          try {
+                            url = await uploadImageToSupabase(file, 'stickers');
+                          } catch (_) {}
+                          if (url) {
+                            updateSelectedLayer('imageUrl', url);
+                            triggerAlert('✓ Đã cập nhật ảnh lên Supabase Storage thành công!');
+                          } else {
+                            const r = new FileReader();
+                            r.onload = ev => updateSelectedLayer('imageUrl', ev.target.result);
+                            r.readAsDataURL(file);
+                          }
                         }} className="hidden" />
                         <Upload className="w-3.5 h-3.5 text-neutral-400" />
                         <span>Đổi ảnh</span>

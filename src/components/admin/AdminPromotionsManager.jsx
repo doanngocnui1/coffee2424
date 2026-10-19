@@ -18,6 +18,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
+import { uploadImageToSupabase } from '../../lib/supabase';
 
 export default function AdminPromotionsManager({ config, onSaveConfig, triggerAlert }) {
   const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [
@@ -163,13 +164,27 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     });
   };
 
-  // Nén ảnh tải lên từ máy tính
-  const handleUploadPromotionImage = (index, file) => {
+  // Tải ảnh ưu đãi lên Supabase Storage (kèm nén ảnh dự phòng)
+  const handleUploadPromotionImage = async (index, file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP, GIF...).');
       return;
     }
+
+    triggerAlert?.('⏳ Đang tải ảnh ưu đãi lên Supabase Storage...');
+
+    try {
+      const cloudUrl = await uploadImageToSupabase(file, 'promos');
+      if (cloudUrl) {
+        handleUpdatePromotionField(index, 'image', cloudUrl);
+        triggerAlert?.(`✓ Đã tải ảnh ưu đãi số ${index + 1} lên Supabase Storage thành công! Bấm "LƯU CẤU HÌNH" để áp dụng.`);
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi tải ảnh lên Supabase:', err);
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const rawDataUrl = e.target.result;

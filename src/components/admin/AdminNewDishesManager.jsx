@@ -18,6 +18,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
+import { uploadImageToSupabase } from '../../lib/supabase';
 
 export default function AdminNewDishesManager({ config, onSaveConfig, triggerAlert }) {
   const defaultDishes = DEFAULT_SITE_CONFIG.newDishesList || [
@@ -163,13 +164,27 @@ export default function AdminNewDishesManager({ config, onSaveConfig, triggerAle
     });
   };
 
-  // Nén ảnh tải lên từ máy tính
-  const handleUploadDishImage = (index, file) => {
+  // Tải ảnh lên Supabase Storage (kèm nén ảnh dự phòng)
+  const handleUploadDishImage = async (index, file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP, GIF...).');
       return;
     }
+
+    triggerAlert?.('⏳ Đang tải ảnh món mới lên Supabase Storage...');
+
+    try {
+      const cloudUrl = await uploadImageToSupabase(file, 'dishes');
+      if (cloudUrl) {
+        handleUpdateDishField(index, 'image', cloudUrl);
+        triggerAlert?.(`✓ Đã tải ảnh món số ${index + 1} lên Supabase Storage thành công! Bấm "LƯU CẤU HÌNH" để áp dụng.`);
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi tải ảnh lên Supabase:', err);
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const rawDataUrl = e.target.result;
@@ -191,7 +206,7 @@ export default function AdminNewDishesManager({ config, onSaveConfig, triggerAle
         ctx.drawImage(img, 0, 0, w, h);
         const compressed = canvas.toDataURL('image/jpeg', 0.86);
         handleUpdateDishField(index, 'image', compressed);
-        triggerAlert?.(`✓ Đã nén và tải ảnh cho món số ${index + 1}!`);
+        triggerAlert?.(`✓ Đã nén và lưu ảnh cho món số ${index + 1}!`);
       };
       img.src = rawDataUrl;
     };
