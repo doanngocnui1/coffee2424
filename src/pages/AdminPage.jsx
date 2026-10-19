@@ -74,6 +74,8 @@ import AdminNewDishesManager from '../components/admin/AdminNewDishesManager';
 import AdminPromotionsManager from '../components/admin/AdminPromotionsManager';
 import AdminSpaceAmenitiesManager from '../components/admin/AdminSpaceAmenitiesManager';
 import AdminReviewsHeaderCard from '../components/admin/AdminReviewsHeaderCard';
+import AdminOfferingsManager from '../components/admin/AdminOfferingsManager';
+import AdminHomeSectionsManager from '../components/admin/AdminHomeSectionsManager';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -106,7 +108,7 @@ export default function AdminPage({ navigate }) {
 
   // Automatically expand group containing activeTab when activeTab changes
   useEffect(() => {
-    if (['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+    if (['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, home: true }));
     } else if (activeTab === 'about') {
       setOpenGroups(prev => ({ ...prev, about: true }));
@@ -156,7 +158,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
+      const allTabs = ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
@@ -1253,9 +1255,9 @@ export default function AdminPage({ navigate }) {
           <div className="p-3 sm:p-3.5 space-y-2.5 flex-1 overflow-y-auto">
             
             {/* NHÓM 1: 🏠 TRANG CHỦ */}
-            {['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
+            {['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                ['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                   ? 'bg-amber-500/10 border-amber-600/40 shadow-xs'
                   : 'bg-white/70 hover:bg-white/90 border-white/80'
               }`}>
@@ -1264,15 +1266,15 @@ export default function AdminPage({ navigate }) {
                   type="button"
                   onClick={() => {
                     toggleGroup('home');
-                    if (!['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
-                      setActiveTab('heroSlide');
+                    if (!['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+                      setActiveTab('homeSections');
                     }
                   }}
                   className="w-full px-3.5 py-3 text-left flex items-center justify-between cursor-pointer select-none transition-colors group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      ['heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                      ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                         ? 'bg-[#2b170e] text-amber-300 shadow-xs'
                         : 'bg-white/90 text-[#8c5932] group-hover:bg-[#2b170e] group-hover:text-amber-300'
                     }`}>
@@ -1283,13 +1285,13 @@ export default function AdminPage({ navigate }) {
                         Trang Chủ
                       </span>
                       <span className="text-[11.5px] font-medium text-[#7a5843] block truncate mt-0.5">
-                        7 phân mục tùy biến
+                        Tùy biến & Bố cục động
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[11px] font-bold text-[#7a5843] bg-white/90 px-2 py-0.5 rounded-full border border-stone-200/60 shadow-2xs">
-                      7 mục
+                      Bố Cục
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openGroups.home ? 'rotate-180 text-amber-600' : 'text-stone-400 group-hover:text-stone-600'}`} />
                   </div>
@@ -1298,6 +1300,34 @@ export default function AdminPage({ navigate }) {
                 {/* Accordion Sub-items (Sổ xuống) */}
                 {openGroups.home && (
                   <div className="px-2 pb-2.5 pt-1 space-y-1.5 border-t border-amber-900/10 bg-white/40">
+                    {/* 1.0: Bố Cục & Thêm Thành Phần (Page Builder) */}
+                    {hasPermission(currentUser, 'homeSections') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('homeSections'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'homeSections'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/90 border border-amber-500/30 bg-amber-500/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Layout className={`w-4 h-4 shrink-0 ${activeTab === 'homeSections' ? 'text-white' : 'text-amber-800'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-black block truncate leading-tight flex items-center gap-1.5">
+                              <span>Bố Cục & Thêm Khối</span>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-amber-400 text-[#2b170e] font-black">STUDIO</span>
+                            </span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'homeSections' ? 'text-amber-100' : 'text-[#7a5843]'}`}>
+                              Thêm khối, đổi thứ tự
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-black text-amber-700 bg-white/90 px-2 py-0.5 rounded-full border border-amber-300 shadow-2xs group-hover:scale-105 transition-transform">
+                          + Thêm
+                        </span>
+                      </button>
+                    )}
                     {/* 1.1: Hero Slide 1 & Hình Ảnh */}
                     {hasPermission(currentUser, 'heroSlide') && (
                       <button
@@ -1421,6 +1451,34 @@ export default function AdminPage({ navigate }) {
                           activeTab === 'promotions' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
                         }`}>
                           {(config.promotionsList || []).length || 3}
+                        </span>
+                      </button>
+                    )}
+
+                    {/* 1.1d: Coffee 24/24 Bán Gì? (7 Nhóm Món) */}
+                    {hasPermission(currentUser, 'offerings') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('offerings'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'offerings'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Coffee className={`w-4 h-4 shrink-0 ${activeTab === 'offerings' ? 'text-amber-300' : 'text-amber-700'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Coffee 24/24 Bán Gì?</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'offerings' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Sân khấu 7 nhóm món
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
+                          activeTab === 'offerings' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
+                        }`}>
+                          {(config.offeringsList || []).length || 7}
                         </span>
                       </button>
                     )}
@@ -2133,9 +2191,14 @@ export default function AdminPage({ navigate }) {
                             : 'Hệ Thống & Bảo Mật'}
               </span>
               <span className="text-neutral-700">/</span>
-              <span className="text-amber-400 font-black flex items-center gap-1.5">
+              <span className="text-amber-400 font-bold">
+                {activeTab === 'homeSections' && <><span>🏗️</span> Bố Cục & Thêm Thành Phần Trang Chủ</>}
+                {activeTab === 'offerings' && <><span>☕</span> Quản Lý "Coffee 24/24 Bán Gì?"</>}
                 {activeTab === 'heroSlide' && <><span>✨</span> Ảnh Bìa / Video 16:9 Đầu Trang</>}
                 {activeTab === 'glassBg' && <><span>🎨</span> Hình Nền & Kính Mờ</>}
+                {activeTab === 'newDishes' && <><span>🍽️</span> Món Mới Trình Làng</>}
+                {activeTab === 'promotions' && <><span>🏷️</span> Chương Trình Ưu Đãi</>}
+                {activeTab === 'spaceAmenities' && <><span>🛋️</span> Không Gian & Tiện Nghi</>}
                 {activeTab === 'sideBanners' && <><span>📢</span> 2 Poster Dọc 2 Bên</>}
                 {activeTab === 'bannerSections' && <><span>🖼️</span> Khối Banner & Check-in</>}
                 {activeTab === 'theme' && <><span>⚙️</span> Slogan & Trang Chủ</>}
@@ -2156,6 +2219,19 @@ export default function AdminPage({ navigate }) {
               </span>
             </div>
           </div>
+
+        {/* TAB BỐ CỤC & THÊM THÀNH PHẦN TRANG CHỦ (PAGE BUILDER) */}
+        {activeTab === 'homeSections' && (
+          <AdminHomeSectionsManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+          />
+        )}
 
         {/* TAB HERO SLIDE 1 & HÌNH ẢNH */}
         {activeTab === 'heroSlide' && (
@@ -2196,6 +2272,18 @@ export default function AdminPage({ navigate }) {
         {/* TAB CHƯƠNG TRÌNH ƯU ĐÃI TRANG CHỦ */}
         {activeTab === 'promotions' && (
           <AdminPromotionsManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
+        )}
+
+        {/* TAB COFFEE 24/24 BÁN GÌ? (7 NHÓM MÓN) */}
+        {activeTab === 'offerings' && (
+          <AdminOfferingsManager 
             config={config} 
             onSaveConfig={(newConf) => {
               setConfig(newConf);

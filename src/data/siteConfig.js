@@ -291,6 +291,122 @@ export const DEFAULT_SITE_CONFIG = {
       { id: 'photo-4', title: 'Sofa Thư Giãn & Xả Stress', image: '/images/blog_gaming_chill.jpg' }
     ]
   },
+  // Khối: COFFEE 24/24 BÁN GÌ? (Trình diễn các nhóm thức uống & món ăn)
+  offeringsSection: {
+    enabled: true,
+    title: 'COFFEE 24/24 BÁN GÌ?',
+    quote: 'Chúng tôi có bán nhiều loại thức uống từ cà phê, matcha, matcha mk4, trà trái cây, trà trái cây tươi, trà sữa, thức uống chế biến từ cacao, các món đá xay, và phục vụ các loại thức ăn.',
+  },
+  offeringsList: [
+    {
+      id: 'coffee',
+      tabLabel: 'Cà Phê Rang Mộc',
+      category: 'TỪ CÀ PHÊ RANG MỘC NGUYÊN BẢN',
+      icon: 'Coffee',
+      badge: '100% Rang Mộc · Robusta & Arabica',
+      title: 'Cà Phê Rang Mộc & Cold Brew 24H',
+      subtitle: 'Khởi đầu sự tỉnh táo & tập trung cao độ',
+      story: 'Chúng tôi tuyển chọn 100% hạt Robusta Đắk Lắk đậm đà và Arabica Cầu Đất thơm nồng nàn, rang mộc nguyên chất không tẩm ướp. Từ phin truyền thống nhỏ từng giọt lắng đọng, espresso chiết xuất chuẩn áp suất, đến Cold Brew ủ lạnh suốt 24 giờ thơm hương hoa quả — tiếp lửa tỉnh táo bền bỉ suốt ngày dài và đêm thâu.',
+      highlights: ['Phin Nguyên Bản Đậm Đà', 'Espresso / Latte Pha Máy', 'Cold Brew Cam Vàng Ủ 24h', 'Bạc Xỉu 3 Tầng Kem Sữa'],
+      image: '/images/journey_espresso.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    },
+    {
+      id: 'matcha',
+      tabLabel: 'Matcha & MK4',
+      category: 'MATCHA & MATCHA MK4 THƯỢNG HẠNG',
+      icon: 'Sparkles',
+      badge: 'Specialty Grade · Nhập Khẩu Nhật Bản',
+      title: 'Matcha Nghệ Nhân & Specialty MK4',
+      subtitle: 'Tâm trí tĩnh tại, sáng tạo thông suốt',
+      story: 'Dòng bột trà xanh Matcha cao cấp, đặc biệt là Specialty Matcha MK4 tuyển chọn chuẩn vùng Uji (Kyoto). Màu xanh ngọc bích tự nhiên, dồi dào chất chống oxy hóa và hoạt chất L-theanine giúp giải tỏa căng thẳng thần kinh, mang lại trạng thái tập trung sâu êm dịu, sảng khoái mà không cồn cào hay tim đập nhanh.',
+      highlights: ['Matcha MK4 Latte Thượng Hạng', 'Macchiato Kem Muối Biển', 'Matcha Đá Xay Kem Tuyết', 'Matcha Sữa Dừa Thanh Mát'],
+      image: '/images/blog_brewing.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    },
+    {
+      id: 'fruit-tea',
+      tabLabel: 'Trà Trái Cây Tươi',
+      category: 'TRÀ TRÁI CÂY & TRÀ TRÁI CÂY TƯƠI',
+      icon: 'Sun',
+      badge: '100% Trái Cây Tươi Trong Ngày',
+      title: 'Trà Trái Cây & Trái Cây Tươi Tự Nhiên',
+      subtitle: 'Năng lượng thanh mát, bừng tỉnh giác quan',
+      story: 'Nấu từ cốt trà Oolong và trà đen hảo hạng ủ lạnh, kết hợp cùng các loại trái cây nhiệt đới tươi rói cắt lát mới mỗi ngày: cam vàng, đào giòn, ổi hồng ruột đỏ, dâu tây và hạt chia hữu cơ. Vị chua ngọt thanh khiết, cung cấp vitamin tự nhiên giúp giải nhiệt tức thì sau nhiều giờ nhìn màn hình laptop.',
+      highlights: ['Trà Đào Cam Sả Hoàng Gia', 'Trà Ổi Hồng Hạt Chia', 'Trà Vải Hoa Hồng Tươi Mát', 'Trà Táo Quế Mật Ong Ấm'],
+      image: '/images/promo_banner.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    },
+    {
+      id: 'milk-tea',
+      tabLabel: 'Trà Sữa Đậm Vị',
+      category: 'TRÀ SỮA ĐẬM VỊ CỐT TRÀ',
+      icon: 'Heart',
+      badge: 'Ủ Cốt Trà Thơm Nức · Chuẩn Gu',
+      title: 'Trà Sữa Đậm Vị Cốt Trà Truyền Thống',
+      subtitle: 'Ngọt ngào vỗ về những giờ học nhóm',
+      story: 'Chắt lọc từ những búp trà đen và Oolong nướng than hoa thơm nức mũi, kết hợp tỷ lệ vàng cùng sữa tươi béo ngậy vừa vặn mà không ngấy. Topping trân châu hoàng kim dai giòn, thạch phô mai béo ngậy được chế biến thủ công trong ngày, tạo nên ly trà sữa đậm vị ngọt thanh, chuẩn gu các bạn trẻ.',
+      highlights: ['Trà Sữa Oolong Nướng 24/24', 'Trà Sữa Thái Xanh Phô Mai', 'Trà Sữa Lài Kem Trứng Cháy', 'Topping Trân Châu Hoàng Kim'],
+      image: '/images/blog_student_study.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    },
+    {
+      id: 'cacao',
+      tabLabel: 'Cacao Thơm Béo',
+      category: 'THỨC UỐNG CHẾ BIẾN TỪ CACAO',
+      icon: 'Flame',
+      badge: 'Cacao Đắk Lắk Nguyên Chất',
+      title: 'Thức Uống Chế Biến Từ Cacao Thơm Béo',
+      subtitle: 'Vòng tay ấm áp giữa đêm muộn se lạnh',
+      story: 'Bột cacao nguyên chất sánh đặc, giàu magiê và dưỡng chất giúp giải tỏa mệt mỏi thể chất và vỗ về tâm trạng. Dù là một tách cacao nóng hổi bồng bềnh kẹo marshmallow tan chảy lúc 2 giờ sáng hay ly cacao sữa dừa đá xay thơm ngậy, đều đem lại cảm giác bình yên và nguồn năng lượng dồi dào.',
+      highlights: ['Cacao Nóng Marshmallow Đêm Muộn', 'Cacao Sữa Dừa Béo Ngậy', 'Cacao Kem Cheese Béo Mặn', 'Dark Chocolate Sánh Đậm'],
+      image: '/images/journey_roast.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    },
+    {
+      id: 'ice-blended',
+      tabLabel: 'Món Đá Xay',
+      category: 'CÁC MÓN ĐÁ XAY SẢNG KHOÁI',
+      icon: 'Wind',
+      badge: 'Đá Xay Tuyết Mịn · Bùng Nổ Vị Giác',
+      title: 'Các Món Đá Xay Tuyết Sảng Khoái',
+      subtitle: 'Đánh thức tinh thần tức thì',
+      story: 'Dòng thức uống Ice-Blended xay tuyết nhuyễn mịn như nhung, kết hợp cà phê espresso đậm đặc, bánh Oreo giòn rụm hoặc caramel béo ngậy, phủ lớp kem tươi whipping cream bồng bềnh rưới sốt ngọt ngào. Món giải nhiệt sảng khoái lý tưởng giúp bạn nạp năng lượng nhanh và đánh bay cơn buồn ngủ.',
+      highlights: ['Mocha Frappe Kem Tươi', 'Caramel Cookies & Cream', 'Matcha Tuyết Đá Xay', 'Chocolate Mint Blizzard'],
+      image: '/images/blog_gaming_chill.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    },
+    {
+      id: 'food-service',
+      tabLabel: 'Thức Ăn Bếp Đêm',
+      category: 'PHỤC VỤ CÁC LOẠI THỨC ĂN 24/7',
+      icon: 'UtensilsCrossed',
+      badge: 'Bếp Nóng 24/7 · Cứu Đói Xuyên Đêm',
+      title: 'Bếp Nóng Phục Vụ Các Loại Thức Ăn 24/24',
+      subtitle: 'Nạp đầy năng lượng ấm bụng để học tập & làm việc thâu đêm',
+      story: 'Chúng tôi hiểu rằng những giờ chạy deadline hay học nhóm thâu đêm không chỉ cần cà phê, mà cần một chiếc bụng no ấm. Bếp nóng COFFEE 24/24 luôn đỏ lửa 24/7, sẵn sàng phục vụ các món ăn nóng hổi vừa thổi vừa ăn: từ tô mì xào bò rau cải đầy đặn kèm trứng ốp la lòng đào, mì gói xúc xích nước cay ấm lòng 2h sáng, đến bánh mì que Hải Phòng giòn rụm và croissant bơ Pháp nướng nóng giòn tại chỗ.',
+      highlights: ['Mì Xào Bò Trứng Ốp La Lòng Đào', 'Mì Gói Xúc Xích Siêu Cấp Cay Ấm', 'Bánh Mì Que Hải Phòng Nóng Giòn', 'Croissant Bơ Pháp Nướng Tại Chỗ'],
+      image: '/images/blog_late_night_food.jpg',
+      ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+      ctaLink: '/dathang'
+    }
+  ],
+  // Bố Cục & Danh Sách Các Thành Phần Trên Trang Chủ (Dynamic Section Page Builder)
+  homeSections: [
+    { id: 'sec-hero', type: 'hero', title: 'Banner 16:9 Tràn Viền (Full-Bleed Studio)', enabled: true },
+    { id: 'sec-newDishes', type: 'newDishes', title: 'Món Mới Trình Làng (Poster 3:4)', enabled: true },
+    { id: 'sec-promotions', type: 'promotions', title: 'Chương Trình Ưu Đãi (Poster 3:4)', enabled: true },
+    { id: 'sec-spaceAmenities', type: 'spaceAmenities', title: 'Không Gian & Tiện Nghi 24/7', enabled: true },
+    { id: 'sec-offerings', type: 'offerings', title: 'Coffee 24/24 Bán Gì? (Sân Khấu 7 Nhóm Món)', enabled: true },
+    { id: 'sec-reviews', type: 'reviews', title: 'Cảm Nhận & Đánh Giá Khách Hàng', enabled: true },
+    { id: 'sec-social', type: 'social', title: 'Kết Nối Mạng Xã Hội & Fanpage', enabled: true },
+  ],
   // Khối Tiêu Đề & Giới Thiệu Đánh Giá Khách Hàng (Trang Chủ)
   reviewsSection: {
     enabled: true,
