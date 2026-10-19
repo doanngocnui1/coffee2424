@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  Coffee,
   FileText, 
   Palette, 
   MapPin, 
