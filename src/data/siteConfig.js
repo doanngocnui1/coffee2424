@@ -1,4 +1,4 @@
-import { saveCloudSiteConfig, fetchCloudSiteConfig } from '../lib/supabase';
+import { saveCloudSiteConfig, fetchCloudSiteConfig } from '../lib/supabase.js';
 
 export const DEFAULT_SITE_CONFIG = {
   brandName: 'COFFEE 24/24',
@@ -815,7 +815,17 @@ export function getSiteConfig() {
         enabled: parsed.sideBanners?.enabled !== undefined ? parsed.sideBanners.enabled : true,
         left: leftConfig,
         right: rightConfig
-      }
+      },
+      homeSections: (Array.isArray(parsed.homeSections) && parsed.homeSections.length > 0)
+        ? parsed.homeSections
+        : DEFAULT_SITE_CONFIG.homeSections,
+      offeringsSection: {
+        ...DEFAULT_SITE_CONFIG.offeringsSection,
+        ...(parsed.offeringsSection || {})
+      },
+      offeringsList: (Array.isArray(parsed.offeringsList) && parsed.offeringsList.length > 0)
+        ? parsed.offeringsList
+        : DEFAULT_SITE_CONFIG.offeringsList
     };
   } catch (e) {
     console.error('Error loading config:', e);
@@ -930,7 +940,20 @@ export async function syncSiteConfigWithCloud() {
     const cloudConfig = await fetchCloudSiteConfig();
     if (cloudConfig && typeof cloudConfig === 'object') {
       const currentConfig = getSiteConfig();
-      const mergedConfig = { ...currentConfig, ...cloudConfig };
+      const mergedConfig = { 
+        ...currentConfig, 
+        ...cloudConfig,
+        homeSections: (Array.isArray(cloudConfig.homeSections) && cloudConfig.homeSections.length > 0)
+          ? cloudConfig.homeSections
+          : currentConfig.homeSections,
+        offeringsList: (Array.isArray(cloudConfig.offeringsList) && cloudConfig.offeringsList.length > 0)
+          ? cloudConfig.offeringsList
+          : currentConfig.offeringsList,
+        offeringsSection: {
+          ...currentConfig.offeringsSection,
+          ...(cloudConfig.offeringsSection || {})
+        }
+      };
       localStorage.setItem('coffee2424_site_config', JSON.stringify(mergedConfig));
       window.dispatchEvent(new Event('site-config-updated'));
       console.info('✓ Đã đồng bộ cấu hình thành công từ Supabase Cloud!');

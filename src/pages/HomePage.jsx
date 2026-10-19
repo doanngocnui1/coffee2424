@@ -260,8 +260,27 @@ export default function HomePage({ navigate, onSelectBranch }) {
     ? siteConfig.promotionsList
     : defaultPromotions;
 
-  const activeOffering = ALL_STORY_OFFERINGS[selectedOfferingIndex] || ALL_STORY_OFFERINGS[0];
-  const ActiveIcon = activeOffering.icon;
+  const fallbackOffering = {
+    id: 'offering-coffee',
+    tabLabel: 'Cà Phê',
+    category: 'TỪ CÀ PHÊ RANG MỘC NGUYÊN BẢN',
+    badge: '100% Rang Mộc',
+    title: 'Cà Phê Rang Mộc & Cold Brew',
+    subtitle: 'Khởi đầu sự tỉnh táo & tập trung cao độ',
+    icon: Coffee,
+    highlights: ['100% Robusta & Arabica Cầu Đất', 'Rang mộc nguyên chất'],
+    story: 'Chúng tôi tuyển chọn 100% hạt Robusta Đắk Lắk và Arabica Cầu Đất thơm nồng nàn.',
+    image: '/images/hero_banner.jpg',
+    ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
+    ctaLink: '/dathang'
+  };
+
+  const safeOfferingIndex = (ALL_STORY_OFFERINGS && ALL_STORY_OFFERINGS.length > 0)
+    ? Math.min(Math.max(0, selectedOfferingIndex), ALL_STORY_OFFERINGS.length - 1)
+    : 0;
+
+  const activeOffering = (ALL_STORY_OFFERINGS && ALL_STORY_OFFERINGS[safeOfferingIndex]) || fallbackOffering;
+  const ActiveIcon = activeOffering?.icon || Coffee;
 
   // 16:9 Hero Media detection (Image, GIF, Video)
   const heroMedia = siteConfig.heroBanner16x9?.mediaUrl || siteConfig.heroSection?.items?.[0]?.image || '/images/hero_banner.jpg';
