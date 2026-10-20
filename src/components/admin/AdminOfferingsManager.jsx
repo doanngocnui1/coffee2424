@@ -26,10 +26,12 @@ import {
   Check,
   Zap,
   Star,
-  Award
+  Award,
+  Crop
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
 import { uploadImageToSupabase } from '../../lib/supabase';
+import OfferingImageCropperModal from './OfferingImageCropperModal';
 
 // Danh sách biểu tượng phổ biến có thể chọn cho danh mục món
 export const AVAILABLE_OFFERING_ICONS = [
@@ -63,6 +65,8 @@ export default function AdminOfferingsManager({ config, onSaveConfig, triggerAle
   const [activeOfferingIdx, setActiveOfferingIdx] = useState(0);
   const [previewOfferingIdx, setPreviewOfferingIdx] = useState(0);
   const [previewMode, setPreviewMode] = useState('desktop'); // 'desktop' | 'mobile'
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [cropperImageUrl, setCropperImageUrl] = useState('');
 
   const currentItem = offerings[activeOfferingIdx] || offerings[0] || {};
 
@@ -153,54 +157,34 @@ export default function AdminOfferingsManager({ config, onSaveConfig, triggerAle
     });
   };
 
-  // Tải ảnh trực tiếp lên Supabase Storage
-  const handleUploadImage = async (file) => {
+  // Mở công cụ cắt & căn chỉnh ảnh tỉ lệ 4:3 (3x4 nằm ngang) cho ảnh hiện tại
+  const handleOpenCropperForCurrent = () => {
+    const currentSrc = currentItem.image || '/images/journey_espresso.jpg';
+    setCropperImageUrl(currentSrc);
+    setIsCropperOpen(true);
+  };
+
+  // Chọn ảnh mới từ máy tính -> Tự động mở Modal Cắt tỉ lệ 4:3 (3x4 Nằm Ngang)
+  const handleSelectLocalImageForCrop = (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP, GIF...).');
       return;
     }
 
-    triggerAlert?.('⏳ Đang tải ảnh lên Supabase Storage...');
-
-    try {
-      const cloudUrl = await uploadImageToSupabase(file, 'offerings');
-      if (cloudUrl) {
-        handleUpdateCurrentField('image', cloudUrl);
-        triggerAlert?.(`✓ Đã tải ảnh lên Supabase Storage thành công! Bấm "LƯU CẤU HÌNH" để áp dụng.`);
-        return;
-      }
-    } catch (err) {
-      console.warn('Lỗi tải ảnh lên Supabase:', err);
-    }
-
-    // Fallback: nén canvas
     const reader = new FileReader();
     reader.onload = (e) => {
-      const rawDataUrl = e.target.result;
-      const img = new Image();
-      img.onload = () => {
-        const maxW = 1200;
-        const maxH = 900;
-        let w = img.width;
-        let h = img.height;
-        if (w > maxW || h > maxH) {
-          const ratio = Math.min(maxW / w, maxH / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const compressed = canvas.toDataURL('image/jpeg', 0.86);
-        handleUpdateCurrentField('image', compressed);
-        triggerAlert?.(`✓ Đã nén và lưu ảnh dự phòng!`);
-      };
-      img.src = rawDataUrl;
+      const dataUrl = e.target.result;
+      setCropperImageUrl(dataUrl);
+      setIsCropperOpen(true);
+      triggerAlert?.('✨ Đã tải ảnh lên! Hãy căn chỉnh khung 4:3 (3x4 nằm ngang) và nhấn Cắt.');
     };
     reader.readAsDataURL(file);
+  };
+
+  // Khi modal hoàn thành cắt ảnh: cập nhật trường ảnh
+  const handleApplyCroppedImage = (croppedUrl) => {
+    handleUpdateCurrentField('image', croppedUrl);
   };
 
   // Quản lý highlights (danh sách món đặc trưng)
@@ -543,49 +527,80 @@ export default function AdminOfferingsManager({ config, onSaveConfig, triggerAle
               />
             </div>
 
-            {/* Ảnh đại diện & Tải lên Supabase */}
-            <div className="space-y-2 md:col-span-2 p-4 rounded-2xl bg-stone-50 border border-stone-200">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-black text-stone-800 uppercase tracking-wide">
-                  Ảnh Đại Diện Sân Khấu (Tỉ lệ ~4:3 hoặc 16:9)
-                </label>
-                <span className="text-[11px] text-emerald-700 font-bold">✓ Tự động đẩy lên Supabase Cloud Storage</span>
+            {/* Ảnh đại diện & Cắt ảnh tỉ lệ 4:3 (3x4 nằm ngang) */}
+            <div className="space-y-3 md:col-span-2 p-4 sm:p-5 rounded-2xl bg-stone-50 border border-stone-200 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-black text-stone-900 uppercase tracking-wide">
+                    Ảnh Sân Khấu Sưu Tập
+                  </label>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 border border-amber-500/30 text-[10.5px] font-black uppercase">
+                    Tỉ Lệ: 4:3 (3x4 Nằm Ngang)
+                  </span>
+                </div>
+                <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Tự động tối ưu & lưu lên Supabase Cloud Storage</span>
+                </span>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-36 h-24 rounded-xl overflow-hidden bg-stone-200 border border-stone-300 shrink-0 relative group">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                {/* Thumbnail tỉ lệ 4:3 (3x4 nằm ngang) có nút bấm cắt nhanh */}
+                <div 
+                  onClick={handleOpenCropperForCurrent}
+                  className="w-40 sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden bg-stone-200 border-2 border-stone-300 hover:border-amber-500 shrink-0 relative group shadow-sm cursor-pointer transition-all"
+                  title="Nhấn để mở công cụ cắt ảnh tỉ lệ 4:3"
+                >
                   <img 
-                    src={currentItem.image || '/images/hero_banner.jpg'} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
+                    src={currentItem.image || '/images/journey_espresso.jpg'} 
+                    alt="Preview 4:3" 
+                    className="w-full h-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                    Xem ảnh
+                  <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs font-bold gap-1 text-center p-2">
+                    <Crop className="w-5 h-5 text-amber-300" />
+                    <span>Cắt / Căn Chỉnh 4:3</span>
                   </div>
+                  <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/75 text-amber-300 text-[10px] font-mono font-bold">
+                    4:3
+                  </span>
                 </div>
 
-                <div className="space-y-2 flex-1 w-full">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-2.5 flex-1 w-full">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input 
                       type="text"
                       value={currentItem.image || ''}
                       onChange={(e) => handleUpdateCurrentField('image', e.target.value)}
                       placeholder="https://... hoặc /images/..."
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-stone-300 text-xs text-stone-700 bg-white focus:outline-none"
+                      className="flex-1 min-w-[200px] px-3.5 py-2 rounded-xl border border-stone-300 text-xs text-stone-700 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-mono"
                     />
-                    <label className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs active:scale-95">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Tải ảnh từ máy</span>
+
+                    {/* Nút Mở Cắt & Căn Chỉnh Ảnh Trực Tiếp */}
+                    <button
+                      type="button"
+                      onClick={handleOpenCropperForCurrent}
+                      className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all"
+                      title="Mở công cụ cắt & căn chỉnh ảnh theo tỉ lệ 4:3 (3x4 nằm ngang)"
+                    >
+                      <Crop className="w-4 h-4 stroke-[2.5]" />
+                      <span>Cắt Ảnh 4:3</span>
+                    </button>
+
+                    {/* Nút Tải Ảnh Mới Từ Máy Tính */}
+                    <label className="px-3.5 py-2 rounded-xl bg-[#2b170e] hover:bg-[#3d2215] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95 transition-all">
+                      <Upload className="w-4 h-4 text-amber-300" />
+                      <span>Tải ảnh mới</span>
                       <input 
                         type="file" 
                         accept="image/*"
-                        onChange={(e) => handleUploadImage(e.target.files?.[0])}
+                        onChange={(e) => handleSelectLocalImageForCrop(e.target.files?.[0])}
                         className="hidden" 
                       />
                     </label>
                   </div>
-                  <p className="text-[11px] text-stone-500">
-                    Gợi ý: Chọn ảnh chụp sản phẩm hoặc ảnh không gian đẹp để làm nổi bật câu chuyện thương hiệu.
+
+                  <p className="text-[11.5px] text-stone-600 leading-relaxed">
+                    💡 <strong>Tỉ lệ 3x4 nằm ngang (4:3)</strong>: Bấm <strong>"Cắt Ảnh 4:3"</strong> hoặc tải ảnh lên để tự do <strong>kéo di chuyển góc nhìn, phóng to/thu nhỏ, xoay ảnh</strong> khớp hoàn hảo với sân khấu Trang Chủ.
                   </p>
                 </div>
               </div>
@@ -735,14 +750,14 @@ export default function AdminOfferingsManager({ config, onSaveConfig, triggerAle
             <div className="rounded-[32px] overflow-hidden border border-stone-200 shadow-md bg-stone-50">
               <div className={`grid ${previewMode === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-12'} items-stretch`}>
                 
-                {/* Ảnh Trái */}
-                <div className={`${previewMode === 'mobile' ? 'h-64' : 'lg:col-span-7 min-h-[380px]'} relative bg-stone-900 overflow-hidden`}>
+                {/* Ảnh Trái Khung 4:3 (3x4 nằm ngang) Chuẩn */}
+                <div className={`${previewMode === 'mobile' ? 'w-full aspect-[4/3]' : 'lg:col-span-7 w-full aspect-[4/3]'} relative bg-stone-900 overflow-hidden`}>
                   <img 
                     src={previewItem.image || '/images/hero_banner.jpg'} 
                     alt={previewItem.title} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full aspect-[4/3] object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
                   
                   <div className="absolute top-4 left-4">
                     <span className="px-3 py-1 rounded-full bg-[#2b170e]/90 text-amber-200 text-xs font-bold border border-white/20">
@@ -753,6 +768,12 @@ export default function AdminOfferingsManager({ config, onSaveConfig, triggerAle
                   <div className="absolute top-4 right-4">
                     <span className="px-2.5 py-0.5 rounded-full bg-black/60 text-white/90 text-xs font-mono font-bold border border-white/20">
                       0{previewOfferingIdx + 1} / 0{offerings.length}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-4">
+                    <span className="px-2 py-0.5 rounded-md bg-black/75 text-amber-300 text-[10px] font-mono font-bold border border-white/10">
+                      Tỉ lệ: 4:3 (3x4 Ngang)
                     </span>
                   </div>
                 </div>
@@ -813,6 +834,15 @@ export default function AdminOfferingsManager({ config, onSaveConfig, triggerAle
           </div>
         </div>
       </div>
+
+      {/* Modal Cắt & Căn Chỉnh Ảnh Tỉ Lệ 4:3 (3x4 Nằm Ngang) */}
+      <OfferingImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        imageUrl={cropperImageUrl}
+        onApplyCrop={handleApplyCroppedImage}
+        triggerAlert={triggerAlert}
+      />
 
     </div>
   );
