@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Coffee, 
@@ -77,34 +77,100 @@ const AMENITY_COLORS = {
 };
 
 /**
- * Hook quản lý auto-slide cho poster carousels:
- * - Desktop: tự động chạy mỗi 2 giây khi nhiều hơn 3 poster (itemsCount > 3)
- * - Mobile: tự động chạy mỗi 2 giây khi nhiều hơn 1 poster (itemsCount > 1)
+ * Hook quản lý cuộn slide vô tận (infinite loop) cho poster carousels:
+ * - Desktop: tự động chạy mỗi 2 giây khi nhiều hơn 3 poster (items.length > 3)
+ * - Mobile: tự động chạy mỗi 2 giây khi nhiều hơn 1 poster (items.length > 1)
+ * - Vòng lặp vô tận (infinite loop): cuộn liên tục một chiều không bao giờ nhảy ngược về đầu
  * - Chuột lướt qua (mouseenter) hoặc ngón tay chạm màn hình (touchstart): tạm dừng ngay
- * - Thả chuột (mouseleave) hoặc nhấc tay khỏi màn hình (touchend/touchcancel): giữ lại đúng 5 giây kể từ lúc thả rồi mới tiếp tục chạy mỗi 2 giây
- * - Hỗ trợ vuốt tay qua lại (swipe left/right) trên điện thoại
+ * - Thả chuột (mouseleave) hoặc nhấc tay khỏi màn hình (touchend/touchcancel): giữ lại đúng 5 giây rồi mới tiếp tục chạy mỗi 2 giây
+ * - Hỗ trợ vuốt tay qua lại (swipe left/right) trên điện thoại và click dots/arrows
  */
 function usePosterAutoSlide({
-  itemsCount,
-  visibleCount,
-  setCurrentIndex,
+  items = [],
+  visibleCount = 3,
   interval = 2000,
   holdDelay = 5000
 }) {
+  const itemsCount = items.length;
+  const shouldAutoSlide = itemsCount > visibleCount;
+  const cloneCount = shouldAutoSlide ? visibleCount : 0;
+
+  // Track position: bắt đầu ở vị trí cloneCount (vị trí phần tử gốc đầu tiên)
+  const [currentIndex, setCurrentIndex] = useState(() => (shouldAutoSlide ? cloneCount : 0));
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
+
   const isInteractingRef = useRef(false);
+  const isSlidingRef = useRef(false);
   const autoTimerRef = useRef(null);
   const resumeTimerRef = useRef(null);
+  const resetTimerRef = useRef(null);
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
+  const hasSwipedRef = useRef(false);
 
-  const maxIndex = Math.max(0, itemsCount - visibleCount);
-  const shouldAutoSlide = itemsCount > visibleCount;
+  // Refs cập nhật liên tục để tránh stale closures
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
 
-  const maxIndexRef = useRef(maxIndex);
-  maxIndexRef.current = maxIndex;
+  const cloneCountRef = useRef(cloneCount);
+  cloneCountRef.current = cloneCount;
+
+  const itemsCountRef = useRef(itemsCount);
+  itemsCountRef.current = itemsCount;
 
   const shouldAutoSlideRef = useRef(shouldAutoSlide);
   shouldAutoSlideRef.current = shouldAutoSlide;
+
+  // Tạo mảng extendedItems với các clone ở đầu và cuối để tạo hiệu ứng vòng lặp vô tận
+  const extendedItems = useMemo(() => {
+    if (!shouldAutoSlide || itemsCount === 0) {
+      return items.map((item, idx) => ({
+        ...item,
+        _extendedKey: item.id ? `orig-${item.id}` : `orig-${idx}`
+      }));
+    }
+    const clonesBefore = cloneCount > 0 
+      ? items.slice(-cloneCount).map((item, idx) => ({
+          ...item,
+          _extendedKey: `clone-before-${item.id || idx}-${idx}`
+        }))
+      : [];
+    const original = items.map((item, idx) => ({
+      ...item,
+      _extendedKey: `orig-${item.id || idx}-${idx}`
+    }));
+    const clonesAfter = cloneCount > 0 
+      ? items.slice(0, cloneCount).map((item, idx) => ({
+          ...item,
+          _extendedKey: `clone-after-${item.id || idx}-${idx}`
+        }))
+      : [];
+    return [...clonesBefore, ...original, ...clonesAfter];
+  }, [items, shouldAutoSlide, cloneCount, itemsCount]);
+
+  // Đồng bộ lại index khi đổi kích thước màn hình hoặc items thay đổi
+  const prevCloneCountRef = useRef(cloneCount);
+  useEffect(() => {
+    if (prevCloneCountRef.current !== cloneCount) {
+      const prevC = prevCloneCountRef.current;
+      prevCloneCountRef.current = cloneCount;
+      if (shouldAutoSlide && itemsCount > 0) {
+        const currentReal = ((currentIndexRef.current - prevC) % itemsCount + itemsCount) % itemsCount;
+        setIsTransitionEnabled(false);
+        const newIdx = cloneCount + currentReal;
+        setCurrentIndex(newIdx);
+        currentIndexRef.current = newIdx;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setIsTransitionEnabled(true);
+          });
+        });
+      } else {
+        setCurrentIndex(0);
+        currentIndexRef.current = 0;
+      }
+    }
+  }, [cloneCount, itemsCount, shouldAutoSlide]);
 
   const clearTimers = useCallback(() => {
     if (autoTimerRef.current) {
@@ -117,13 +183,90 @@ function usePosterAutoSlide({
     }
   }, []);
 
+  // Xử lý chuyển tức thời không animation khi chạm ngưỡng clone (vòng lặp vô tận)
+  const handleTransitionEnd = useCallback((e) => {
+    if (e && e.target !== e.currentTarget) return;
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
+    isSlidingRef.current = false;
+    if (!shouldAutoSlideRef.current) return;
+
+    const current = currentIndexRef.current;
+    const cCount = cloneCountRef.current;
+    const count = itemsCountRef.current;
+
+    // Nếu đã trượt tới hoặc qua nhóm clone cuối -> nhảy không giật về vị trí gốc tương ứng
+    if (current >= cCount + count) {
+      const jumpTo = current - count;
+      setIsTransitionEnabled(false);
+      setCurrentIndex(jumpTo);
+      currentIndexRef.current = jumpTo;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitionEnabled(true);
+        });
+      });
+    } else if (current < cCount) {
+      // Nếu đã trượt lùi qua nhóm clone đầu -> nhảy không giật về vị trí gốc tương ứng
+      const jumpTo = current + count;
+      setIsTransitionEnabled(false);
+      setCurrentIndex(jumpTo);
+      currentIndexRef.current = jumpTo;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitionEnabled(true);
+        });
+      });
+    }
+  }, []);
+
   const slideNext = useCallback(() => {
-    setCurrentIndex(prev => (prev >= maxIndexRef.current ? 0 : prev + 1));
-  }, [setCurrentIndex]);
+    if (!shouldAutoSlideRef.current) return;
+    if (isSlidingRef.current) return;
+    isSlidingRef.current = true;
+    setIsTransitionEnabled(true);
+    setCurrentIndex(prev => {
+      const next = prev + 1;
+      currentIndexRef.current = next;
+      return next;
+    });
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
+      handleTransitionEnd();
+    }, 600);
+  }, [handleTransitionEnd]);
 
   const slidePrev = useCallback(() => {
-    setCurrentIndex(prev => (prev <= 0 ? maxIndexRef.current : prev - 1));
-  }, [setCurrentIndex]);
+    if (!shouldAutoSlideRef.current) return;
+    if (isSlidingRef.current) return;
+    isSlidingRef.current = true;
+    setIsTransitionEnabled(true);
+    setCurrentIndex(prev => {
+      const next = prev - 1;
+      currentIndexRef.current = next;
+      return next;
+    });
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
+      handleTransitionEnd();
+    }, 600);
+  }, [handleTransitionEnd]);
+
+  const goToIndex = useCallback((dotIdx) => {
+    if (!shouldAutoSlideRef.current) return;
+    if (isSlidingRef.current) return;
+    isSlidingRef.current = true;
+    setIsTransitionEnabled(true);
+    const target = cloneCountRef.current + dotIdx;
+    setCurrentIndex(target);
+    currentIndexRef.current = target;
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
+      handleTransitionEnd();
+    }, 600);
+  }, [handleTransitionEnd]);
 
   const startAutoPlay = useCallback(() => {
     clearTimers();
@@ -162,6 +305,7 @@ function usePosterAutoSlide({
 
   // Touch gesture handling
   const handleTouchStart = useCallback((e) => {
+    hasSwipedRef.current = false;
     if (e.targetTouches && e.targetTouches.length > 0) {
       touchStartXRef.current = e.targetTouches[0].clientX;
       touchStartYRef.current = e.targetTouches[0].clientY;
@@ -175,6 +319,8 @@ function usePosterAutoSlide({
       const diffY = touchStartYRef.current !== null ? Math.abs(touchStartYRef.current - e.changedTouches[0].clientY) : 0;
       // Chỉ kích hoạt lật slide khi khoảng cách vuốt ngang lớn hơn dọc và > 40px
       if (Math.abs(diffX) > diffY && Math.abs(diffX) > 40) {
+        hasSwipedRef.current = true;
+        setTimeout(() => { hasSwipedRef.current = false; }, 120);
         if (diffX > 0) {
           slideNext();
         } else {
@@ -216,10 +362,30 @@ function usePosterAutoSlide({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [clearTimers, startAutoPlay]);
 
+  // Cleanup khi unmount
+  useEffect(() => {
+    return () => {
+      clearTimers();
+      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    };
+  }, [clearTimers]);
+
+  // Vị trí chấm tròn (Dot index) thực tế
+  const activeDotIndex = shouldAutoSlide && itemsCount > 0
+    ? ((currentIndex - cloneCount) % itemsCount + itemsCount) % itemsCount
+    : currentIndex;
+
   return {
+    items: extendedItems,
+    currentIndex,
+    isTransitionEnabled,
+    activeDotIndex,
+    showNav: shouldAutoSlide,
     handlePrev: () => onManualAction(slidePrev),
     handleNext: () => onManualAction(slideNext),
-    goToIndex: (idx) => onManualAction(() => setCurrentIndex(idx)),
+    goToIndex: (idx) => onManualAction(() => goToIndex(idx)),
+    handleTransitionEnd,
+    hasSwipedRef,
     containerProps: {
       onMouseEnter: onInteractionStart,
       onMouseLeave: onInteractionEnd,
@@ -413,38 +579,21 @@ export default function HomePage({ navigate, onSelectBranch }) {
     : defaultPromotions;
 
   const visibleCount = isMobile ? 1 : 3;
-  const dishesMaxIndex = Math.max(0, newDishesItems.length - visibleCount);
-  const promosMaxIndex = Math.max(0, promotionsItems.length - visibleCount);
 
-  // Auto-slide controllers cho Món Mới và Chương Trình Ưu Đãi
+  // Auto-slide controllers vòng lặp vô tận cho Món Mới và Chương Trình Ưu Đãi
   const dishesCarousel = usePosterAutoSlide({
-    itemsCount: newDishesItems.length,
+    items: newDishesItems,
     visibleCount,
-    setCurrentIndex: setNewDishesIndex,
     interval: 2000,
     holdDelay: 5000
   });
 
   const promosCarousel = usePosterAutoSlide({
-    itemsCount: promotionsItems.length,
+    items: promotionsItems,
     visibleCount,
-    setCurrentIndex: setPromotionsIndex,
     interval: 2000,
     holdDelay: 5000
   });
-
-  // Đảm bảo index luôn hợp lệ khi thay đổi kích thước màn hình
-  useEffect(() => {
-    if (newDishesIndex > dishesMaxIndex) {
-      setNewDishesIndex(Math.max(0, dishesMaxIndex));
-    }
-  }, [dishesMaxIndex, newDishesIndex]);
-
-  useEffect(() => {
-    if (promotionsIndex > promosMaxIndex) {
-      setPromotionsIndex(Math.max(0, promosMaxIndex));
-    }
-  }, [promosMaxIndex, promotionsIndex]);
 
   const fallbackOffering = {
     id: 'offering-coffee',
@@ -823,16 +972,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
           {/* Carousel Container: 3 món trên máy tính, 1 món trên điện thoại */}
           {(() => {
-            const safeIndex = Math.min(newDishesIndex, dishesMaxIndex);
-            const showNav = newDishesItems.length > visibleCount;
-
             return (
               <div 
                 className="relative group/carousel px-0 sm:px-2"
                 {...dishesCarousel.containerProps}
               >
                 {/* Navigation Arrow Left */}
-                {showNav && (
+                {dishesCarousel.showNav && (
                   <button
                     type="button"
                     onClick={dishesCarousel.handlePrev}
@@ -844,7 +990,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 )}
 
                 {/* Navigation Arrow Right */}
-                {showNav && (
+                {dishesCarousel.showNav && (
                   <button
                     type="button"
                     onClick={dishesCarousel.handleNext}
@@ -858,20 +1004,27 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {/* Carousel Overflow Track */}
                 <div className="overflow-hidden w-full py-2 touch-pan-y">
                   <div 
-                    className="flex transition-transform duration-500 ease-out"
+                    className="flex"
+                    onTransitionEnd={dishesCarousel.handleTransitionEnd}
                     style={{
-                      transform: `translateX(-${safeIndex * (100 / visibleCount)}%)`
+                      transform: `translateX(-${dishesCarousel.currentIndex * (100 / visibleCount)}%)`,
+                      transition: dishesCarousel.isTransitionEnabled 
+                        ? 'transform 500ms ease-out' 
+                        : 'none'
                     }}
                   >
-                    {newDishesItems.map((dish, idx) => (
+                    {dishesCarousel.items.map((dish, idx) => (
                       <div 
-                        key={dish.id || idx}
+                        key={dish._extendedKey || dish.id || idx}
                         className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
                       >
                         <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
                           {/* 3:4 Vertical Poster Container */}
                           <div 
-                            onClick={() => navigate(dish.link || '/dathang')}
+                            onClick={() => {
+                              if (dishesCarousel.hasSwipedRef.current) return;
+                              navigate(dish.link || '/dathang');
+                            }}
                             className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
                           >
                             <img 
@@ -894,7 +1047,10 @@ export default function HomePage({ navigate, onSelectBranch }) {
                           {/* Minimal Text: Tiêu đề & Nút đặt món */}
                           <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
                             <h3 
-                              onClick={() => navigate(dish.link || '/dathang')}
+                              onClick={() => {
+                                if (dishesCarousel.hasSwipedRef.current) return;
+                                navigate(dish.link || '/dathang');
+                              }}
                               className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
                               title={dish.title}
                             >
@@ -902,7 +1058,10 @@ export default function HomePage({ navigate, onSelectBranch }) {
                             </h3>
                             <button
                               type="button"
-                              onClick={() => navigate(dish.link || '/dathang')}
+                              onClick={() => {
+                                if (dishesCarousel.hasSwipedRef.current) return;
+                                navigate(dish.link || '/dathang');
+                              }}
                               className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                             >
                               <span>{dish.cta || 'Thử Ngay'}</span>
@@ -916,15 +1075,15 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 </div>
 
                 {/* Dots Indicator */}
-                {showNav && dishesMaxIndex > 0 && (
+                {dishesCarousel.showNav && (
                   <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
-                    {Array.from({ length: dishesMaxIndex + 1 }).map((_, dotIdx) => (
+                    {newDishesItems.map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         type="button"
                         onClick={() => dishesCarousel.goToIndex(dotIdx)}
                         className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                          safeIndex === dotIdx 
+                          dishesCarousel.activeDotIndex === dotIdx 
                             ? 'w-8 bg-[#8c5932] shadow-xs' 
                             : 'w-2.5 bg-stone-300 hover:bg-stone-400'
                         }`}
@@ -989,16 +1148,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
           {/* Carousel Container: 3 ưu đãi trên máy tính, 1 trên điện thoại */}
           {(() => {
-            const safeIndex = Math.min(promotionsIndex, promosMaxIndex);
-            const showNav = promotionsItems.length > visibleCount;
-
             return (
               <div 
                 className="relative group/carousel px-0 sm:px-2"
                 {...promosCarousel.containerProps}
               >
                 {/* Navigation Arrow Left */}
-                {showNav && (
+                {promosCarousel.showNav && (
                   <button
                     type="button"
                     onClick={promosCarousel.handlePrev}
@@ -1010,7 +1166,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 )}
 
                 {/* Navigation Arrow Right */}
-                {showNav && (
+                {promosCarousel.showNav && (
                   <button
                     type="button"
                     onClick={promosCarousel.handleNext}
@@ -1024,20 +1180,27 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {/* Carousel Overflow Track */}
                 <div className="overflow-hidden w-full py-2 touch-pan-y">
                   <div 
-                    className="flex transition-transform duration-500 ease-out"
+                    className="flex"
+                    onTransitionEnd={promosCarousel.handleTransitionEnd}
                     style={{
-                      transform: `translateX(-${safeIndex * (100 / visibleCount)}%)`
+                      transform: `translateX(-${promosCarousel.currentIndex * (100 / visibleCount)}%)`,
+                      transition: promosCarousel.isTransitionEnabled 
+                        ? 'transform 500ms ease-out' 
+                        : 'none'
                     }}
                   >
-                    {promotionsItems.map((promo, idx) => (
+                    {promosCarousel.items.map((promo, idx) => (
                       <div 
-                        key={promo.id || idx}
+                        key={promo._extendedKey || promo.id || idx}
                         className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
                       >
                         <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
                           {/* 3:4 Vertical Poster Container */}
                           <div 
-                            onClick={() => navigate(promo.link || '/khuyenmai')}
+                            onClick={() => {
+                              if (promosCarousel.hasSwipedRef.current) return;
+                              navigate(promo.link || '/khuyenmai');
+                            }}
                             className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
                           >
                             <img 
@@ -1060,7 +1223,10 @@ export default function HomePage({ navigate, onSelectBranch }) {
                           {/* Minimal Text: Tiêu đề & Nút xem ưu đãi */}
                           <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
                             <h3 
-                              onClick={() => navigate(promo.link || '/khuyenmai')}
+                              onClick={() => {
+                                if (promosCarousel.hasSwipedRef.current) return;
+                                navigate(promo.link || '/khuyenmai');
+                              }}
                               className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
                               title={promo.title}
                             >
@@ -1068,7 +1234,10 @@ export default function HomePage({ navigate, onSelectBranch }) {
                             </h3>
                             <button
                               type="button"
-                              onClick={() => navigate(promo.link || '/khuyenmai')}
+                              onClick={() => {
+                                if (promosCarousel.hasSwipedRef.current) return;
+                                navigate(promo.link || '/khuyenmai');
+                              }}
                               className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-rose-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                             >
                               <span>{promo.cta || 'Xem Ưu Đãi'}</span>
@@ -1082,15 +1251,15 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 </div>
 
                 {/* Dots Indicator */}
-                {showNav && promosMaxIndex > 0 && (
+                {promosCarousel.showNav && (
                   <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
-                    {Array.from({ length: promosMaxIndex + 1 }).map((_, dotIdx) => (
+                    {promotionsItems.map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         type="button"
                         onClick={() => promosCarousel.goToIndex(dotIdx)}
                         className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                          safeIndex === dotIdx 
+                          promosCarousel.activeDotIndex === dotIdx 
                             ? 'w-8 bg-[#8c5932] shadow-xs' 
                             : 'w-2.5 bg-stone-300 hover:bg-stone-400'
                         }`}
