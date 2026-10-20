@@ -33,7 +33,8 @@ import {
   Moon, 
   Volume2, 
   VolumeX, 
-  ExternalLink 
+  ExternalLink,
+  Smartphone
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
 import { uploadImageToSupabase } from '../../lib/supabase';
@@ -59,6 +60,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
   const [clickLink, setClickLink] = useState(currentBanner.link || '/dathang');
   const [altText, setAltText] = useState(currentBanner.alt || 'COFFEE 24/24');
   const [fixedBackground, setFixedBackground] = useState(currentBanner.fixedBackground || false);
+  const [mobileAspectRatio, setMobileAspectRatio] = useState(currentBanner.mobileAspectRatio || '3/4');
 
   // Background Lighting & Filter State
   const [filter, setFilter] = useState({
@@ -522,6 +524,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
       link: clickLink,
       alt: altText,
       fixedBackground,
+      mobileAspectRatio,
       filter,
       layers
     };
@@ -544,6 +547,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
       setClickLink(def.link);
       setAltText(def.alt);
       setFixedBackground(false);
+      setMobileAspectRatio('3/4');
       setFilter(def.filter || { brightness: 100, contrast: 100, saturation: 100, blur: 0, overlayDarkness: 10, overlayColor: '#000000', vignette: true });
       setLayers([]);
       setSelectedLayerId(null);
@@ -834,7 +838,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
                       letterSpacing: `${layer.letterSpacing || 0}px`,
                       lineHeight: layer.lineHeight || 1.25,
                       textShadow: textShadow,
-                      whiteSpace: 'pre-wrap'
+                      whiteSpace: layer.text?.includes('\n') ? 'pre' : 'nowrap'
                     }}
                   >
                     {layer.text || 'Chữ thiết kế'}
@@ -2194,6 +2198,43 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
                         }`}
                       />
                     </button>
+                  </div>
+                </div>
+
+                {/* =========================================================================
+                    3. TÙY CHỌN TỈ LỆ ẢNH BÌA TRÊN ĐIỆN THOẠI (MOBILE ASPECT RATIO)
+                    ========================================================================= */}
+                <div className="p-4 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-3 mt-3">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-amber-400" />
+                    <h5 className="text-xs font-black text-white uppercase tracking-wider">
+                      Tỉ Lệ Hiển Thị Ảnh Bìa Trên Điện Thoại (Mobile)
+                    </h5>
+                  </div>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Mở to phạm vi chiều dài ảnh bìa trên màn hình điện thoại, tự động cắt đều 2 cạnh bên ảnh 16:9 để tạo cảm giác cao lớn, ấn tượng chuẩn poster dọc.
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: '3/4', label: '3:4 Dọc Chuẩn', desc: 'Mở to chiều dài & Cắt 2 bên (Khuyên dùng)' },
+                      { id: '4/5', label: '4:5 Dọc Vừa', desc: 'Cao vừa vặn chuẩn Instagram' },
+                      { id: '1/1', label: '1:1 Vuông', desc: 'Cắt nhẹ 2 bên ảnh' },
+                      { id: '16/9', label: '16:9 Ngang', desc: 'Nguyên bản không cắt' }
+                    ].map(r => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setMobileAspectRatio(r.id)}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          mobileAspectRatio === r.id
+                            ? 'bg-amber-500/15 border-amber-400 text-white shadow-md'
+                            : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-amber-300">{r.label}</div>
+                        <div className="text-[10px] text-neutral-400 mt-0.5">{r.desc}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

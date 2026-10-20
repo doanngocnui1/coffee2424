@@ -25,6 +25,7 @@ export const DEFAULT_SITE_CONFIG = {
     link: '/dathang',
     alt: 'COFFEE 24/24 - Không Gian Cà Phê 24/7',
     fixedBackground: false,
+    mobileAspectRatio: '3/4', // '3/4' | '4/5' | '1/1' | '16/9'
     filter: {
       brightness: 100,
       contrast: 100,
