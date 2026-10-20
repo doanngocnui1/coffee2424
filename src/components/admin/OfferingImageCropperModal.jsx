@@ -176,17 +176,17 @@ export default function OfferingImageCropperModal({
     }
   };
 
-  // Xác nhận cắt ảnh và xuất file độ phân giải cao 1200 x 900 (Chuẩn tỉ lệ 4:3)
+  // Xác nhận cắt ảnh và xuất file độ phân giải cao 1000 x 1000 (Chuẩn tỉ lệ vuông 1:1)
   const handleConfirmCrop = async () => {
     if (!imageElement) return;
 
     setIsProcessing(true);
-    triggerAlert?.('⏳ Đang xử lý cắt ảnh tỉ lệ 4:3 và tải lên Supabase Storage...');
+    triggerAlert?.('⏳ Đang xử lý cắt ảnh tỉ lệ vuông 1:1 và tải lên Supabase Storage...');
 
     try {
       const outputCanvas = document.createElement('canvas');
-      const targetW = 1200;
-      const targetH = 900; // 4 : 3 landscape
+      const targetW = 1000;
+      const targetH = 1000; // 1 : 1 square
       outputCanvas.width = targetW;
       outputCanvas.height = targetH;
       const ctx = outputCanvas.getContext('2d');
@@ -194,7 +194,7 @@ export default function OfferingImageCropperModal({
       ctx.fillStyle = '#0f0a07';
       ctx.fillRect(0, 0, targetW, targetH);
 
-      // Tỉ lệ scale giữa preview canvas (800x600) và output canvas (1200x900)
+      // Tỉ lệ scale giữa preview canvas (800x800) và output canvas (1000x1000)
       const previewW = canvasRef.current?.width || 800;
       const scaleMultiplier = targetW / previewW;
 
@@ -223,22 +223,22 @@ export default function OfferingImageCropperModal({
           onApplyCrop(fallbackDataUrl);
           setIsProcessing(false);
           onClose();
-          triggerAlert?.('✓ Đã cắt ảnh chuẩn tỉ lệ 4:3 (3x4 nằm ngang)!');
+          triggerAlert?.('✓ Đã cắt ảnh chuẩn tỉ lệ vuông 1:1!');
           return;
         }
 
         // Đặt tên file ảnh cắt
-        const cropFile = new File([blob], `offering_4x3_${Date.now()}.webp`, { type: 'image/webp' });
+        const cropFile = new File([blob], `offering_1x1_${Date.now()}.webp`, { type: 'image/webp' });
 
         try {
           const cloudUrl = await uploadImageToSupabase(cropFile, 'offerings');
           if (cloudUrl) {
             onApplyCrop(cloudUrl);
-            triggerAlert?.('✓ Đã cắt ảnh chuẩn tỉ lệ 4:3 và lưu lên Cloud Storage thành công!');
+            triggerAlert?.('✓ Đã cắt ảnh chuẩn tỉ lệ vuông 1:1 và lưu lên Cloud Storage thành công!');
           } else {
             const fallbackDataUrl = outputCanvas.toDataURL('image/jpeg', 0.88);
             onApplyCrop(fallbackDataUrl);
-            triggerAlert?.('✓ Đã cắt ảnh chuẩn tỉ lệ 4:3 (dự phòng)!');
+            triggerAlert?.('✓ Đã cắt ảnh chuẩn tỉ lệ vuông 1:1 (dự phòng)!');
           }
         } catch (err) {
           console.warn('Lỗi lưu ảnh cắt lên Supabase:', err);
@@ -277,7 +277,7 @@ export default function OfferingImageCropperModal({
                   Cắt & Căn Chỉnh Ảnh Sân Khấu
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-black uppercase tracking-wider">
-                  Tỉ Lệ Cố Định 4:3 (3x4 Nằm Ngang)
+                  Tỉ Lệ Vuông Chuẩn 1:1
                 </span>
               </div>
               <p className="text-xs text-neutral-400 mt-0.5">
@@ -295,11 +295,11 @@ export default function OfferingImageCropperModal({
           </button>
         </div>
 
-        {/* Viewport Khu Vực Cắt Tỉ Lệ 4:3 */}
+        {/* Viewport Khu Vực Cắt Tỉ Lệ Vuông 1:1 */}
         <div className="p-4 sm:p-6 flex-1 flex flex-col items-center justify-center overflow-y-auto bg-neutral-950/70">
           <div 
             ref={containerRef}
-            className="relative w-full max-w-[640px] aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-500/60 bg-neutral-900 cursor-grab active:cursor-grabbing group touch-none"
+            className="relative w-full max-w-[500px] aspect-square rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/60 bg-neutral-900 cursor-grab active:cursor-grabbing group touch-none"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onTouchStart={handleTouchStart}
@@ -310,7 +310,7 @@ export default function OfferingImageCropperModal({
             <canvas 
               ref={canvasRef} 
               width={800} 
-              height={600} 
+              height={800} 
               className="w-full h-full object-contain pointer-events-none"
             />
 
@@ -331,7 +331,7 @@ export default function OfferingImageCropperModal({
             <div className="absolute top-3 left-3 pointer-events-none">
               <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md text-amber-300 text-[11px] font-black border border-white/20 shadow-md flex items-center gap-1.5">
                 <Maximize2 className="w-3 h-3" />
-                <span>Khung Cắt 4:3 (Ngang)</span>
+                <span>Khung Cắt 1:1 (Vuông)</span>
               </span>
             </div>
 

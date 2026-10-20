@@ -1102,72 +1102,74 @@ export default function HomePage({ navigate, onSelectBranch }) {
         </div>
 
         {/* The Single Unified Stage (Sân khấu đơn nhất, không phân mảnh nhiều thẻ) */}
-        <div className="relative ios-glass-panel rounded-[36px] sm:rounded-[48px] overflow-hidden border border-white/90 shadow-[0_24px_70px_rgba(60,35,15,0.08)] mt-6 sm:mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+        <div className="relative ios-glass-panel rounded-[36px] sm:rounded-[48px] p-4 sm:p-6 lg:p-8 border border-white/90 shadow-[0_24px_70px_rgba(60,35,15,0.08)] mt-6 sm:mt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
             
-            {/* Left: Cinematic Photo Canvas locked at 4:3 landscape (3x4 nằm ngang) */}
-            <div className="lg:col-span-6 xl:col-span-7 relative w-full aspect-[4/3] overflow-hidden bg-stone-900 group">
-              <img 
-                key={activeOffering.id}
-                src={activeOffering.image} 
-                alt={activeOffering.title} 
-                className="w-full h-full aspect-[4/3] object-cover transition-all duration-700 ease-out transform group-hover:scale-105 animate-in fade-in zoom-in-95"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-black/30 pointer-events-none" />
-              
-              {/* Badge */}
-              <div className="absolute top-4 sm:top-6 left-4 sm:left-6 flex items-center gap-2">
-                <span className="px-3.5 py-1.5 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-amber-200 text-xs font-bold border border-white/20 shadow-md">
-                  {activeOffering.badge}
-                </span>
-              </div>
+            {/* Left: 1:1 Square Image Canvas with Gorgeous Rounded Corners */}
+            <div className="lg:col-span-6 xl:col-span-6 flex justify-center w-full">
+              <div className="relative w-full aspect-square max-w-[540px] rounded-[28px] sm:rounded-[38px] overflow-hidden bg-stone-900 group shadow-[0_16px_40px_rgba(43,23,14,0.18)] border border-white/60">
+                <img 
+                  key={activeOffering.id}
+                  src={activeOffering.image} 
+                  alt={activeOffering.title} 
+                  className="w-full h-full aspect-square object-cover transition-all duration-700 ease-out transform group-hover:scale-105 animate-in fade-in zoom-in-95"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                
+                {/* Badge */}
+                <div className="absolute top-4 sm:top-6 left-4 sm:left-6 flex items-center gap-2">
+                  <span className="px-3.5 py-1.5 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-amber-200 text-xs font-bold border border-white/20 shadow-md">
+                    {activeOffering.badge}
+                  </span>
+                </div>
 
-              {/* Number indicator */}
-              <div className="absolute top-4 sm:top-6 right-4 sm:right-6">
-                <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-xs font-mono font-bold border border-white/20">
-                  0{selectedOfferingIndex + 1} / 0{ALL_STORY_OFFERINGS.length}
-                </span>
-              </div>
+                {/* Number indicator */}
+                <div className="absolute top-4 sm:top-6 right-4 sm:right-6">
+                  <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-xs font-mono font-bold border border-white/20">
+                    0{selectedOfferingIndex + 1} / 0{ALL_STORY_OFFERINGS.length}
+                  </span>
+                </div>
 
-              {/* Bottom controls on image */}
-              <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 flex items-center justify-between">
-                {/* 7 Progress Dots */}
-                <div className="flex items-center gap-1.5">
-                  {ALL_STORY_OFFERINGS.map((_, idx) => (
+                {/* Bottom controls on image */}
+                <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 flex items-center justify-between">
+                  {/* 7 Progress Dots */}
+                  <div className="flex items-center gap-1.5">
+                    {ALL_STORY_OFFERINGS.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedOfferingIndex(idx)}
+                        className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                          idx === selectedOfferingIndex ? 'w-7 bg-amber-400' : 'w-2 bg-white/40 hover:bg-white/70'
+                        }`}
+                        aria-label={`Chuyển đến phần ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Arrow Navigation */}
+                  <div className="flex items-center gap-2">
                     <button
-                      key={idx}
-                      onClick={() => setSelectedOfferingIndex(idx)}
-                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        idx === selectedOfferingIndex ? 'w-7 bg-amber-400' : 'w-2 bg-white/40 hover:bg-white/70'
-                      }`}
-                      aria-label={`Chuyển đến phần ${idx + 1}`}
-                    />
-                  ))}
+                      onClick={() => setSelectedOfferingIndex((prev) => (prev === 0 ? ALL_STORY_OFFERINGS.length - 1 : prev - 1))}
+                      className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer"
+                      title="Trước đó"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedOfferingIndex((prev) => (prev === ALL_STORY_OFFERINGS.length - 1 ? 0 : prev + 1))}
+                      className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer"
+                      title="Tiếp theo"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Arrow Navigation */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedOfferingIndex((prev) => (prev === 0 ? ALL_STORY_OFFERINGS.length - 1 : prev - 1))}
-                    className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer"
-                    title="Trước đó"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setSelectedOfferingIndex((prev) => (prev === ALL_STORY_OFFERINGS.length - 1 ? 0 : prev + 1))}
-                    className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer"
-                    title="Tiếp theo"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
               </div>
-
             </div>
 
             {/* Right: Rich Editorial Craft Narrative */}
-            <div className="lg:col-span-6 xl:col-span-5 p-7 sm:p-10 lg:p-12 flex flex-col justify-between space-y-6 animate-in fade-in duration-300">
+            <div className="lg:col-span-6 xl:col-span-6 p-2 sm:p-4 lg:p-6 flex flex-col justify-between space-y-6 animate-in fade-in duration-300">
               
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 text-[#8c5932] text-xs font-black uppercase tracking-wider border border-white shadow-2xs">
