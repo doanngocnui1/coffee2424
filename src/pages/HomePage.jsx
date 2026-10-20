@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Coffee, 
@@ -76,6 +76,160 @@ const AMENITY_COLORS = {
   purple: 'bg-purple-500/15 text-purple-700'
 };
 
+/**
+ * Hook quản lý auto-slide cho poster carousels:
+ * - Desktop: tự động chạy mỗi 2 giây khi nhiều hơn 3 poster (itemsCount > 3)
+ * - Mobile: tự động chạy mỗi 2 giây khi nhiều hơn 1 poster (itemsCount > 1)
+ * - Chuột lướt qua (mouseenter) hoặc ngón tay chạm màn hình (touchstart): tạm dừng ngay
+ * - Thả chuột (mouseleave) hoặc nhấc tay khỏi màn hình (touchend/touchcancel): giữ lại đúng 5 giây kể từ lúc thả rồi mới tiếp tục chạy mỗi 2 giây
+ * - Hỗ trợ vuốt tay qua lại (swipe left/right) trên điện thoại
+ */
+function usePosterAutoSlide({
+  itemsCount,
+  visibleCount,
+  setCurrentIndex,
+  interval = 2000,
+  holdDelay = 5000
+}) {
+  const isInteractingRef = useRef(false);
+  const autoTimerRef = useRef(null);
+  const resumeTimerRef = useRef(null);
+  const touchStartXRef = useRef(null);
+  const touchStartYRef = useRef(null);
+
+  const maxIndex = Math.max(0, itemsCount - visibleCount);
+  const shouldAutoSlide = itemsCount > visibleCount;
+
+  const maxIndexRef = useRef(maxIndex);
+  maxIndexRef.current = maxIndex;
+
+  const shouldAutoSlideRef = useRef(shouldAutoSlide);
+  shouldAutoSlideRef.current = shouldAutoSlide;
+
+  const clearTimers = useCallback(() => {
+    if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, []);
+
+  const slideNext = useCallback(() => {
+    setCurrentIndex(prev => (prev >= maxIndexRef.current ? 0 : prev + 1));
+  }, [setCurrentIndex]);
+
+  const slidePrev = useCallback(() => {
+    setCurrentIndex(prev => (prev <= 0 ? maxIndexRef.current : prev - 1));
+  }, [setCurrentIndex]);
+
+  const startAutoPlay = useCallback(() => {
+    clearTimers();
+    if (!shouldAutoSlideRef.current) return;
+    autoTimerRef.current = setInterval(() => {
+      slideNext();
+    }, interval);
+  }, [clearTimers, slideNext, interval]);
+
+  const scheduleResumeAfterHold = useCallback(() => {
+    clearTimers();
+    if (!shouldAutoSlideRef.current) return;
+    resumeTimerRef.current = setTimeout(() => {
+      if (!isInteractingRef.current) {
+        slideNext();
+        startAutoPlay();
+      }
+    }, holdDelay);
+  }, [clearTimers, slideNext, startAutoPlay, holdDelay]);
+
+  const onInteractionStart = useCallback(() => {
+    isInteractingRef.current = true;
+    clearTimers();
+  }, [clearTimers]);
+
+  const onInteractionEnd = useCallback(() => {
+    isInteractingRef.current = false;
+    scheduleResumeAfterHold();
+  }, [scheduleResumeAfterHold]);
+
+  const onManualAction = useCallback((actionFn) => {
+    if (actionFn) actionFn();
+    clearTimers();
+    scheduleResumeAfterHold();
+  }, [clearTimers, scheduleResumeAfterHold]);
+
+  // Touch gesture handling
+  const handleTouchStart = useCallback((e) => {
+    if (e.targetTouches && e.targetTouches.length > 0) {
+      touchStartXRef.current = e.targetTouches[0].clientX;
+      touchStartYRef.current = e.targetTouches[0].clientY;
+    }
+    onInteractionStart();
+  }, [onInteractionStart]);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (touchStartXRef.current !== null && e.changedTouches && e.changedTouches.length > 0) {
+      const diffX = touchStartXRef.current - e.changedTouches[0].clientX;
+      const diffY = touchStartYRef.current !== null ? Math.abs(touchStartYRef.current - e.changedTouches[0].clientY) : 0;
+      // Chỉ kích hoạt lật slide khi khoảng cách vuốt ngang lớn hơn dọc và > 40px
+      if (Math.abs(diffX) > diffY && Math.abs(diffX) > 40) {
+        if (diffX > 0) {
+          slideNext();
+        } else {
+          slidePrev();
+        }
+      }
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+    }
+    onInteractionEnd();
+  }, [onInteractionEnd, slideNext, slidePrev]);
+
+  const handleTouchCancel = useCallback(() => {
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+    onInteractionEnd();
+  }, [onInteractionEnd]);
+
+  // Khởi động auto-play khi đủ điều kiện
+  useEffect(() => {
+    if (shouldAutoSlide && !isInteractingRef.current) {
+      startAutoPlay();
+    } else {
+      clearTimers();
+    }
+    return () => clearTimers();
+  }, [shouldAutoSlide, startAutoPlay, clearTimers]);
+
+  // Tạm dừng khi chuyển tab trình duyệt
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearTimers();
+      } else if (shouldAutoSlideRef.current && !isInteractingRef.current) {
+        startAutoPlay();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [clearTimers, startAutoPlay]);
+
+  return {
+    handlePrev: () => onManualAction(slidePrev),
+    handleNext: () => onManualAction(slideNext),
+    goToIndex: (idx) => onManualAction(() => setCurrentIndex(idx)),
+    containerProps: {
+      onMouseEnter: onInteractionStart,
+      onMouseLeave: onInteractionEnd,
+      onTouchStart: handleTouchStart,
+      onTouchEnd: handleTouchEnd,
+      onTouchCancel: handleTouchCancel
+    }
+  };
+}
+
 export default function HomePage({ navigate, onSelectBranch }) {
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
   const [selectedOfferingIndex, setSelectedOfferingIndex] = useState(0);
@@ -91,8 +245,6 @@ export default function HomePage({ navigate, onSelectBranch }) {
     }
     return false;
   });
-  const [touchDishesStartX, setTouchDishesStartX] = useState(null);
-  const [touchPromosStartX, setTouchPromosStartX] = useState(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -259,6 +411,40 @@ export default function HomePage({ navigate, onSelectBranch }) {
   const promotionsItems = (siteConfig.promotionsList && siteConfig.promotionsList.length > 0)
     ? siteConfig.promotionsList
     : defaultPromotions;
+
+  const visibleCount = isMobile ? 1 : 3;
+  const dishesMaxIndex = Math.max(0, newDishesItems.length - visibleCount);
+  const promosMaxIndex = Math.max(0, promotionsItems.length - visibleCount);
+
+  // Auto-slide controllers cho Món Mới và Chương Trình Ưu Đãi
+  const dishesCarousel = usePosterAutoSlide({
+    itemsCount: newDishesItems.length,
+    visibleCount,
+    setCurrentIndex: setNewDishesIndex,
+    interval: 2000,
+    holdDelay: 5000
+  });
+
+  const promosCarousel = usePosterAutoSlide({
+    itemsCount: promotionsItems.length,
+    visibleCount,
+    setCurrentIndex: setPromotionsIndex,
+    interval: 2000,
+    holdDelay: 5000
+  });
+
+  // Đảm bảo index luôn hợp lệ khi thay đổi kích thước màn hình
+  useEffect(() => {
+    if (newDishesIndex > dishesMaxIndex) {
+      setNewDishesIndex(Math.max(0, dishesMaxIndex));
+    }
+  }, [dishesMaxIndex, newDishesIndex]);
+
+  useEffect(() => {
+    if (promotionsIndex > promosMaxIndex) {
+      setPromotionsIndex(Math.max(0, promosMaxIndex));
+    }
+  }, [promosMaxIndex, promotionsIndex]);
 
   const fallbackOffering = {
     id: 'offering-coffee',
@@ -637,26 +823,19 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
           {/* Carousel Container: 3 món trên máy tính, 1 món trên điện thoại */}
           {(() => {
-            const visibleCount = isMobile ? 1 : 3;
-            const maxIndex = Math.max(0, newDishesItems.length - visibleCount);
-            const safeIndex = Math.min(newDishesIndex, maxIndex);
+            const safeIndex = Math.min(newDishesIndex, dishesMaxIndex);
             const showNav = newDishesItems.length > visibleCount;
 
-            const handlePrev = () => {
-              setNewDishesIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
-            };
-
-            const handleNext = () => {
-              setNewDishesIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
-            };
-
             return (
-              <div className="relative group/carousel px-0 sm:px-2">
+              <div 
+                className="relative group/carousel px-0 sm:px-2"
+                {...dishesCarousel.containerProps}
+              >
                 {/* Navigation Arrow Left */}
                 {showNav && (
                   <button
                     type="button"
-                    onClick={handlePrev}
+                    onClick={dishesCarousel.handlePrev}
                     className="absolute -left-2 sm:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
                     aria-label="Xem món mới trước đó"
                   >
@@ -668,7 +847,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {showNav && (
                   <button
                     type="button"
-                    onClick={handleNext}
+                    onClick={dishesCarousel.handleNext}
                     className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
                     aria-label="Xem món mới tiếp theo"
                   >
@@ -677,17 +856,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 )}
 
                 {/* Carousel Overflow Track */}
-                <div 
-                  className="overflow-hidden w-full py-2"
-                  onTouchStart={(e) => setTouchDishesStartX(e.targetTouches[0].clientX)}
-                  onTouchEnd={(e) => {
-                    if (touchDishesStartX === null) return;
-                    const diff = touchDishesStartX - e.changedTouches[0].clientX;
-                    if (diff > 45) handleNext();
-                    else if (diff < -45) handlePrev();
-                    setTouchDishesStartX(null);
-                  }}
-                >
+                <div className="overflow-hidden w-full py-2 touch-pan-y">
                   <div 
                     className="flex transition-transform duration-500 ease-out"
                     style={{
@@ -747,13 +916,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 </div>
 
                 {/* Dots Indicator */}
-                {showNav && maxIndex > 0 && (
+                {showNav && dishesMaxIndex > 0 && (
                   <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
-                    {Array.from({ length: maxIndex + 1 }).map((_, dotIdx) => (
+                    {Array.from({ length: dishesMaxIndex + 1 }).map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         type="button"
-                        onClick={() => setNewDishesIndex(dotIdx)}
+                        onClick={() => dishesCarousel.goToIndex(dotIdx)}
                         className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                           safeIndex === dotIdx 
                             ? 'w-8 bg-[#8c5932] shadow-xs' 
@@ -820,26 +989,19 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
           {/* Carousel Container: 3 ưu đãi trên máy tính, 1 trên điện thoại */}
           {(() => {
-            const visibleCount = isMobile ? 1 : 3;
-            const maxIndex = Math.max(0, promotionsItems.length - visibleCount);
-            const safeIndex = Math.min(promotionsIndex, maxIndex);
+            const safeIndex = Math.min(promotionsIndex, promosMaxIndex);
             const showNav = promotionsItems.length > visibleCount;
 
-            const handlePrev = () => {
-              setPromotionsIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
-            };
-
-            const handleNext = () => {
-              setPromotionsIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
-            };
-
             return (
-              <div className="relative group/carousel px-0 sm:px-2">
+              <div 
+                className="relative group/carousel px-0 sm:px-2"
+                {...promosCarousel.containerProps}
+              >
                 {/* Navigation Arrow Left */}
                 {showNav && (
                   <button
                     type="button"
-                    onClick={handlePrev}
+                    onClick={promosCarousel.handlePrev}
                     className="absolute -left-2 sm:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
                     aria-label="Xem ưu đãi trước đó"
                   >
@@ -851,7 +1013,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {showNav && (
                   <button
                     type="button"
-                    onClick={handleNext}
+                    onClick={promosCarousel.handleNext}
                     className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
                     aria-label="Xem ưu đãi tiếp theo"
                   >
@@ -860,17 +1022,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 )}
 
                 {/* Carousel Overflow Track */}
-                <div 
-                  className="overflow-hidden w-full py-2"
-                  onTouchStart={(e) => setTouchPromosStartX(e.targetTouches[0].clientX)}
-                  onTouchEnd={(e) => {
-                    if (touchPromosStartX === null) return;
-                    const diff = touchPromosStartX - e.changedTouches[0].clientX;
-                    if (diff > 45) handleNext();
-                    else if (diff < -45) handlePrev();
-                    setTouchPromosStartX(null);
-                  }}
-                >
+                <div className="overflow-hidden w-full py-2 touch-pan-y">
                   <div 
                     className="flex transition-transform duration-500 ease-out"
                     style={{
@@ -930,13 +1082,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 </div>
 
                 {/* Dots Indicator */}
-                {showNav && maxIndex > 0 && (
+                {showNav && promosMaxIndex > 0 && (
                   <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
-                    {Array.from({ length: maxIndex + 1 }).map((_, dotIdx) => (
+                    {Array.from({ length: promosMaxIndex + 1 }).map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         type="button"
-                        onClick={() => setPromotionsIndex(dotIdx)}
+                        onClick={() => promosCarousel.goToIndex(dotIdx)}
                         className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                           safeIndex === dotIdx 
                             ? 'w-8 bg-[#8c5932] shadow-xs' 
