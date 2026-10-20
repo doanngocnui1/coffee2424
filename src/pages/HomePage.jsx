@@ -80,7 +80,7 @@ const AMENITY_COLORS = {
  * Hook quản lý cuộn slide vô tận (infinite loop) cho poster carousels:
  * - Desktop: tự động chạy mỗi 2 giây khi nhiều hơn 3 poster (items.length > 3)
  * - Mobile: tự động chạy mỗi 2 giây khi nhiều hơn 1 poster (items.length > 1)
- * - Vòng lặp vô tận (infinite loop): cuộn liên tục một chiều không bao giờ nhảy ngược về đầu
+ * - Vòng lặp vô tận (infinite loop): cuộn liên tục một chiều mượt mà, không bao giờ nháy giật hay nhảy ngược về đầu
  * - Chuột lướt qua (mouseenter) hoặc ngón tay chạm màn hình (touchstart): tạm dừng ngay
  * - Thả chuột (mouseleave) hoặc nhấc tay khỏi màn hình (touchend/touchcancel): giữ lại đúng 5 giây rồi mới tiếp tục chạy mỗi 2 giây
  * - Hỗ trợ vuốt tay qua lại (swipe left/right) trên điện thoại và click dots/arrows
@@ -93,9 +93,10 @@ function usePosterAutoSlide({
 }) {
   const itemsCount = items.length;
   const shouldAutoSlide = itemsCount > visibleCount;
-  const cloneCount = shouldAutoSlide ? visibleCount : 0;
+  // Buffer clone ít nhất 2 phần tử (hoặc visibleCount) để đảm bảo cuộn mượt không lộ mép
+  const cloneCount = shouldAutoSlide ? Math.min(itemsCount, Math.max(visibleCount, 2)) : 0;
 
-  // Track position: bắt đầu ở vị trí cloneCount (vị trí phần tử gốc đầu tiên)
+  const trackRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(() => (shouldAutoSlide ? cloneCount : 0));
   const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
 
@@ -118,33 +119,32 @@ function usePosterAutoSlide({
   const itemsCountRef = useRef(itemsCount);
   itemsCountRef.current = itemsCount;
 
+  const visibleCountRef = useRef(visibleCount);
+  visibleCountRef.current = visibleCount;
+
   const shouldAutoSlideRef = useRef(shouldAutoSlide);
   shouldAutoSlideRef.current = shouldAutoSlide;
 
   // Tạo mảng extendedItems với các clone ở đầu và cuối để tạo hiệu ứng vòng lặp vô tận
   const extendedItems = useMemo(() => {
-    if (!shouldAutoSlide || itemsCount === 0) {
+    if (!shouldAutoSlide || itemsCount === 0 || cloneCount === 0) {
       return items.map((item, idx) => ({
         ...item,
         _extendedKey: item.id ? `orig-${item.id}` : `orig-${idx}`
       }));
     }
-    const clonesBefore = cloneCount > 0 
-      ? items.slice(-cloneCount).map((item, idx) => ({
-          ...item,
-          _extendedKey: `clone-before-${item.id || idx}-${idx}`
-        }))
-      : [];
+    const clonesBefore = items.slice(-cloneCount).map((item, idx) => ({
+      ...item,
+      _extendedKey: `clone-before-${item.id || idx}-${idx}`
+    }));
     const original = items.map((item, idx) => ({
       ...item,
       _extendedKey: `orig-${item.id || idx}-${idx}`
     }));
-    const clonesAfter = cloneCount > 0 
-      ? items.slice(0, cloneCount).map((item, idx) => ({
-          ...item,
-          _extendedKey: `clone-after-${item.id || idx}-${idx}`
-        }))
-      : [];
+    const clonesAfter = items.slice(0, cloneCount).map((item, idx) => ({
+      ...item,
+      _extendedKey: `clone-after-${item.id || idx}-${idx}`
+    }));
     return [...clonesBefore, ...original, ...clonesAfter];
   }, [items, shouldAutoSlide, cloneCount, itemsCount]);
 
@@ -156,21 +156,27 @@ function usePosterAutoSlide({
       prevCloneCountRef.current = cloneCount;
       if (shouldAutoSlide && itemsCount > 0) {
         const currentReal = ((currentIndexRef.current - prevC) % itemsCount + itemsCount) % itemsCount;
-        setIsTransitionEnabled(false);
         const newIdx = cloneCount + currentReal;
+        if (trackRef.current) {
+          trackRef.current.style.transition = 'none';
+          trackRef.current.style.transform = `translateX(-${newIdx * (100 / visibleCount)}%)`;
+          void trackRef.current.offsetHeight; // Force reflow
+        }
+        setIsTransitionEnabled(false);
         setCurrentIndex(newIdx);
         currentIndexRef.current = newIdx;
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setIsTransitionEnabled(true);
-          });
-        });
       } else {
+        if (trackRef.current) {
+          trackRef.current.style.transition = 'none';
+          trackRef.current.style.transform = 'translateX(0%)';
+          void trackRef.current.offsetHeight;
+        }
+        setIsTransitionEnabled(false);
         setCurrentIndex(0);
         currentIndexRef.current = 0;
       }
     }
-  }, [cloneCount, itemsCount, shouldAutoSlide]);
+  }, [cloneCount, itemsCount, shouldAutoSlide, visibleCount]);
 
   const clearTimers = useCallback(() => {
     if (autoTimerRef.current) {
@@ -181,11 +187,18 @@ function usePosterAutoSlide({
       clearTimeout(resumeTimerRef.current);
       resumeTimerRef.current = null;
     }
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
   }, []);
 
-  // Xử lý chuyển tức thời không animation khi chạm ngưỡng clone (vòng lặp vô tận)
+  // Xử lý chuyển tức thời không animation khi chạm ngưỡng clone (vòng lặp vô tận hoàn toàn không nháy giật)
   const handleTransitionEnd = useCallback((e) => {
-    if (e && e.target !== e.currentTarget) return;
+    if (e) {
+      if (e.target !== e.currentTarget) return;
+      if (e.propertyName && e.propertyName !== 'transform') return;
+    }
     if (resetTimerRef.current) {
       clearTimeout(resetTimerRef.current);
       resetTimerRef.current = null;
@@ -196,29 +209,32 @@ function usePosterAutoSlide({
     const current = currentIndexRef.current;
     const cCount = cloneCountRef.current;
     const count = itemsCountRef.current;
+    const vCount = visibleCountRef.current || 1;
+
+    if (count === 0) return;
 
     // Nếu đã trượt tới hoặc qua nhóm clone cuối -> nhảy không giật về vị trí gốc tương ứng
     if (current >= cCount + count) {
       const jumpTo = current - count;
+      if (trackRef.current) {
+        trackRef.current.style.transition = 'none';
+        trackRef.current.style.transform = `translateX(-${jumpTo * (100 / vCount)}%)`;
+        void trackRef.current.offsetHeight; // Bắt buộc browser reflow tức thì 0ms không chạy ngược
+      }
       setIsTransitionEnabled(false);
       setCurrentIndex(jumpTo);
       currentIndexRef.current = jumpTo;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsTransitionEnabled(true);
-        });
-      });
     } else if (current < cCount) {
       // Nếu đã trượt lùi qua nhóm clone đầu -> nhảy không giật về vị trí gốc tương ứng
       const jumpTo = current + count;
+      if (trackRef.current) {
+        trackRef.current.style.transition = 'none';
+        trackRef.current.style.transform = `translateX(-${jumpTo * (100 / vCount)}%)`;
+        void trackRef.current.offsetHeight; // Bắt buộc browser reflow tức thì 0ms không chạy ngược
+      }
       setIsTransitionEnabled(false);
       setCurrentIndex(jumpTo);
       currentIndexRef.current = jumpTo;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsTransitionEnabled(true);
-        });
-      });
     }
   }, []);
 
@@ -226,46 +242,64 @@ function usePosterAutoSlide({
     if (!shouldAutoSlideRef.current) return;
     if (isSlidingRef.current) return;
     isSlidingRef.current = true;
+
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)';
+    }
     setIsTransitionEnabled(true);
+
     setCurrentIndex(prev => {
       const next = prev + 1;
       currentIndexRef.current = next;
       return next;
     });
+
     if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     resetTimerRef.current = setTimeout(() => {
       handleTransitionEnd();
-    }, 600);
+    }, 650);
   }, [handleTransitionEnd]);
 
   const slidePrev = useCallback(() => {
     if (!shouldAutoSlideRef.current) return;
     if (isSlidingRef.current) return;
     isSlidingRef.current = true;
+
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)';
+    }
     setIsTransitionEnabled(true);
+
     setCurrentIndex(prev => {
       const next = prev - 1;
       currentIndexRef.current = next;
       return next;
     });
+
     if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     resetTimerRef.current = setTimeout(() => {
       handleTransitionEnd();
-    }, 600);
+    }, 650);
   }, [handleTransitionEnd]);
 
   const goToIndex = useCallback((dotIdx) => {
     if (!shouldAutoSlideRef.current) return;
     if (isSlidingRef.current) return;
     isSlidingRef.current = true;
+
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)';
+    }
     setIsTransitionEnabled(true);
+
     const target = cloneCountRef.current + dotIdx;
     setCurrentIndex(target);
     currentIndexRef.current = target;
+
     if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     resetTimerRef.current = setTimeout(() => {
       handleTransitionEnd();
-    }, 600);
+    }, 650);
   }, [handleTransitionEnd]);
 
   const startAutoPlay = useCallback(() => {
@@ -366,7 +400,6 @@ function usePosterAutoSlide({
   useEffect(() => {
     return () => {
       clearTimers();
-      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     };
   }, [clearTimers]);
 
@@ -376,6 +409,7 @@ function usePosterAutoSlide({
     : currentIndex;
 
   return {
+    trackRef,
     items: extendedItems,
     currentIndex,
     isTransitionEnabled,
@@ -1043,12 +1077,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {/* Carousel Overflow Track */}
                 <div className="overflow-hidden w-full py-2 touch-pan-y">
                   <div 
-                    className="flex"
+                    ref={dishesCarousel.trackRef}
+                    className="flex will-change-transform"
                     onTransitionEnd={dishesCarousel.handleTransitionEnd}
                     style={{
                       transform: `translateX(-${dishesCarousel.currentIndex * (100 / visibleCount)}%)`,
                       transition: dishesCarousel.isTransitionEnabled 
-                        ? 'transform 500ms ease-out' 
+                        ? 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)' 
                         : 'none'
                     }}
                   >
@@ -1219,12 +1254,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
                 {/* Carousel Overflow Track */}
                 <div className="overflow-hidden w-full py-2 touch-pan-y">
                   <div 
-                    className="flex"
+                    ref={promosCarousel.trackRef}
+                    className="flex will-change-transform"
                     onTransitionEnd={promosCarousel.handleTransitionEnd}
                     style={{
                       transform: `translateX(-${promosCarousel.currentIndex * (100 / visibleCount)}%)`,
                       transition: promosCarousel.isTransitionEnabled 
-                        ? 'transform 500ms ease-out' 
+                        ? 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)' 
                         : 'none'
                     }}
                   >
