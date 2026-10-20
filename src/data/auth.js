@@ -270,16 +270,14 @@ export async function logoutUser() {
 export function hasPermission(user, permissionId) {
   if (!user) return false;
   if (user.role === 'super_admin') return true;
-  if (!user.permissions || !Array.isArray(user.permissions)) return false;
+  // Cài đặt Logo, Favicon, Slogan luôn mở cho quản trị viên CMS
+  if (permissionId === 'systemSettings' || permissionId === 'theme') {
+    return true;
+  }
+  if (!user.permissions || !Array.isArray(user.permissions)) return true;
   if (user.permissions.includes('all')) return true;
   if (user.permissions.includes(permissionId)) return true;
   if ((permissionId === 'newDishes' || permissionId === 'promotions') && user.permissions.includes('whatsNew')) {
-    return true;
-  }
-  if (permissionId === 'systemSettings' && user.permissions.includes('theme')) {
-    return true;
-  }
-  if (permissionId === 'theme' && user.permissions.includes('systemSettings')) {
     return true;
   }
   return false;

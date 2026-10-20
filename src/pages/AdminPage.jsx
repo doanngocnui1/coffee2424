@@ -1660,28 +1660,29 @@ export default function AdminPage({ navigate }) {
                     )}
 
                     {/* 1.3: Slogan & Cấu Hình Trang Chủ / Logo */}
-                    {(hasPermission(currentUser, 'theme') || hasPermission(currentUser, 'systemSettings')) && (
-                      <button
-                        type="button"
-                        onClick={() => { setActiveTab('systemSettings'); setMobileSidebarOpen(false); }}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
-                          activeTab === 'theme' || activeTab === 'systemSettings'
-                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
-                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
-                          <div className="truncate">
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('systemSettings'); setMobileSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                        activeTab === 'theme' || activeTab === 'systemSettings'
+                          ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                          : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                        <div className="truncate">
+                          <div className="flex items-center gap-1.5">
                             <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Cài Đặt Logo & Slogan</span>
-                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
-                              Logo, Slogan & Tên shop
-                            </span>
+                            <span className="text-[10px] bg-amber-500 text-white font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider shrink-0 shadow-2xs">Logo</span>
                           </div>
+                          <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                            Logo, Slogan & Tên shop
+                          </span>
                         </div>
-                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
-                      </button>
-                    )}
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                    </button>
 
                     {/* 1.4: Đánh Giá Khách Hàng */}
                     {hasPermission(currentUser, 'reviews') && (
@@ -2194,16 +2195,16 @@ export default function AdminPage({ navigate }) {
                     </div>
                     <div className="truncate">
                       <span className="text-sm font-extrabold text-[#1f0f09] block truncate leading-tight">
-                        Hệ Thống & Bảo Mật
+                        Hệ Thống & Đổi Logo
                       </span>
                       <span className="text-[11.5px] font-medium text-[#7a5843] block truncate mt-0.5">
-                        Tài khoản & Phân quyền RBAC
+                        Thay Logo, Slogan & Tài Khoản
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[11px] font-bold text-[#7a5843] bg-white/90 px-2 py-0.5 rounded-full border border-stone-200/60 shadow-2xs">
-                      RBAC
+                    <span className="text-[11px] font-extrabold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
+                      ĐỔI LOGO
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openGroups.users ? 'rotate-180 text-amber-600' : 'text-stone-400 group-hover:text-stone-600'}`} />
                   </div>
@@ -2213,28 +2214,29 @@ export default function AdminPage({ navigate }) {
                 {openGroups.users && (
                   <div className="px-2 pb-2.5 pt-1 space-y-1.5 border-t border-amber-900/10 bg-white/40">
                     {/* Cài Đặt Hệ Thống & Logo */}
-                    {(hasPermission(currentUser, 'systemSettings') || hasPermission(currentUser, 'theme')) && (
-                      <button
-                        type="button"
-                        onClick={() => { setActiveTab('systemSettings'); setMobileSidebarOpen(false); }}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
-                          activeTab === 'systemSettings' || activeTab === 'theme'
-                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
-                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
-                          <div className="truncate">
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('systemSettings'); setMobileSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                        activeTab === 'systemSettings' || activeTab === 'theme'
+                          ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                          : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                        <div className="truncate">
+                          <div className="flex items-center gap-1.5">
                             <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Cài Đặt Hệ Thống & Logo</span>
-                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
-                              Thay Logo, Favicon, Slogan
-                            </span>
+                            <span className="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-white font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider shrink-0 shadow-2xs">Đổi Logo</span>
                           </div>
+                          <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                            Thay Logo, Favicon, Slogan
+                          </span>
                         </div>
-                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
-                      </button>
-                    )}
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                    </button>
 
                     <button
                       type="button"
@@ -2366,6 +2368,21 @@ export default function AdminPage({ navigate }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+              {/* Nút Đổi Logo & Slogan truy cập nhanh 1 chạm */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('systemSettings')}
+                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-sm ${
+                  activeTab === 'systemSettings' || activeTab === 'theme'
+                    ? 'bg-amber-400 text-neutral-950 ring-2 ring-amber-300 font-black scale-105'
+                    : 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white hover:shadow-md'
+                }`}
+                title="Bấm để vào ngay trang Cài Đặt Hệ Thống & Thay Đổi Logo thương hiệu"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>🖼️ Đổi Logo & Slogan</span>
+              </button>
+
               {isLocalhost ? (
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
