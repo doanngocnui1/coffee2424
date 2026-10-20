@@ -62,13 +62,19 @@ import {
   pushLocalConfigToCloud, 
   pullCloudConfigToLocal 
 } from '../data/siteConfig';
-import { isLocalhost } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, isLocalhost } from '../lib/supabase';
 import { getJobs, saveJobs } from '../data/jobs';
 import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
   getAccounts, 
+  fetchAdminAccounts,
   saveAccounts, 
+  updateAdminProfileInCloud,
+  deleteAdminProfileFromCloud,
+  createAdminUserOnCloud,
   getCurrentUser, 
+  setCurrentUserSession,
+  fetchAdminProfile,
   loginUser, 
   logoutUser, 
   hasPermission, 
@@ -96,6 +102,8 @@ export default function AdminPage({ navigate }) {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginShowPassword, setLoginShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   // Accounts & RBAC state
   const [accountsList, setAccountsList] = useState(getAccounts);
@@ -149,6 +157,46 @@ export default function AdminPage({ navigate }) {
     }, 100);
   };
 
+  // Validate active session with Supabase on mount
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        if (session?.user) {
+          const profile = await fetchAdminProfile(session.user.id);
+          if (profile && profile.active === false) {
+            await logoutUser();
+            setCurrentUser(null);
+          } else if (profile) {
+            const isSuper = profile.role === 'super_admin' || session.user.email.toLowerCase().includes('admin');
+            const safeUser = {
+              id: session.user.id,
+              email: session.user.email,
+              name: profile.name || session.user.email.split('@')[0],
+              role: profile.role,
+              roleName: profile.role_name || (isSuper ? 'Tổng Quản Trị (Toàn quyền)' : 'Biên Tập & Marketing'),
+              permissions: profile.permissions || (isSuper ? ['all'] : ['articles']),
+              active: true,
+              loginAt: Date.now()
+            };
+            setCurrentUser(safeUser);
+            setCurrentUserSession(safeUser);
+          }
+        }
+      });
+    }
+  }, []);
+
+  // Fetch live accounts from Supabase when logged in
+  useEffect(() => {
+    if (currentUser) {
+      fetchAdminAccounts().then(accounts => {
+        if (accounts && accounts.length > 0) {
+          setAccountsList(accounts);
+        }
+      });
+    }
+  }, [currentUser]);
+
   // Sync auth and accounts state
   useEffect(() => {
     const handleAuthChange = () => setCurrentUser(getCurrentUser());
@@ -172,77 +220,104 @@ export default function AdminPage({ navigate }) {
     }
   }, [currentUser, activeTab]);
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    const res = loginUser(loginEmail, loginPassword);
-    if (!res.success) {
-      setLoginError(res.message);
-    } else {
-      setCurrentUser(res.user);
-      setLoginError('');
-      triggerAlert(`Xin chào ${res.user.name || res.user.email}! Đăng nhập thành công.`);
+    setLoginLoading(true);
+    setLoginError('');
+    try {
+      const res = await loginUser(loginEmail, loginPassword);
+      if (!res.success) {
+        setLoginError(res.message);
+      } else {
+        setCurrentUser(res.user);
+        setLoginError('');
+        triggerAlert(`Xin chào ${res.user.name || res.user.email}! Đăng nhập thành công.`);
+        fetchAdminAccounts().then(accounts => {
+          if (accounts?.length > 0) setAccountsList(accounts);
+        });
+      }
+    } catch {
+      setLoginError('Đã xảy ra lỗi không mong muốn khi đăng nhập.');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
-  const handleSaveAccount = (e) => {
+  const handleSaveAccount = async (e) => {
     e.preventDefault();
-    if (!editingAccount.email || !editingAccount.password) {
-      alert('Vui lòng nhập đầy đủ Email và Mật khẩu!');
+    if (!editingAccount.email) {
+      alert('Vui lòng nhập Email!');
       return;
     }
 
-    let updated;
     if (isNewAccount) {
+      if (!editingAccount.password) {
+        alert('Vui lòng nhập Mật khẩu cho tài khoản mới!');
+        return;
+      }
       if (accountsList.some(a => a.email.toLowerCase() === editingAccount.email.trim().toLowerCase())) {
         alert('Email này đã được sử dụng cho một tài khoản khác!');
         return;
       }
-      const newAcc = {
-        ...editingAccount,
-        id: 'acc-' + Date.now(),
-        createdAt: new Date().toLocaleDateString('vi-VN'),
-        active: editingAccount.active !== false
-      };
-      updated = [newAcc, ...accountsList];
+
+      const createRes = await createAdminUserOnCloud(
+        editingAccount.email,
+        editingAccount.password,
+        {
+          name: editingAccount.name,
+          role: editingAccount.role,
+          roleName: editingAccount.roleName
+        }
+      );
+
+      if (!createRes.success) {
+        alert('Lỗi tạo tài khoản trên Supabase: ' + createRes.error);
+        return;
+      }
+
+      triggerAlert('Đã tạo tài khoản trên Supabase Cloud thành công!');
     } else {
-      updated = accountsList.map(a => a.id === editingAccount.id ? editingAccount : a);
+      const updateRes = await updateAdminProfileInCloud(editingAccount);
+      if (!updateRes.success) {
+        alert('Lỗi cập nhật hồ sơ: ' + (updateRes.error || 'Vui lòng kiểm tra kết nối'));
+      } else {
+        triggerAlert('Đã cập nhật quyền hạn nhân sự trên Cloud thành công!');
+      }
     }
 
-    setAccountsList(updated);
-    saveAccounts(updated);
+    const freshAccounts = await fetchAdminAccounts();
+    if (freshAccounts?.length > 0) {
+      setAccountsList(freshAccounts);
+    }
     setEditingAccount(null);
-    triggerAlert('Đã lưu tài khoản nhân sự thành công!');
   };
 
-  const handleDeleteAccount = (accId) => {
+  const handleDeleteAccount = async (accId) => {
     const target = accountsList.find(a => a.id === accId);
     if (target?.id === 'admin-super' || target?.email.toLowerCase() === 'admin.coffee2424@gmail.com') {
       alert('Không thể xóa tài khoản Tổng Quản Trị mặc định!');
       return;
     }
     if (window.confirm(`Bạn có chắc muốn xóa tài khoản "${target?.name || target?.email}" không?`)) {
-      const updated = accountsList.filter(a => a.id !== accId);
-      setAccountsList(updated);
-      saveAccounts(updated);
+      await deleteAdminProfileFromCloud(accId);
+      const freshAccounts = await fetchAdminAccounts();
+      setAccountsList(freshAccounts);
       triggerAlert('Đã xóa tài khoản.');
     }
   };
 
-  const handleToggleAccountActive = (accId) => {
+  const handleToggleAccountActive = async (accId) => {
     const target = accountsList.find(a => a.id === accId);
     if (target?.id === 'admin-super' || target?.email.toLowerCase() === 'admin.coffee2424@gmail.com') {
       alert('Không thể khóa tài khoản Tổng Quản Trị mặc định!');
       return;
     }
-    const updated = accountsList.map(a => {
-      if (a.id === accId) {
-        return { ...a, active: a.active === false ? true : false };
-      }
-      return a;
-    });
-    setAccountsList(updated);
-    saveAccounts(updated);
-    triggerAlert('Đã cập nhật trạng thái tài khoản.');
+    const newActive = target.active === false;
+    const updated = { ...target, active: newActive };
+    await updateAdminProfileInCloud(updated);
+    const freshAccounts = await fetchAdminAccounts();
+    setAccountsList(freshAccounts);
+    triggerAlert(newActive ? 'Đã kích hoạt lại tài khoản.' : 'Đã tạm khóa tài khoản.');
   };
 
   // Articles state
@@ -1099,22 +1174,63 @@ export default function AdminPage({ navigate }) {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl ios-btn-primary font-black text-xs sm:text-sm tracking-wide shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
+              disabled={loginLoading}
+              className="w-full py-3.5 rounded-2xl ios-btn-primary font-black text-xs sm:text-sm tracking-wide shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-60"
             >
-              <Key className="w-4 h-4 text-amber-300" />
-              <span>ĐĂNG NHẬP HỆ THỐNG</span>
+              {loginLoading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
+                  <span>ĐANG XÁC THỰC BẢO MẬT SUPABASE...</span>
+                </>
+              ) : (
+                <>
+                  <Key className="w-4 h-4 text-amber-300" />
+                  <span>ĐĂNG NHẬP HỆ THỐNG</span>
+                </>
+              )}
             </button>
           </form>
 
           {/* Security & SSL Encryption Notice */}
-          <div className="pt-2 border-t border-[#dfd4c7]/70 flex flex-col items-center gap-1.5 text-center">
+          <div className="pt-2 border-t border-[#dfd4c7]/70 flex flex-col items-center gap-2 text-center">
             <div className="inline-flex items-center gap-1.5 text-[11px] text-[#5c3c26] font-semibold bg-white/70 px-3 py-1.5 rounded-full border border-white/90 shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Kết Nối Bảo Mật SSL 256-Bit • Mã Hóa Phiên Đăng Nhập</span>
+              <span>Bảo Mật Supabase Cloud • Mã Hóa Mật Khẩu Bcrypt 256-Bit</span>
             </div>
             <p className="text-[10.5px] text-[#7a5843]">
-              Hệ thống bảo vệ chống brute-force • Giám sát truy cập nội bộ
+              Mật khẩu không lưu ở code web • Khóa RLS bảo vệ dữ liệu toàn trang
             </p>
+
+            {/* Expandable Setup Helper */}
+            <button
+              type="button"
+              onClick={() => setShowSetupGuide(!showSetupGuide)}
+              className="text-[11px] font-bold text-amber-800 hover:text-amber-950 underline cursor-pointer mt-1"
+            >
+              {showSetupGuide ? '▲ Đóng hướng dẫn kích hoạt tài khoản' : '▼ Hướng dẫn kích hoạt tài khoản trên Supabase'}
+            </button>
+
+            {showSetupGuide && (
+              <div className="w-full mt-2 p-3.5 rounded-2xl bg-white/90 border border-amber-300/80 text-[11px] text-[#422c1e] text-left space-y-2 shadow-sm animate-fade-in">
+                <span className="font-extrabold text-[#2b170e] block">
+                  🛠️ Hướng dẫn thiết lập tài khoản an toàn tuyệt đối:
+                </span>
+                <ol className="list-decimal pl-4 space-y-1.5 font-medium leading-relaxed">
+                  <li>
+                    Vào Supabase Dashboard → <strong>SQL Editor</strong> → Chạy toàn bộ file <code className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono font-bold">supabase_setup.sql</code> để tạo bảng và bật bảo mật RLS.
+                  </li>
+                  <li>
+                    Vào <strong>Authentication</strong> → <strong>Users</strong> → Nhấn <strong>Add User</strong> → <strong>Create User</strong>.
+                  </li>
+                  <li>
+                    Nhập Email: <code className="bg-stone-100 px-1 py-0.5 rounded font-mono font-bold text-black">Admin.coffee2424@gmail.com</code> và đặt mật khẩu bí mật của bạn.
+                  </li>
+                  <li>
+                    Quay lại màn hình này và đăng nhập với Email & Mật khẩu bạn vừa tạo trên Supabase.
+                  </li>
+                </ol>
+              </div>
+            )}
           </div>
 
           {/* Return Home */}
@@ -6289,30 +6405,42 @@ export default function AdminPage({ navigate }) {
                 </div>
               </div>
 
-              {/* Row 2: Password with eye toggle */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-neutral-300">
-                    Mật Khẩu Đăng Nhập *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setAccountPasswordVisible(!accountPasswordVisible)}
-                    className="text-[11px] font-bold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    {accountPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    <span>{accountPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}</span>
-                  </button>
+              {/* Row 2: Password with eye toggle (Chỉ cần khi tạo tài khoản mới) */}
+              {isNewAccount ? (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-neutral-300">
+                      Mật Khẩu Đăng Nhập *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setAccountPasswordVisible(!accountPasswordVisible)}
+                      className="text-[11px] font-bold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {accountPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      <span>{accountPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}</span>
+                    </button>
+                  </div>
+                  <input
+                    type={accountPasswordVisible ? 'text' : 'password'}
+                    required
+                    value={editingAccount.password || ''}
+                    onChange={(e) => setEditingAccount({ ...editingAccount, password: e.target.value })}
+                    placeholder="Nhập mật khẩu bí mật (tối thiểu 8 ký tự)..."
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                  <span className="text-[10.5px] text-neutral-500 mt-1 block">
+                    Mật khẩu sẽ được mã hóa Bcrypt trên máy chủ Supabase và không lưu vào code web.
+                  </span>
                 </div>
-                <input
-                  type={accountPasswordVisible ? 'text' : 'password'}
-                  required
-                  value={editingAccount.password || ''}
-                  onChange={(e) => setEditingAccount({ ...editingAccount, password: e.target.value })}
-                  placeholder="Nhập mật khẩu (vd: Coffee24/24@1)..."
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 text-[11px] text-neutral-300 flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>
+                    Mật khẩu được mã hóa an toàn trên Supabase Cloud. Bạn có thể đổi vai trò và phân quyền trực tiếp tại đây, hoặc đổi mật khẩu trong Supabase Authentication.
+                  </span>
+                </div>
+              )}
 
               {/* Row 3: Role Presets */}
               <div>
