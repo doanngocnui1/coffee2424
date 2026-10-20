@@ -60,7 +60,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
   const [clickLink, setClickLink] = useState(currentBanner.link || '/dathang');
   const [altText, setAltText] = useState(currentBanner.alt || 'COFFEE 24/24');
   const [fixedBackground, setFixedBackground] = useState(currentBanner.fixedBackground || false);
-  const [mobileAspectRatio, setMobileAspectRatio] = useState(currentBanner.mobileAspectRatio || '3/4');
+  const [mobileAspectRatio, setMobileAspectRatio] = useState(currentBanner.mobileAspectRatio || 'full');
 
   // Background Lighting & Filter State
   const [filter, setFilter] = useState({
@@ -547,7 +547,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
       setClickLink(def.link);
       setAltText(def.alt);
       setFixedBackground(false);
-      setMobileAspectRatio('3/4');
+      setMobileAspectRatio('full');
       setFilter(def.filter || { brightness: 100, contrast: 100, saturation: 100, blur: 0, overlayDarkness: 10, overlayColor: '#000000', vignette: true });
       setLayers([]);
       setSelectedLayerId(null);
@@ -2214,19 +2214,20 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
                   <p className="text-xs text-neutral-400 leading-relaxed">
                     Mở to phạm vi chiều dài ảnh bìa trên màn hình điện thoại, tự động cắt đều 2 cạnh bên ảnh 16:9 để tạo cảm giác cao lớn, ấn tượng chuẩn poster dọc.
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     {[
-                      { id: '3/4', label: '3:4 Dọc Chuẩn', desc: 'Mở to chiều dài & Cắt 2 bên (Khuyên dùng)' },
+                      { id: 'full', label: 'Full Màn Hình (100dvh)', desc: 'Tự căn theo chiều dài mọi máy (Khuyên dùng)' },
+                      { id: '3/4', label: '3:4 Dọc Chuẩn', desc: 'Mở to chiều dài & Cắt 2 bên ảnh' },
                       { id: '4/5', label: '4:5 Dọc Vừa', desc: 'Cao vừa vặn chuẩn Instagram' },
                       { id: '1/1', label: '1:1 Vuông', desc: 'Cắt nhẹ 2 bên ảnh' },
-                      { id: '16/9', label: '16:9 Ngang', desc: 'Nguyên bản không cắt' }
+                      { id: '16/9', label: '16:9 Ngang', desc: 'Nguyên bản không cắt (nhỏ)' }
                     ].map(r => (
                       <button
                         key={r.id}
                         type="button"
                         onClick={() => setMobileAspectRatio(r.id)}
                         className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                          mobileAspectRatio === r.id
+                          (mobileAspectRatio === r.id || (!mobileAspectRatio && r.id === 'full'))
                             ? 'bg-amber-500/15 border-amber-400 text-white shadow-md'
                             : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
                         }`}

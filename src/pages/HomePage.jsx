@@ -776,178 +776,202 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
         // 2. Khối cốt lõi: Hero 16:9 Banner / Video / Layers
         if (sec.type === 'hero') {
+          const mobileRatio = siteConfig.heroBanner16x9?.mobileAspectRatio || 'full';
+          const isFullMobile = mobileRatio === 'full';
+          const mobileAspectClass = isFullMobile
+            ? 'h-[100vh] h-[100dvh] min-h-[520px]'
+            : mobileRatio === '4/5' 
+              ? 'aspect-[4/5]' 
+              : mobileRatio === '1/1' 
+                ? 'aspect-square' 
+                : mobileRatio === '16/9' 
+                  ? 'aspect-[16/9]' 
+                  : mobileRatio === '4/3'
+                    ? 'aspect-[4/3]'
+                    : 'aspect-[3/4]';
+
           return (
             <React.Fragment key={sectionKey}>
               {/* =========================================================================
           1. HERO SECTION: ẢNH BÌA / GIF / VIDEO TỈ LỆ 16:9 TRÀN VIỀN (FULL-BLEED)
           ========================================================================= */}
-      <section 
-        id="hero" 
-        className="relative w-full p-0 pb-10 sm:pb-16 mt-0"
-      >
-        {(() => {
-          const mobileRatio = siteConfig.heroBanner16x9?.mobileAspectRatio || '3/4';
-          const mobileAspectClass = mobileRatio === '4/5' 
-            ? 'aspect-[4/5]' 
-            : mobileRatio === '1/1' 
-              ? 'aspect-square' 
-              : mobileRatio === '16/9' 
-                ? 'aspect-[16/9]' 
-                : mobileRatio === '4/3'
-                  ? 'aspect-[4/3]'
-                  : 'aspect-[3/4]';
-
-          return (
-            <div 
-              onClick={() => {
-                const link = siteConfig.heroBanner16x9?.link || '/dathang';
-                if (link) {
-                  if (link.startsWith('http')) {
-                    window.open(link, '_blank');
-                  } else {
-                    navigate(link);
-                  }
-                }
-              }}
-              className={`relative w-full ${mobileAspectClass} md:aspect-[16/9] overflow-hidden bg-stone-900 group cursor-pointer shadow-[0_20px_60px_rgba(43,23,14,0.18)]`}
-            >
-              {isHeroVideo ? (
-                <video
-                  src={heroMedia}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  style={heroFilterStyle}
-                  className={`w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ${isFixedBg ? 'fixed top-0 left-0 w-full h-full pointer-events-none -z-10 object-cover object-center' : ''}`}
-                />
-              ) : isFixedBg ? (
+              <section 
+                id="hero" 
+                className={`relative w-full p-0 ${isFullMobile ? 'pb-0 md:pb-16' : 'pb-10 sm:pb-16'} mt-0`}
+              >
                 <div 
-                  role="img"
-                  aria-label={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
-                  style={{
-                    backgroundImage: `url(${heroMedia})`,
-                    backgroundAttachment: 'fixed',
-                    backgroundPosition: 'center center',
-                    backgroundSize: 'cover',
-                    backgroundRepeat: 'no-repeat',
-                    ...heroFilterStyle
-                  }}
-                  className="w-full h-full group-hover:scale-102 transition-transform duration-700"
-                />
-              ) : (
-                <img 
-                  src={heroMedia} 
-                  alt={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
-                  style={heroFilterStyle}
-                  className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700" 
-                />
-              )}
-
-              {/* Dark Overlay Tint if configured */}
-              {(heroFilter.overlayDarkness ?? 10) > 0 && (
-                <div 
-                  className="absolute inset-0 pointer-events-none transition-opacity duration-300" 
-                  style={{ 
-                    backgroundColor: heroFilter.overlayColor || '#000000',
-                    opacity: (heroFilter.overlayDarkness ?? 10) / 100 
-                  }} 
-                />
-              )}
-
-              {/* Top Subtle Vignette to give floating frosted header ultra-crisp specular separation */}
-              {heroFilter.vignette !== false && (
-                <div className="absolute top-0 inset-x-0 h-28 sm:h-44 bg-gradient-to-b from-black/40 via-black/10 to-transparent pointer-events-none" />
-              )}
-
-              {/* DESIGNER OVERLAY LAYERS (CHỮ & HÌNH ẢNH / STICKER TỰ THIẾT KẾ) */}
-              {heroLayers.map((layer) => {
-                if (layer.visible === false) return null;
-
-                const isText = layer.type === 'text';
-                const animClass = getLayerAnimationClass(layer.animation);
-                const badgeClass = isText ? getLayerBadgeClass(layer.bgBadge) : '';
-                const textShadow = isText ? getLayerTextShadow(layer) : 'none';
-
-                return (
-                  <div
-                    key={layer.id}
-                    onClick={(e) => {
-                      if (layer.link) {
-                        e.stopPropagation();
-                        if (layer.link.startsWith('http')) {
-                          window.open(layer.link, '_blank');
-                        } else {
-                          navigate(layer.link);
-                        }
+                  onClick={() => {
+                    const link = siteConfig.heroBanner16x9?.link || '/dathang';
+                    if (link) {
+                      if (link.startsWith('http')) {
+                        window.open(link, '_blank');
+                      } else {
+                        navigate(link);
                       }
-                    }}
-                    className={`absolute select-none pointer-events-auto transition-transform ${animClass} ${layer.link ? 'cursor-pointer hover:scale-105 active:scale-95' : ''}`}
-                    style={{
-                      left: `${layer.x}%`,
-                      top: `${layer.y}%`,
-                      transform: `translate(-50%, -50%) rotate(${layer.rotation || 0}deg)`,
-                      '--layer-rotate': `${layer.rotation || 0}deg`,
-                      zIndex: layer.zIndex || 10
-                    }}
-                  >
-                    {isText ? (
-                      <div
-                        className={`${badgeClass} inline-block transition-all whitespace-nowrap`}
-                        style={{
-                          fontFamily: `'${layer.fontFamily || 'Montserrat'}', sans-serif`,
-                          fontSize: `clamp(${Math.max(9, Math.round((layer.fontSize || 32) * 0.32))}px, ${(((layer.fontSize || 32) / 1440) * 100).toFixed(3)}vw, ${(layer.fontSize || 32)}px)`,
-                          fontWeight: layer.fontWeight || '700',
-                          fontStyle: layer.fontStyle || 'normal',
-                          textDecoration: layer.textDecoration || 'none',
-                          textTransform: layer.textTransform || 'none',
-                          textAlign: layer.textAlign || 'center',
-                          color: layer.color || '#ffffff',
-                          letterSpacing: `${layer.letterSpacing || 0}px`,
-                          lineHeight: layer.lineHeight || 1.25,
-                          textShadow: textShadow,
-                          whiteSpace: layer.text?.includes('\n') ? 'pre' : 'nowrap'
-                        }}
-                      >
-                        {layer.text || ''}
-                      </div>
-                    ) : (
-                      <div
-                        className="inline-block transition-all"
-                        style={{
-                          width: `clamp(36px, ${(layer.width || 15)}vw, 600px)`,
-                          opacity: (layer.opacity ?? 100) / 100,
-                          mixBlendMode: layer.blendMode || 'normal',
-                          filter: layer.shadow === 'glow' 
-                            ? 'drop-shadow(0 0 16px rgba(245, 158, 11, 0.8))' 
-                            : layer.shadow === 'deep' 
-                            ? 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.85))'
-                            : layer.shadow === 'soft'
-                            ? 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.55))'
-                            : 'none'
-                        }}
-                      >
-                        <img
-                          src={layer.imageUrl}
-                          alt={layer.title || 'Layer graphic'}
-                          className="w-full h-auto block select-none pointer-events-none"
-                          style={{
-                            borderRadius: `${layer.borderRadius || 0}px`,
-                            border: layer.borderWidth ? `${layer.borderWidth}px solid ${layer.borderColor || '#ffffff'}` : 'none'
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    }
+                  }}
+                  className={`relative w-full ${mobileAspectClass} md:h-auto md:min-h-0 md:aspect-[16/9] overflow-hidden bg-stone-900 group cursor-pointer shadow-[0_20px_60px_rgba(43,23,14,0.18)]`}
+                >
+                  {isHeroVideo ? (
+                    <video
+                      src={heroMedia}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={heroFilterStyle}
+                      className={`w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ${isFixedBg ? 'fixed top-0 left-0 w-full h-full pointer-events-none -z-10 object-cover object-center' : ''}`}
+                    />
+                  ) : isFixedBg ? (
+                    <div 
+                      role="img"
+                      aria-label={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
+                      style={{
+                        backgroundImage: `url(${heroMedia})`,
+                        backgroundAttachment: 'fixed',
+                        backgroundPosition: 'center center',
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                        ...heroFilterStyle
+                      }}
+                      className="w-full h-full group-hover:scale-102 transition-transform duration-700"
+                    />
+                  ) : (
+                    <img 
+                      src={heroMedia} 
+                      alt={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
+                      style={heroFilterStyle}
+                      className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700" 
+                    />
+                  )}
 
-              {/* Subtle Glare reflection highlight */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/10 pointer-events-none" />
-            </div>
-          );
-        })()}
-      </section>
+                  {/* Dark Overlay Tint if configured */}
+                  {(heroFilter.overlayDarkness ?? 10) > 0 && (
+                    <div 
+                      className="absolute inset-0 pointer-events-none transition-opacity duration-300" 
+                      style={{ 
+                        backgroundColor: heroFilter.overlayColor || '#000000',
+                        opacity: (heroFilter.overlayDarkness ?? 10) / 100 
+                      }} 
+                    />
+                  )}
+
+                  {/* Top Subtle Vignette to give floating frosted header ultra-crisp specular separation */}
+                  {heroFilter.vignette !== false && (
+                    <div className="absolute top-0 inset-x-0 h-28 sm:h-44 bg-gradient-to-b from-black/40 via-black/10 to-transparent pointer-events-none" />
+                  )}
+
+                  {/* DESIGNER OVERLAY LAYERS (CHỮ & HÌNH ẢNH / STICKER TỰ THIẾT KẾ) */}
+                  {heroLayers.map((layer) => {
+                    if (layer.visible === false) return null;
+
+                    const isText = layer.type === 'text';
+                    const animClass = getLayerAnimationClass(layer.animation);
+                    const badgeClass = isText ? getLayerBadgeClass(layer.bgBadge) : '';
+                    const textShadow = isText ? getLayerTextShadow(layer) : 'none';
+
+                    return (
+                      <div
+                        key={layer.id}
+                        onClick={(e) => {
+                          if (layer.link) {
+                            e.stopPropagation();
+                            if (layer.link.startsWith('http')) {
+                              window.open(layer.link, '_blank');
+                            } else {
+                              navigate(layer.link);
+                            }
+                          }
+                        }}
+                        className={`absolute select-none pointer-events-auto transition-transform ${animClass} ${layer.link ? 'cursor-pointer hover:scale-105 active:scale-95' : ''}`}
+                        style={{
+                          left: `${layer.x}%`,
+                          top: `${layer.y}%`,
+                          transform: `translate(-50%, -50%) rotate(${layer.rotation || 0}deg)`,
+                          '--layer-rotate': `${layer.rotation || 0}deg`,
+                          zIndex: layer.zIndex || 10
+                        }}
+                      >
+                        {isText ? (
+                          <div
+                            className={`${badgeClass} inline-block transition-all whitespace-nowrap`}
+                            style={{
+                              fontFamily: `'${layer.fontFamily || 'Montserrat'}', sans-serif`,
+                              fontSize: `clamp(${Math.max(9, Math.round((layer.fontSize || 32) * 0.32))}px, ${(((layer.fontSize || 32) / 1440) * 100).toFixed(3)}vw, ${(layer.fontSize || 32)}px)`,
+                              fontWeight: layer.fontWeight || '700',
+                              fontStyle: layer.fontStyle || 'normal',
+                              textDecoration: layer.textDecoration || 'none',
+                              textTransform: layer.textTransform || 'none',
+                              textAlign: layer.textAlign || 'center',
+                              color: layer.color || '#ffffff',
+                              letterSpacing: `${layer.letterSpacing || 0}px`,
+                              lineHeight: layer.lineHeight || 1.25,
+                              textShadow: textShadow,
+                              whiteSpace: layer.text?.includes('\n') ? 'pre' : 'nowrap'
+                            }}
+                          >
+                            {layer.text || ''}
+                          </div>
+                        ) : (
+                          <div
+                            className="inline-block transition-all"
+                            style={{
+                              width: `clamp(36px, ${(layer.width || 15)}vw, 600px)`,
+                              opacity: (layer.opacity ?? 100) / 100,
+                              mixBlendMode: layer.blendMode || 'normal',
+                              filter: layer.shadow === 'glow' 
+                                ? 'drop-shadow(0 0 16px rgba(245, 158, 11, 0.8))' 
+                                : layer.shadow === 'deep' 
+                                ? 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.85))'
+                                : layer.shadow === 'soft'
+                                ? 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.55))'
+                                : 'none'
+                            }}
+                          >
+                            <img
+                              src={layer.imageUrl}
+                              alt={layer.title || 'Layer graphic'}
+                              className="w-full h-auto block select-none pointer-events-none"
+                              style={{
+                                borderRadius: `${layer.borderRadius || 0}px`,
+                                border: layer.borderWidth ? `${layer.borderWidth}px solid ${layer.borderColor || '#ffffff'}` : 'none'
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Subtle Glare reflection highlight */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/10 pointer-events-none" />
+
+                  {/* Subtle Scroll Down Hint on Mobile Full Screen */}
+                  {isFullMobile && (
+                    <button 
+                      type="button"
+                      aria-label="Cuộn xuống khám phá"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const heroEl = document.getElementById('hero');
+                        if (heroEl && heroEl.nextElementSibling) {
+                          heroEl.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                          window.scrollBy({ top: window.innerHeight * 0.85, behavior: 'smooth' });
+                        }
+                      }}
+                      className="md:hidden absolute bottom-5 inset-x-0 mx-auto flex flex-col items-center justify-center pointer-events-auto z-20 text-white/90 active:scale-95 transition-transform cursor-pointer"
+                    >
+                      <div className="flex flex-col items-center animate-bounce">
+                        <span className="text-[10px] tracking-widest uppercase font-bold text-white/80 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+                          Cuộn khám phá
+                        </span>
+                        <ChevronDown className="w-5 h-5 -mt-0.5 text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]" />
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </section>
             </React.Fragment>
           );
         }
