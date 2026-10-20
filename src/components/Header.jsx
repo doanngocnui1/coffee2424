@@ -101,8 +101,16 @@ export default function Header({ currentPath, navigate }) {
             onClick={() => handleNav('/')}
             className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2b170e] to-[#180d08] text-amber-200 flex items-center justify-center shadow-md group-hover:scale-110 group-active:scale-95 transition-all duration-300 shrink-0">
-              <Coffee className="w-5 h-5 text-amber-200 group-hover:rotate-12 transition-transform duration-300" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2b170e] to-[#180d08] text-amber-200 flex items-center justify-center shadow-md group-hover:scale-110 group-active:scale-95 transition-all duration-300 shrink-0 overflow-hidden ring-1 ring-black/10">
+              {siteConfig.logo ? (
+                <img 
+                  src={siteConfig.logo} 
+                  alt={siteConfig.brandName || 'Logo'} 
+                  className="w-full h-full object-cover rounded-full" 
+                />
+              ) : (
+                <Coffee className="w-5 h-5 text-amber-200 group-hover:rotate-12 transition-transform duration-300" />
+              )}
             </div>
             
             <div className="flex flex-col">

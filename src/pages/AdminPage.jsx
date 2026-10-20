@@ -83,6 +83,7 @@ import AdminSpaceAmenitiesManager from '../components/admin/AdminSpaceAmenitiesM
 import AdminReviewsHeaderCard from '../components/admin/AdminReviewsHeaderCard';
 import AdminOfferingsManager from '../components/admin/AdminOfferingsManager';
 import AdminHomeSectionsManager from '../components/admin/AdminHomeSectionsManager';
+import AdminSystemSettingsManager from '../components/admin/AdminSystemSettingsManager';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -127,7 +128,7 @@ export default function AdminPage({ navigate }) {
       setOpenGroups(prev => ({ ...prev, branches: true }));
     } else if (activeTab === 'navigation') {
       setOpenGroups(prev => ({ ...prev, navigation: true }));
-    } else if (activeTab === 'users') {
+    } else if (activeTab === 'users' || activeTab === 'systemSettings') {
       setOpenGroups(prev => ({ ...prev, users: true }));
     }
   }, [activeTab]);
@@ -165,7 +166,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
+      const allTabs = ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
@@ -1158,8 +1159,12 @@ export default function AdminPage({ navigate }) {
             {mobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
 
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2b170e] to-[#180d08] text-amber-200 flex items-center justify-center font-black text-sm shadow-md">
-            24
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2b170e] to-[#180d08] text-amber-200 flex items-center justify-center font-black text-sm shadow-md overflow-hidden ring-1 ring-white/60 shrink-0">
+            {config.logo ? (
+              <img src={config.logo} alt="Logo" className="w-full h-full object-cover rounded-full" />
+            ) : (
+              '24'
+            )}
           </div>
           <div>
             <h1 className="text-lg font-black text-[#2b170e] flex items-center gap-2">
@@ -1538,27 +1543,27 @@ export default function AdminPage({ navigate }) {
                       </button>
                     )}
 
-                    {/* 1.3: Slogan & Cấu Hình Trang Chủ */}
-                    {hasPermission(currentUser, 'theme') && (
+                    {/* 1.3: Slogan & Cấu Hình Trang Chủ / Logo */}
+                    {(hasPermission(currentUser, 'theme') || hasPermission(currentUser, 'systemSettings')) && (
                       <button
                         type="button"
-                        onClick={() => { setActiveTab('theme'); setMobileSidebarOpen(false); }}
+                        onClick={() => { setActiveTab('systemSettings'); setMobileSidebarOpen(false); }}
                         className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
-                          activeTab === 'theme'
+                          activeTab === 'theme' || activeTab === 'systemSettings'
                             ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
                             : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'theme' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                          <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
                           <div className="truncate">
-                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Slogan & Cấu Hình</span>
-                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'theme' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
-                              Slogan "Enjoy Your Life"
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Cài Đặt Logo & Slogan</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Logo, Slogan & Tên shop
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'theme' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'theme' || activeTab === 'systemSettings' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
                       </button>
                     )}
 
@@ -2091,6 +2096,30 @@ export default function AdminPage({ navigate }) {
                 {/* Sub-items (Sổ xuống) */}
                 {openGroups.users && (
                   <div className="px-2 pb-2.5 pt-1 space-y-1.5 border-t border-amber-900/10 bg-white/40">
+                    {/* Cài Đặt Hệ Thống & Logo */}
+                    {(hasPermission(currentUser, 'systemSettings') || hasPermission(currentUser, 'theme')) && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('systemSettings'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'systemSettings' || activeTab === 'theme'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Cài Đặt Hệ Thống & Logo</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Thay Logo, Favicon, Slogan
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'systemSettings' || activeTab === 'theme' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => { setActiveTab('users'); setMobileSidebarOpen(false); }}
@@ -2208,7 +2237,7 @@ export default function AdminPage({ navigate }) {
                 {activeTab === 'spaceAmenities' && <><span>🛋️</span> Không Gian & Tiện Nghi</>}
                 {activeTab === 'sideBanners' && <><span>📢</span> 2 Poster Dọc 2 Bên</>}
                 {activeTab === 'bannerSections' && <><span>🖼️</span> Khối Banner & Check-in</>}
-                {activeTab === 'theme' && <><span>⚙️</span> Slogan & Trang Chủ</>}
+                {(activeTab === 'theme' || activeTab === 'systemSettings') && <><span>⚙️</span> Cài Đặt Hệ Thống & Quản Lý Logo</>}
                 {activeTab === 'reviews' && <><span>⭐</span> Đánh Giá Khách Hàng</>}
                 {activeTab === 'socialZalo' && <><span>🌐</span> Mạng Xã Hội & Zalo OA</>}
                 {activeTab === 'navigation' && <><span>🧭</span> Menu & Các Trang Web</>}
@@ -4286,93 +4315,16 @@ export default function AdminPage({ navigate }) {
           </div>
         )}
 
-        {/* TAB 5: SLOGAN & NỘI DUNG TRANG CHỦ */}
-        {activeTab === 'theme' && (
-          <form onSubmit={handleSaveConfig} className="bg-neutral-950 p-6 sm:p-8 rounded-3xl border border-neutral-800 space-y-6 max-w-3xl">
-            <div>
-              <h2 className="text-xl font-black text-white flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-amber-500" />
-                <span>Chỉnh Sửa Slogan & Nội Dung Trang Chủ</span>
-              </h2>
-              <p className="text-xs text-neutral-400 mt-1">Thay đổi thương hiệu, slogan, tiêu đề banner và thanh thông báo chạy trên đầu web.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-neutral-300 block mb-1">Tên Thương Hiệu</label>
-                <input
-                  type="text"
-                  value={config.brandName || 'COFFEE 24/24'}
-                  onChange={(e) => setConfig({ ...config, brandName: e.target.value })}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-neutral-300 block mb-1">Slogan Thương Hiệu</label>
-                <input
-                  type="text"
-                  value={config.slogan || 'Enjoy Your Life'}
-                  onChange={(e) => setConfig({ ...config, slogan: e.target.value })}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-neutral-300 block mb-1">Tiêu Đề Banner Trang Chủ (Hero Headline)</label>
-                <input
-                  type="text"
-                  value={config.heroHeadline || 'CÀ PHÊ 24/24'}
-                  onChange={(e) => setConfig({ ...config, heroHeadline: e.target.value })}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-neutral-300 block mb-1">Mô Tả Ngắn Trang Chủ</label>
-                <textarea
-                  rows={2}
-                  value={config.heroSubheadline || 'Không gian mở cửa 24/7 xuyên đêm.'}
-                  onChange={(e) => setConfig({ ...config, heroSubheadline: e.target.value })}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white"
-                />
-              </div>
-
-              {/* Announcement Bar */}
-              <div className="p-4 rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Thanh Thông Báo Trên Cùng (Top Announcement Bar)</span>
-                  <input
-                    type="checkbox"
-                    checked={config.announcementBar?.enabled}
-                    onChange={(e) => setConfig({
-                      ...config,
-                      announcementBar: { ...config.announcementBar, enabled: e.target.checked }
-                    })}
-                    className="w-4 h-4 accent-amber-500 cursor-pointer"
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={config.announcementBar?.text || ''}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    announcementBar: { ...config.announcementBar, text: e.target.value }
-                  })}
-                  placeholder="Nội dung khuyến mãi hiển thị trên đầu web..."
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-2 shadow-lg cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>LƯU NỘI DUNG TRANG CHỦ</span>
-            </button>
-          </form>
+        {/* TAB: CÀI ĐẶT HỆ THỐNG & LOGO THƯƠNG HIỆU */}
+        {(activeTab === 'theme' || activeTab === 'systemSettings') && (
+          <AdminSystemSettingsManager
+            config={config}
+            onSaveConfig={(updatedConfig) => {
+              setConfig(updatedConfig);
+              saveSiteConfig(updatedConfig);
+            }}
+            triggerAlert={triggerAlert}
+          />
         )}
 
         {/* TAB: MẠNG XÃ HỘI & ZALO OFFICIAL ACCOUNT */}

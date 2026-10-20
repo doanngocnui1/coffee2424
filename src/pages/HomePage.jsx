@@ -327,18 +327,26 @@ export default function HomePage({ navigate, onSelectBranch }) {
           aria-label="Thanh tiến trình cuộn trang"
           className="fixed right-3.5 sm:right-6 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-2.5 p-2 rounded-full bg-white/75 backdrop-blur-2xl border border-white/90 shadow-[0_12px_40px_rgba(43,23,14,0.15)] transition-all duration-300 group hover:shadow-2xl pointer-events-auto"
         >
-          {/* Animated Rotating Cup with Steam */}
+          {/* Animated Rotating Cup with Steam / Brand Logo */}
           <div 
-            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2b170e] to-[#160a05] text-amber-200 flex items-center justify-center shadow-md relative cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2b170e] to-[#160a05] text-amber-200 flex items-center justify-center shadow-md relative cursor-pointer hover:scale-105 active:scale-95 transition-transform overflow-hidden ring-1 ring-amber-500/30"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             title="Nhấn để cuộn lên đầu trang"
           >
-            <Coffee 
-              className="w-5 h-5 text-amber-200 transition-transform duration-200" 
-              style={{ transform: `rotate(${scrollY * 0.12}deg)` }}
-            />
+            {siteConfig.logo ? (
+              <img 
+                src={siteConfig.logo} 
+                alt={siteConfig.brandName || "Logo"} 
+                className="w-full h-full object-cover rounded-full" 
+              />
+            ) : (
+              <Coffee 
+                className="w-5 h-5 text-amber-200 transition-transform duration-200" 
+                style={{ transform: `rotate(${scrollY * 0.12}deg)` }}
+              />
+            )}
             {/* Steam bubble */}
-            <span className="absolute -top-1 w-1.5 h-3 rounded-full bg-amber-300/80 blur-[0.5px] animate-steam" />
+            <span className="absolute -top-1 w-1.5 h-3 rounded-full bg-amber-300/80 blur-[0.5px] animate-steam pointer-events-none" />
           </div>
 
           {/* Scroll Progress Indicator Pill */}

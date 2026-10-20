@@ -39,14 +39,14 @@ export default function Footer({ currentPath = '/', navigate }) {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <img 
-                    src="/images/logo.jpg" 
-                    alt="COFFEE 24/24 Logo" 
+                    src={config.logo || "/images/logo.jpg"} 
+                    alt={`${config.brandName || "COFFEE 24/24"} Logo`} 
                     className="w-12 h-12 rounded-full border-2 border-amber-500/40 object-cover bg-white shadow-md"
                   />
                   <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" title="Mở cửa 24/7" />
                 </div>
                 <div>
-                  <span className="text-xl font-black text-[#2b170e] tracking-wider block">COFFEE 24/24</span>
+                  <span className="text-xl font-black text-[#2b170e] tracking-wider block">{config.brandName || "COFFEE 24/24"}</span>
                   <span className="text-xs text-[#8c5932] font-black tracking-widest uppercase">{config.slogan || 'ENJOY YOUR LIFE'}</span>
                 </div>
               </div>

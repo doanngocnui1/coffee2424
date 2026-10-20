@@ -5,6 +5,8 @@ export const STORAGE_KEY = isLocalhost ? 'coffee2424_local_site_config' : 'coffe
 export const DEFAULT_SITE_CONFIG = {
   brandName: 'COFFEE 24/24',
   slogan: 'Enjoy Your Life',
+  logo: '/images/logo.jpg',
+  favicon: '/images/logo.jpg',
   heroHeadline: 'COFFEE 24/24',
   heroSubheadline: 'Hương vị cà phê nguyên bản, đậm đà và tinh tế.',
   hotlineGeneral: '0906 916 816',
@@ -647,6 +649,18 @@ export const DEFAULT_SITE_CONFIG = {
   ]
 };
 
+export function updateDocumentFavicon(logoUrl) {
+  if (typeof document === 'undefined') return;
+  const targetUrl = logoUrl || '/images/logo.jpg';
+  let link = document.querySelector("link[rel*='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.getElementsByTagName('head')[0].appendChild(link);
+  }
+  link.href = targetUrl;
+}
+
 export function getSiteConfig() {
   try {
     let saved = localStorage.getItem(STORAGE_KEY);
@@ -799,9 +813,19 @@ export function getSiteConfig() {
       heroBannerConfig.mediaUrl = customHeroBannerMedia;
     }
 
+    // Restore custom logo if stored in dedicated key
+    const customLogo = localStorage.getItem('coffee2424_brand_logo_img');
+    let resolvedLogo = parsed.logo || DEFAULT_SITE_CONFIG.logo || '/images/logo.jpg';
+    if (customLogo && (resolvedLogo === '__STORED_LOGO__' || !resolvedLogo || resolvedLogo === '/images/logo.jpg')) {
+      resolvedLogo = customLogo;
+    }
+    updateDocumentFavicon(resolvedLogo);
+
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
+      logo: resolvedLogo,
+      favicon: resolvedLogo,
       navMenu: currentNavMenu,
       slogan: updatedSlogan,
       socialMedia: socialConfig,
@@ -845,12 +869,25 @@ export function getSiteConfig() {
 
 export function saveSiteConfig(newConfig) {
   try {
+    const brandLogo = newConfig.logo;
     const leftImg = newConfig.sideBanners?.left?.image;
     const rightImg = newConfig.sideBanners?.right?.image;
     const zaloQr = newConfig.zaloOA?.qrImage;
     const glassBgImg = newConfig.glassBackground?.image;
 
     // 1. Save data URLs into dedicated keys to ensure isolation and quota safety
+    if (brandLogo && brandLogo.startsWith('data:image')) {
+      try {
+        localStorage.setItem('coffee2424_brand_logo_img', brandLogo);
+      } catch (logoErr) {
+        console.warn('Could not save logo image into dedicated key:', logoErr);
+      }
+    } else if (brandLogo && !brandLogo.startsWith('__STORED_LOGO__')) {
+      try {
+        localStorage.setItem('coffee2424_brand_logo_img', brandLogo);
+      } catch (_) {}
+    }
+
     if (leftImg && leftImg.startsWith('data:image')) {
       try {
         localStorage.setItem('coffee2424_banner_left_img', leftImg);
@@ -901,6 +938,8 @@ export function saveSiteConfig(newConfig) {
       // Strip large data URLs so all toggles, text, and settings are 100% guaranteed to save
       const safeConfig = {
         ...newConfig,
+        logo: brandLogo && brandLogo.startsWith('data:image') ? '__STORED_LOGO__' : brandLogo,
+        favicon: brandLogo && brandLogo.startsWith('data:image') ? '__STORED_LOGO__' : brandLogo,
         sideBanners: {
           ...newConfig.sideBanners,
           left: {
@@ -928,6 +967,7 @@ export function saveSiteConfig(newConfig) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(safeConfig));
     }
 
+    updateDocumentFavicon(brandLogo || '/images/logo.jpg');
     window.dispatchEvent(new Event('site-config-updated'));
 
     // Chỉ đồng bộ lên Supabase Cloud khi KHÔNG PHẢI Localhost (môi trường Production)

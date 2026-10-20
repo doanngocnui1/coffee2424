@@ -10,7 +10,7 @@ import BlogPage from './pages/BlogPage';
 import AdminPage from './pages/AdminPage';
 
 import SideBanners from './components/SideBanners';
-import { getSiteConfig, syncSiteConfigWithCloud } from './data/siteConfig';
+import { getSiteConfig, syncSiteConfigWithCloud, updateDocumentFavicon } from './data/siteConfig';
 import { subscribeToCloudSiteConfig } from './lib/supabase';
 
 export default function App() {
@@ -18,13 +18,23 @@ export default function App() {
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
 
+  // Sync favicon whenever siteConfig.logo changes
+  useEffect(() => {
+    updateDocumentFavicon(siteConfig.logo);
+    if (siteConfig.brandName && siteConfig.slogan) {
+      document.title = `${siteConfig.brandName} | ${siteConfig.slogan}`;
+    }
+  }, [siteConfig.logo, siteConfig.brandName, siteConfig.slogan]);
+
   // Sync with browser back/forward buttons, local events & Supabase Cloud
   useEffect(() => {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname || '/');
     };
     const handleConfigUpdate = () => {
-      setSiteConfig(getSiteConfig());
+      const fresh = getSiteConfig();
+      setSiteConfig(fresh);
+      updateDocumentFavicon(fresh.logo);
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -36,7 +46,11 @@ export default function App() {
 
     // Lắng nghe cập nhật Realtime từ Supabase (khi có ai sửa từ máy khác)
     const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData) => {
-      setSiteConfig(prev => ({ ...prev, ...newCloudData }));
+      setSiteConfig(prev => {
+        const merged = { ...prev, ...newCloudData };
+        if (merged.logo) updateDocumentFavicon(merged.logo);
+        return merged;
+      });
     });
 
     return () => {

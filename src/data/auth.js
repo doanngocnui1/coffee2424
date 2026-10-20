@@ -11,6 +11,7 @@ export const ALL_PERMISSIONS = [
   { id: 'sideBanners', label: '2 Poster Dọc 2 Bên', group: 'Trang Chủ', desc: 'Đổi ảnh poster đứng trượt 2 bên màn hình' },
   { id: 'bannerSections', label: 'Khối Banner & Check-in', group: 'Trang Chủ', desc: 'Quản lý ưu đãi đêm & hashtag check-in' },
   { id: 'theme', label: 'Slogan & Thương Hiệu', group: 'Trang Chủ', desc: 'Đổi slogan "Enjoy Your Life", tên thương hiệu' },
+  { id: 'systemSettings', label: 'Cài Đặt Hệ Thống & Logo', group: 'Hệ Thống', desc: 'Thay logo thương hiệu, favicon, slogan, tên thương hiệu' },
   { id: 'reviews', label: 'Đánh Giá Khách Hàng', group: 'Trang Chủ', desc: 'Kiểm duyệt & thêm đánh giá khách hàng' },
   { id: 'socialZalo', label: 'Mạng Xã Hội & Zalo OA', group: 'Trang Chủ', desc: 'Quản lý link Facebook, TikTok, Instagram, Threads, YouTube & Zalo OA' },
   { id: 'navigation', label: 'Menu & Liên Kết Web', group: 'Nội Dung', desc: 'Bật/tắt thanh menu và các trang độc lập' },
@@ -40,7 +41,7 @@ export const INITIAL_ACCOUNTS = [
     name: 'Biên Tập Viên Marketing',
     role: 'marketing',
     roleName: 'Biên Tập & Marketing',
-    permissions: ['homeSections', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo', 'about', 'articles'],
+    permissions: ['homeSections', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles'],
     active: true,
     createdAt: '16/10/2026'
   },
@@ -226,6 +227,13 @@ export function hasPermission(user, permissionId) {
   if (user.permissions.includes(permissionId)) return true;
   // Backward compatibility: if user has whatsNew, grant newDishes and promotions
   if ((permissionId === 'newDishes' || permissionId === 'promotions') && user.permissions.includes('whatsNew')) {
+    return true;
+  }
+  // Compatibility: systemSettings & theme share access
+  if (permissionId === 'systemSettings' && user.permissions.includes('theme')) {
+    return true;
+  }
+  if (permissionId === 'theme' && user.permissions.includes('systemSettings')) {
     return true;
   }
   return false;
