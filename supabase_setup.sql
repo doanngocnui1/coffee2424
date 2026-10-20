@@ -115,17 +115,17 @@ begin
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     case 
-      when lower(new.email) = 'admin.coffee2424@gmail.com' or lower(new.email) like '%admin%' then 'super_admin'
+      when lower(new.email) in ('admin.coffee2424@gmail.com', 'doanngocnui.2424@gmail.com') or lower(new.email) like '%admin%' or lower(new.email) like '%doanngocnui%' then 'super_admin'
       when lower(new.email) like '%hr%' or lower(new.email) like '%tuyendung%' then 'hr'
       else coalesce(new.raw_user_meta_data->>'role', 'marketing')
     end,
     case 
-      when lower(new.email) = 'admin.coffee2424@gmail.com' or lower(new.email) like '%admin%' then 'Tổng Quản Trị (Toàn quyền)'
+      when lower(new.email) in ('admin.coffee2424@gmail.com', 'doanngocnui.2424@gmail.com') or lower(new.email) like '%admin%' or lower(new.email) like '%doanngocnui%' then 'Tổng Quản Trị (Toàn quyền)'
       when lower(new.email) like '%hr%' or lower(new.email) like '%tuyendung%' then 'Phòng Nhân Sự'
       else coalesce(new.raw_user_meta_data->>'roleName', 'Biên Tập & Marketing')
     end,
     case 
-      when lower(new.email) = 'admin.coffee2424@gmail.com' or lower(new.email) like '%admin%' then array['all']
+      when lower(new.email) in ('admin.coffee2424@gmail.com', 'doanngocnui.2424@gmail.com') or lower(new.email) like '%admin%' or lower(new.email) like '%doanngocnui%' then array['all']
       when lower(new.email) like '%hr%' or lower(new.email) like '%tuyendung%' then array['jobs']
       else array['homeSections', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles']
     end,
@@ -151,17 +151,17 @@ select
   email, 
   coalesce(raw_user_meta_data->>'name', split_part(email, '@', 1)),
   case 
-    when lower(email) = 'admin.coffee2424@gmail.com' or lower(email) like '%admin%' then 'super_admin'
+    when lower(email) in ('admin.coffee2424@gmail.com', 'doanngocnui.2424@gmail.com') or lower(email) like '%admin%' or lower(email) like '%doanngocnui%' then 'super_admin'
     when lower(email) like '%hr%' or lower(email) like '%tuyendung%' then 'hr'
     else 'marketing'
   end,
   case 
-    when lower(email) = 'admin.coffee2424@gmail.com' or lower(email) like '%admin%' then 'Tổng Quản Trị (Toàn quyền)'
+    when lower(email) in ('admin.coffee2424@gmail.com', 'doanngocnui.2424@gmail.com') or lower(email) like '%admin%' or lower(email) like '%doanngocnui%' then 'Tổng Quản Trị (Toàn quyền)'
     when lower(email) like '%hr%' or lower(email) like '%tuyendung%' then 'Phòng Nhân Sự'
     else 'Biên Tập & Marketing'
   end,
   case 
-    when lower(email) = 'admin.coffee2424@gmail.com' or lower(email) like '%admin%' then array['all']
+    when lower(email) in ('admin.coffee2424@gmail.com', 'doanngocnui.2424@gmail.com') or lower(email) like '%admin%' or lower(email) like '%doanngocnui%' then array['all']
     when lower(email) like '%hr%' or lower(email) like '%tuyendung%' then array['jobs']
     else array['homeSections', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles']
   end,

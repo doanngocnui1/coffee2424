@@ -192,9 +192,9 @@ export async function loginUser(email, password) {
 
       let errorMsg = 'Thông tin đăng nhập không chính xác! Vui lòng kiểm tra lại Email và Mật khẩu.';
       if (error.message.includes('Invalid login credentials')) {
-        errorMsg = `Email hoặc mật khẩu không chính xác! (Còn ${remaining} lần thử)`;
+        errorMsg = `Email hoặc mật khẩu không chính xác! Vui lòng kiểm tra lại mật khẩu bạn đã đặt trong Supabase. (Còn ${remaining} lần thử)`;
       } else if (error.message.includes('Email not confirmed')) {
-        errorMsg = 'Email chưa được kích hoạt. Vui lòng kích hoạt trong Supabase Dashboard -> Authentication -> Users.';
+        errorMsg = 'Tài khoản chưa được kích hoạt xác nhận (Email not confirmed). Vui lòng vào Supabase Dashboard -> Authentication -> Users -> Bấm dấu 3 chấm (...) ở tài khoản -> Chọn "Auto Confirm User" (hoặc vào Authentication -> Providers -> Email -> Tắt "Confirm email").';
       } else if (error.message.includes('Too many requests')) {
         errorMsg = 'Quá nhiều yêu cầu đăng nhập. Vui lòng thử lại sau ít phút.';
       }
@@ -219,11 +219,33 @@ export async function loginUser(email, password) {
       return { success: false, message: 'Tài khoản này đã bị tạm khóa quyền truy cập bởi Tổng Quản Trị!' };
     }
 
-    const isSuperEmail = trimmedEmail === 'admin.coffee2424@gmail.com' || trimmedEmail.includes('admin');
+    const isSuperEmail = 
+      trimmedEmail === 'admin.coffee2424@gmail.com' || 
+      trimmedEmail === 'doanngocnui.2424@gmail.com' ||
+      trimmedEmail.includes('admin') ||
+      trimmedEmail.includes('doanngocnui');
+
     const role = profile?.role || (isSuperEmail ? 'super_admin' : 'marketing');
     const roleName = profile?.role_name || (role === 'super_admin' ? 'Tổng Quản Trị (Toàn quyền)' : 'Biên Tập & Marketing');
     const permissions = profile?.permissions || (role === 'super_admin' ? ['all'] : ROLE_PRESETS.marketing.permissions);
     const name = profile?.name || data.user.user_metadata?.name || data.user.email.split('@')[0];
+
+    // Tự động đồng bộ hồ sơ vào bảng admin_profiles nếu chưa có
+    if (!profile && isSupabaseConfigured) {
+      try {
+        await supabase.from('admin_profiles').upsert({
+          id: data.user.id,
+          email: data.user.email,
+          name,
+          role,
+          role_name: roleName,
+          permissions,
+          active: true
+        });
+      } catch (err) {
+        console.warn('Lỗi tự động tạo profile admin:', err);
+      }
+    }
 
     // 5. Khởi tạo phiên làm việc bảo mật (KHÔNG LƯU MẬT KHẨU)
     const safeSessionUser = {
@@ -337,7 +359,21 @@ function getCachedAccounts() {
   try {
     const saved = localStorage.getItem(STORAGE_ACCOUNTS_CACHE);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        let cleaned = false;
+        const sanitized = parsed.map(acc => {
+          if (acc.password) {
+            delete acc.password;
+            cleaned = true;
+          }
+          return acc;
+        });
+        if (cleaned) {
+          localStorage.setItem(STORAGE_ACCOUNTS_CACHE, JSON.stringify(sanitized));
+        }
+        return sanitized;
+      }
     }
   } catch (e) {
     console.warn('Error reading accounts cache:', e);

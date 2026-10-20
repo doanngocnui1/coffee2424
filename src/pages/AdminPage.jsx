@@ -166,15 +166,20 @@ export default function AdminPage({ navigate }) {
           if (profile && profile.active === false) {
             await logoutUser();
             setCurrentUser(null);
-          } else if (profile) {
-            const isSuper = profile.role === 'super_admin' || session.user.email.toLowerCase().includes('admin');
+          } else {
+            const isSuper = 
+              (profile && profile.role === 'super_admin') ||
+              session.user.email.toLowerCase() === 'admin.coffee2424@gmail.com' ||
+              session.user.email.toLowerCase() === 'doanngocnui.2424@gmail.com' ||
+              session.user.email.toLowerCase().includes('admin') ||
+              session.user.email.toLowerCase().includes('doanngocnui');
             const safeUser = {
               id: session.user.id,
               email: session.user.email,
-              name: profile.name || session.user.email.split('@')[0],
-              role: profile.role,
-              roleName: profile.role_name || (isSuper ? 'Tổng Quản Trị (Toàn quyền)' : 'Biên Tập & Marketing'),
-              permissions: profile.permissions || (isSuper ? ['all'] : ['articles']),
+              name: profile?.name || session.user.user_metadata?.name || session.user.email.split('@')[0],
+              role: profile?.role || (isSuper ? 'super_admin' : 'marketing'),
+              roleName: profile?.role_name || (isSuper ? 'Tổng Quản Trị (Toàn quyền)' : 'Biên Tập & Marketing'),
+              permissions: profile?.permissions || (isSuper ? ['all'] : ['articles']),
               active: true,
               loginAt: Date.now()
             };
@@ -1223,7 +1228,10 @@ export default function AdminPage({ navigate }) {
                     Vào <strong>Authentication</strong> → <strong>Users</strong> → Nhấn <strong>Add User</strong> → <strong>Create User</strong>.
                   </li>
                   <li>
-                    Nhập Email: <code className="bg-stone-100 px-1 py-0.5 rounded font-mono font-bold text-black">Admin.coffee2424@gmail.com</code> và đặt mật khẩu bí mật của bạn.
+                    Nhập Email: <code className="bg-stone-100 px-1 py-0.5 rounded font-mono font-bold text-black">doanngocnui.2424@gmail.com</code> (hoặc email quản trị của bạn) và đặt mật khẩu bí mật.
+                  </li>
+                  <li className="text-amber-800 font-bold">
+                    ⚠️ QUAN TRỌNG: Nhớ TICK CHỌN ô <code className="bg-amber-200/80 px-1 rounded text-black font-mono">Auto Confirm User?</code> để tài khoản có thể đăng nhập ngay mà không bị chặn xác nhận email! (Nếu đã tạo user trước đó mà chưa tick, bấm dấu 3 chấm (...) ở dòng user đó và chọn &quot;Auto-confirm user&quot;).
                   </li>
                   <li>
                     Quay lại màn hình này và đăng nhập với Email & Mật khẩu bạn vừa tạo trên Supabase.
@@ -6005,7 +6013,7 @@ export default function AdminPage({ navigate }) {
                           <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-neutral-400">
                             <span className="font-mono text-neutral-300 select-all">{acc.email}</span>
                             <span className="text-neutral-600 hidden sm:inline">•</span>
-                            <span className="text-[11px] text-neutral-500">Mật khẩu: ••••••••••••</span>
+                            <span className="text-[11px] text-emerald-400 font-medium">Mật khẩu: Mã hóa Bcrypt Cloud</span>
                             <span className="text-neutral-600 hidden sm:inline">•</span>
                             <span className="text-[11px] text-neutral-500">Tạo: {acc.createdAt || '16/10/2026'}</span>
                           </div>
@@ -6040,7 +6048,9 @@ export default function AdminPage({ navigate }) {
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingAccount({ ...acc });
+                            const copy = { ...acc };
+                            delete copy.password;
+                            setEditingAccount(copy);
                             setIsNewAccount(false);
                             setAccountPasswordVisible(false);
                           }}
