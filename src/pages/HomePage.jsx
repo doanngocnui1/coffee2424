@@ -721,73 +721,138 @@ export default function HomePage({ navigate, onSelectBranch }) {
                   </button>
                 )}
 
-                {/* Carousel Overflow Track */}
+                {/* Carousel Viewport (Mobile: Zero-Flicker CSS Grid Slide Stage | Desktop: Multi-card Track) */}
                 <div className="overflow-hidden w-full py-2 touch-pan-y">
-                  <div 
-                    ref={dishesCarousel.trackRef}
-                    className="flex will-change-transform"
-                    onTransitionEnd={dishesCarousel.handleTransitionEnd}
-                    style={dishesCarousel.trackStyle}
-                  >
-                    {dishesCarousel.items.map((dish, idx) => (
-                      <div 
-                        key={dish.id || idx}
-                        className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
-                      >
-                        <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
-                          {/* 3:4 Vertical Poster Container */}
+                  {isMobile ? (
+                    <div className="grid grid-cols-1 grid-rows-1 w-full overflow-hidden">
+                      {newDishesItems.map((dish, idx) => {
+                        const slideProps = dishesCarousel.getMobileSlideProps(idx);
+                        return (
                           <div 
-                            onClick={() => {
-                              if (dishesCarousel.hasSwipedRef.current) return;
-                              navigate(dish.link || '/dathang');
-                            }}
-                            className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
+                            key={dish.id || idx}
+                            style={slideProps.style}
+                            className={`p-1.5 sm:p-2 ${slideProps.className}`}
                           >
-                            <img 
-                              src={dish.image} 
-                              alt={dish.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                            />
-                            {dish.tag && (
-                              <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
-                                {dish.tag}
-                              </span>
-                            )}
-                            {(dish.price || dish.discount) && (
-                              <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-amber-400 text-[#1a0a04] font-mono text-xs font-black shadow-md">
-                                {dish.price || dish.discount}
-                              </span>
-                            )}
-                          </div>
+                            <div className="rounded-[32px] overflow-hidden p-3.5 border border-white/85 shadow-md flex flex-col justify-between h-full bg-white/95">
+                              {/* 3:4 Vertical Poster Container */}
+                              <div 
+                                onClick={() => {
+                                  if (dishesCarousel.hasSwipedRef.current) return;
+                                  navigate(dish.link || '/dathang');
+                                }}
+                                className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
+                              >
+                                <img 
+                                  src={dish.image} 
+                                  alt={dish.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                                />
+                                {dish.tag && (
+                                  <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
+                                    {dish.tag}
+                                  </span>
+                                )}
+                                {(dish.price || dish.discount) && (
+                                  <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-amber-400 text-[#1a0a04] font-mono text-xs font-black shadow-md">
+                                    {dish.price || dish.discount}
+                                  </span>
+                                )}
+                              </div>
 
-                          {/* Minimal Text: Tiêu đề & Nút đặt món */}
-                          <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
-                            <h3 
+                              {/* Minimal Text: Tiêu đề & Nút đặt món */}
+                              <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
+                                <h3 
+                                  onClick={() => {
+                                    if (dishesCarousel.hasSwipedRef.current) return;
+                                    navigate(dish.link || '/dathang');
+                                  }}
+                                  className="text-base font-black text-[#2b170e] truncate hover:text-[#8c5932] transition-colors cursor-pointer" 
+                                  title={dish.title}
+                                >
+                                  {dish.title}
+                                </h3>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (dishesCarousel.hasSwipedRef.current) return;
+                                    navigate(dish.link || '/dathang');
+                                  }}
+                                  className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <span>{dish.cta || 'Thử Ngay'}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div 
+                      className="flex will-change-transform"
+                      style={dishesCarousel.trackStyle}
+                    >
+                      {dishesCarousel.desktopItems.map((dish, idx) => (
+                        <div 
+                          key={dish.id ? `${dish.id}-${idx}` : idx}
+                          className="w-1/3 shrink-0 p-2 sm:p-3"
+                        >
+                          <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-shadow duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
+                            {/* 3:4 Vertical Poster Container */}
+                            <div 
                               onClick={() => {
                                 if (dishesCarousel.hasSwipedRef.current) return;
                                 navigate(dish.link || '/dathang');
                               }}
-                              className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
-                              title={dish.title}
+                              className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
                             >
-                              {dish.title}
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (dishesCarousel.hasSwipedRef.current) return;
-                                navigate(dish.link || '/dathang');
-                              }}
-                              className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                            >
-                              <span>{dish.cta || 'Thử Ngay'}</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
+                              <img 
+                                src={dish.image} 
+                                alt={dish.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                              />
+                              {dish.tag && (
+                                <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
+                                  {dish.tag}
+                                </span>
+                              )}
+                              {(dish.price || dish.discount) && (
+                                <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-amber-400 text-[#1a0a04] font-mono text-xs font-black shadow-md">
+                                  {dish.price || dish.discount}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Minimal Text: Tiêu đề & Nút đặt món */}
+                            <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
+                              <h3 
+                                onClick={() => {
+                                  if (dishesCarousel.hasSwipedRef.current) return;
+                                  navigate(dish.link || '/dathang');
+                                }}
+                                className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
+                                title={dish.title}
+                              >
+                                {dish.title}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (dishesCarousel.hasSwipedRef.current) return;
+                                  navigate(dish.link || '/dathang');
+                                }}
+                                className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                              >
+                                <span>{dish.cta || 'Thử Ngay'}</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Dots Indicator */}
@@ -893,73 +958,138 @@ export default function HomePage({ navigate, onSelectBranch }) {
                   </button>
                 )}
 
-                {/* Carousel Overflow Track */}
+                {/* Carousel Viewport (Mobile: Zero-Flicker CSS Grid Slide Stage | Desktop: Multi-card Track) */}
                 <div className="overflow-hidden w-full py-2 touch-pan-y">
-                  <div 
-                    ref={promosCarousel.trackRef}
-                    className="flex will-change-transform"
-                    onTransitionEnd={promosCarousel.handleTransitionEnd}
-                    style={promosCarousel.trackStyle}
-                  >
-                    {promosCarousel.items.map((promo, idx) => (
-                      <div 
-                        key={promo.id || idx}
-                        className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
-                      >
-                        <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
-                          {/* 3:4 Vertical Poster Container */}
+                  {isMobile ? (
+                    <div className="grid grid-cols-1 grid-rows-1 w-full overflow-hidden">
+                      {promotionsItems.map((promo, idx) => {
+                        const slideProps = promosCarousel.getMobileSlideProps(idx);
+                        return (
                           <div 
-                            onClick={() => {
-                              if (promosCarousel.hasSwipedRef.current) return;
-                              navigate(promo.link || '/khuyenmai');
-                            }}
-                            className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
+                            key={promo.id || idx}
+                            style={slideProps.style}
+                            className={`p-1.5 sm:p-2 ${slideProps.className}`}
                           >
-                            <img 
-                              src={promo.image} 
-                              alt={promo.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                            />
-                            {promo.tag && (
-                              <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
-                                {promo.tag}
-                              </span>
-                            )}
-                            {(promo.discount || promo.price) && (
-                              <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-rose-500 text-white font-mono text-xs font-black shadow-md">
-                                {promo.discount || promo.price}
-                              </span>
-                            )}
-                          </div>
+                            <div className="rounded-[32px] overflow-hidden p-3.5 border border-white/85 shadow-md flex flex-col justify-between h-full bg-white/95">
+                              {/* 3:4 Vertical Poster Container */}
+                              <div 
+                                onClick={() => {
+                                  if (promosCarousel.hasSwipedRef.current) return;
+                                  navigate(promo.link || '/khuyenmai');
+                                }}
+                                className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
+                              >
+                                <img 
+                                  src={promo.image} 
+                                  alt={promo.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                                />
+                                {promo.tag && (
+                                  <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
+                                    {promo.tag}
+                                  </span>
+                                )}
+                                {(promo.discount || promo.price) && (
+                                  <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-rose-500 text-white font-mono text-xs font-black shadow-md">
+                                    {promo.discount || promo.price}
+                                  </span>
+                                )}
+                              </div>
 
-                          {/* Minimal Text: Tiêu đề & Nút xem ưu đãi */}
-                          <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
-                            <h3 
+                              {/* Minimal Text: Tiêu đề & Nút xem ưu đãi */}
+                              <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
+                                <h3 
+                                  onClick={() => {
+                                    if (promosCarousel.hasSwipedRef.current) return;
+                                    navigate(promo.link || '/khuyenmai');
+                                  }}
+                                  className="text-base font-black text-[#2b170e] truncate hover:text-[#8c5932] transition-colors cursor-pointer" 
+                                  title={promo.title}
+                                >
+                                  {promo.title}
+                                </h3>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (promosCarousel.hasSwipedRef.current) return;
+                                    navigate(promo.link || '/khuyenmai');
+                                  }}
+                                  className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-rose-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <span>{promo.cta || 'Xem Ưu Đãi'}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div 
+                      className="flex will-change-transform"
+                      style={promosCarousel.trackStyle}
+                    >
+                      {promosCarousel.desktopItems.map((promo, idx) => (
+                        <div 
+                          key={promo.id ? `${promo.id}-${idx}` : idx}
+                          className="w-1/3 shrink-0 p-2 sm:p-3"
+                        >
+                          <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-shadow duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
+                            {/* 3:4 Vertical Poster Container */}
+                            <div 
                               onClick={() => {
                                 if (promosCarousel.hasSwipedRef.current) return;
                                 navigate(promo.link || '/khuyenmai');
                               }}
-                              className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
-                              title={promo.title}
+                              className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-stone-900 shadow-inner cursor-pointer"
                             >
-                              {promo.title}
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (promosCarousel.hasSwipedRef.current) return;
-                                navigate(promo.link || '/khuyenmai');
-                              }}
-                              className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-rose-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                            >
-                              <span>{promo.cta || 'Xem Ưu Đãi'}</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
+                              <img 
+                                src={promo.image} 
+                                alt={promo.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                              />
+                              {promo.tag && (
+                                <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-md bg-black/60 backdrop-blur-md border border-white/20">
+                                  {promo.tag}
+                                </span>
+                              )}
+                              {(promo.discount || promo.price) && (
+                                <span className="absolute bottom-3 right-3 px-3.5 py-1 rounded-full bg-rose-500 text-white font-mono text-xs font-black shadow-md">
+                                  {promo.discount || promo.price}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Minimal Text: Tiêu đề & Nút xem ưu đãi */}
+                            <div className="pt-3.5 pb-1 px-1 flex items-center justify-between gap-3">
+                              <h3 
+                                onClick={() => {
+                                  if (promosCarousel.hasSwipedRef.current) return;
+                                  navigate(promo.link || '/khuyenmai');
+                                }}
+                                className="text-base sm:text-lg font-black text-[#2b170e] truncate group-hover:text-[#8c5932] transition-colors cursor-pointer" 
+                                title={promo.title}
+                              >
+                                {promo.title}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (promosCarousel.hasSwipedRef.current) return;
+                                  navigate(promo.link || '/khuyenmai');
+                                }}
+                                className="shrink-0 px-4 py-2 rounded-full bg-[#2b170e] hover:bg-rose-600 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                              >
+                                <span>{promo.cta || 'Xem Ưu Đãi'}</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Dots Indicator */}

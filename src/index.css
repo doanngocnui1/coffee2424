@@ -781,3 +781,63 @@ img {
 .admin-liquid-glass textarea {
   font-size: 14px !important;
 }
+
+/* =========================================================================
+   CAROUSEL MOBILE SLIDE STAGE ANIMATIONS (Hardware-accelerated, zero-flicker)
+   ========================================================================= */
+@keyframes carouselSlideOutToLeft {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes carouselSlideInFromRight {
+  0% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0%, 0, 0);
+  }
+}
+
+@keyframes carouselSlideOutToRight {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes carouselSlideInFromLeft {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0%, 0, 0);
+  }
+}
+
+.animate-carousel-out-left {
+  animation: carouselSlideOutToLeft 550ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform;
+}
+
+.animate-carousel-in-right {
+  animation: carouselSlideInFromRight 550ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform;
+}
+
+.animate-carousel-out-right {
+  animation: carouselSlideOutToRight 550ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform;
+}
+
+.animate-carousel-in-left {
+  animation: carouselSlideInFromLeft 550ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform;
+}
+

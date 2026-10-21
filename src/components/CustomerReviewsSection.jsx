@@ -147,74 +147,140 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
           </button>
         )}
 
-        {/* Carousel Overflow Track */}
+        {/* Carousel Viewport (Mobile: Zero-Flicker CSS Grid Slide Stage | Desktop: Multi-card Track) */}
         <div className="overflow-hidden w-full py-2 touch-pan-y">
-          <div 
-            ref={reviewsCarousel.trackRef}
-            className="flex will-change-transform"
-            onTransitionEnd={reviewsCarousel.handleTransitionEnd}
-            style={reviewsCarousel.trackStyle}
-          >
-            {reviewsCarousel.items.map((rev) => (
-              <div 
-                key={rev.id}
-                className="w-full md:w-1/3 shrink-0 p-2.5 sm:p-3"
-              >
-                <div className="ios-glass-card rounded-[32px] p-6 sm:p-7 flex flex-col justify-between space-y-5 border border-white/85 shadow-lg hover:shadow-2xl transition-all duration-300 h-full relative group bg-white/70 backdrop-blur-xl">
-                  <div className="space-y-4">
-                    {/* 5 Stars Rating & Quote Icon */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-amber-500">
-                        {[...Array(rev.rating || 5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-amber-500 stroke-amber-500" />
-                        ))}
-                      </div>
-                      <Quote className="w-6 h-6 text-[#8c5932]/25 group-hover:text-[#8c5932]/45 transition-colors" />
-                    </div>
-
-                    {/* Review Text */}
-                    <p className="text-sm sm:text-base text-[#3d2719] font-medium leading-relaxed italic">
-                      "{rev.content}"
-                    </p>
-                  </div>
-
-                  {/* Customer Info (Tên khách nguyên vẹn trên 1 dòng, không bị bóp nghẹt xuống dòng) */}
-                  <div className="pt-4 border-t border-[#2b170e]/10 space-y-2.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#8c5932] to-amber-500 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
-                        {rev.initial || (rev.author ? rev.author.charAt(0).toUpperCase() : 'K')}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-black text-[#2b170e] text-sm sm:text-base whitespace-nowrap">
-                            {rev.author}
-                          </span>
-                          {rev.verified !== false && (
-                            <span className="inline-flex items-center text-blue-600 shrink-0" title="Đã ghé quán & xác thực">
-                              <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-                            </span>
-                          )}
+          {isMobile ? (
+            <div className="grid grid-cols-1 grid-rows-1 w-full overflow-hidden">
+              {activeReviews.map((rev, idx) => {
+                const slideProps = reviewsCarousel.getMobileSlideProps(idx);
+                return (
+                  <div 
+                    key={rev.id || idx}
+                    style={slideProps.style}
+                    className={`p-1.5 sm:p-2 ${slideProps.className}`}
+                  >
+                    <div className="rounded-[32px] p-6 sm:p-7 flex flex-col justify-between space-y-5 border border-white/85 shadow-md h-full relative group bg-white/95">
+                      <div className="space-y-4">
+                        {/* 5 Stars Rating & Quote Icon */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-amber-500">
+                            {[...Array(rev.rating || 5)].map((_, i) => (
+                              <Star key={i} className="w-4 h-4 fill-amber-500 stroke-amber-500" />
+                            ))}
+                          </div>
+                          <Quote className="w-6 h-6 text-[#8c5932]/25 group-hover:text-[#8c5932]/45 transition-colors" />
                         </div>
-                        <p className="text-xs text-[#7d5d48] font-medium truncate">
-                          {rev.role || 'Khách Hàng'}
+
+                        {/* Review Text */}
+                        <p className="text-sm sm:text-base text-[#3d2719] font-medium leading-relaxed italic">
+                          "{rev.content}"
                         </p>
                       </div>
+
+                      {/* Customer Info (Tên khách nguyên vẹn trên 1 dòng, không bị bóp nghẹt xuống dòng) */}
+                      <div className="pt-4 border-t border-[#2b170e]/10 space-y-2.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#8c5932] to-amber-500 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+                            {rev.initial || (rev.author ? rev.author.charAt(0).toUpperCase() : 'K')}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-black text-[#2b170e] text-sm sm:text-base whitespace-nowrap">
+                                {rev.author}
+                              </span>
+                              {rev.verified !== false && (
+                                <span className="inline-flex items-center text-blue-600 shrink-0" title="Đã ghé quán & xác thực">
+                                  <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-[#7d5d48] font-medium truncate">
+                              {rev.role || 'Khách Hàng'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {rev.favoriteItem && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8c5932] bg-white/90 px-3 py-1.5 rounded-full border border-stone-200/80 shadow-2xs max-w-full">
+                              <span className="shrink-0 text-xs">☕</span>
+                              <span className="shrink-0 font-medium text-[#7d5d48]">Món ruột:</span>
+                              <span className="font-bold truncate text-[#3d2417]">{rev.favoriteItem}</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div 
+              className="flex will-change-transform"
+              style={reviewsCarousel.trackStyle}
+            >
+              {reviewsCarousel.desktopItems.map((rev, idx) => (
+                <div 
+                  key={rev.id ? `${rev.id}-${idx}` : idx}
+                  className="w-1/3 shrink-0 p-2.5 sm:p-3"
+                >
+                  <div className="ios-glass-card rounded-[32px] p-6 sm:p-7 flex flex-col justify-between space-y-5 border border-white/85 shadow-lg hover:shadow-2xl transition-shadow duration-300 h-full relative group bg-white/70 backdrop-blur-xl">
+                    <div className="space-y-4">
+                      {/* 5 Stars Rating & Quote Icon */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-amber-500">
+                          {[...Array(rev.rating || 5)].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-amber-500 stroke-amber-500" />
+                          ))}
+                        </div>
+                        <Quote className="w-6 h-6 text-[#8c5932]/25 group-hover:text-[#8c5932]/45 transition-colors" />
+                      </div>
+
+                      {/* Review Text */}
+                      <p className="text-sm sm:text-base text-[#3d2719] font-medium leading-relaxed italic">
+                        "{rev.content}"
+                      </p>
                     </div>
 
-                    {rev.favoriteItem && (
-                      <div className="pt-0.5">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8c5932] bg-white/90 px-3 py-1.5 rounded-full border border-stone-200/80 shadow-2xs max-w-full">
-                          <span className="shrink-0 text-xs">☕</span>
-                          <span className="shrink-0 font-medium text-[#7d5d48]">Món ruột:</span>
-                          <span className="font-bold truncate text-[#3d2417]">{rev.favoriteItem}</span>
-                        </span>
+                    {/* Customer Info (Tên khách nguyên vẹn trên 1 dòng, không bị bóp nghẹt xuống dòng) */}
+                    <div className="pt-4 border-t border-[#2b170e]/10 space-y-2.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#8c5932] to-amber-500 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+                          {rev.initial || (rev.author ? rev.author.charAt(0).toUpperCase() : 'K')}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-black text-[#2b170e] text-sm sm:text-base whitespace-nowrap">
+                              {rev.author}
+                            </span>
+                            {rev.verified !== false && (
+                              <span className="inline-flex items-center text-blue-600 shrink-0" title="Đã ghé quán & xác thực">
+                                <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#7d5d48] font-medium truncate">
+                            {rev.role || 'Khách Hàng'}
+                          </p>
+                        </div>
                       </div>
-                    )}
+
+                      {rev.favoriteItem && (
+                        <div className="pt-0.5">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8c5932] bg-white/90 px-3 py-1.5 rounded-full border border-stone-200/80 shadow-2xs max-w-full">
+                            <span className="shrink-0 text-xs">☕</span>
+                            <span className="shrink-0 font-medium text-[#7d5d48]">Món ruột:</span>
+                            <span className="font-bold truncate text-[#3d2417]">{rev.favoriteItem}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Dots Indicator */}
