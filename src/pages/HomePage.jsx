@@ -53,6 +53,7 @@ import {
   getLayerAnimationClass, 
   getLayerBadgeClass 
 } from '../data/bannerDesignerPresets';
+import { useInfiniteAutoSlide } from '../hooks/useInfiniteAutoSlide';
 
 const AMENITY_ICONS = {
   zap: Zap,
@@ -75,360 +76,6 @@ const AMENITY_COLORS = {
   cyan: 'bg-cyan-500/15 text-cyan-700',
   purple: 'bg-purple-500/15 text-purple-700'
 };
-
-/**
- * Hook quản lý cuộn slide vô tận (infinite loop) cho poster carousels:
- * - Desktop: tự động chạy mỗi 2 giây khi nhiều hơn 3 poster (items.length > 3)
- * - Mobile: tự động chạy mỗi 2 giây khi nhiều hơn 1 poster (items.length > 1)
- * - Vòng lặp vô tận (infinite loop): cuộn liên tục một chiều mượt mà, không bao giờ nháy giật hay nhảy ngược về đầu
- * - Chuột lướt qua (mouseenter) hoặc ngón tay chạm màn hình (touchstart): tạm dừng ngay
- * - Thả chuột (mouseleave) hoặc nhấc tay khỏi màn hình (touchend/touchcancel): giữ lại đúng 5 giây rồi mới tiếp tục chạy mỗi 2 giây
- * - Hỗ trợ vuốt tay qua lại (swipe left/right) trên điện thoại và click dots/arrows
- */
-function usePosterAutoSlide({
-  items = [],
-  visibleCount = 3,
-  interval = 2000,
-  holdDelay = 5000
-}) {
-  const itemsCount = items.length;
-  const shouldAutoSlide = itemsCount > visibleCount;
-  // Buffer clone ít nhất 2 phần tử (hoặc visibleCount) để đảm bảo cuộn mượt không lộ mép
-  const cloneCount = shouldAutoSlide ? Math.min(itemsCount, Math.max(visibleCount, 2)) : 0;
-
-  const trackRef = useRef(null);
-  const [currentIndex, setCurrentIndex] = useState(() => (shouldAutoSlide ? cloneCount : 0));
-  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
-
-  const isInteractingRef = useRef(false);
-  const isSlidingRef = useRef(false);
-  const autoTimerRef = useRef(null);
-  const resumeTimerRef = useRef(null);
-  const resetTimerRef = useRef(null);
-  const touchStartXRef = useRef(null);
-  const touchStartYRef = useRef(null);
-  const hasSwipedRef = useRef(false);
-
-  // Refs cập nhật liên tục để tránh stale closures
-  const currentIndexRef = useRef(currentIndex);
-  currentIndexRef.current = currentIndex;
-
-  const cloneCountRef = useRef(cloneCount);
-  cloneCountRef.current = cloneCount;
-
-  const itemsCountRef = useRef(itemsCount);
-  itemsCountRef.current = itemsCount;
-
-  const visibleCountRef = useRef(visibleCount);
-  visibleCountRef.current = visibleCount;
-
-  const shouldAutoSlideRef = useRef(shouldAutoSlide);
-  shouldAutoSlideRef.current = shouldAutoSlide;
-
-  // Tạo mảng extendedItems với các clone ở đầu và cuối để tạo hiệu ứng vòng lặp vô tận
-  const extendedItems = useMemo(() => {
-    if (!shouldAutoSlide || itemsCount === 0 || cloneCount === 0) {
-      return items.map((item, idx) => ({
-        ...item,
-        _extendedKey: item.id ? `orig-${item.id}` : `orig-${idx}`
-      }));
-    }
-    const clonesBefore = items.slice(-cloneCount).map((item, idx) => ({
-      ...item,
-      _extendedKey: `clone-before-${item.id || idx}-${idx}`
-    }));
-    const original = items.map((item, idx) => ({
-      ...item,
-      _extendedKey: `orig-${item.id || idx}-${idx}`
-    }));
-    const clonesAfter = items.slice(0, cloneCount).map((item, idx) => ({
-      ...item,
-      _extendedKey: `clone-after-${item.id || idx}-${idx}`
-    }));
-    return [...clonesBefore, ...original, ...clonesAfter];
-  }, [items, shouldAutoSlide, cloneCount, itemsCount]);
-
-  // Đồng bộ lại index khi đổi kích thước màn hình hoặc items thay đổi
-  const prevCloneCountRef = useRef(cloneCount);
-  useEffect(() => {
-    if (prevCloneCountRef.current !== cloneCount) {
-      const prevC = prevCloneCountRef.current;
-      prevCloneCountRef.current = cloneCount;
-      if (shouldAutoSlide && itemsCount > 0) {
-        const currentReal = ((currentIndexRef.current - prevC) % itemsCount + itemsCount) % itemsCount;
-        const newIdx = cloneCount + currentReal;
-        if (trackRef.current) {
-          trackRef.current.style.transition = 'none';
-          trackRef.current.style.transform = `translateX(-${newIdx * (100 / visibleCount)}%)`;
-          void trackRef.current.offsetHeight; // Force reflow
-        }
-        setIsTransitionEnabled(false);
-        setCurrentIndex(newIdx);
-        currentIndexRef.current = newIdx;
-      } else {
-        if (trackRef.current) {
-          trackRef.current.style.transition = 'none';
-          trackRef.current.style.transform = 'translateX(0%)';
-          void trackRef.current.offsetHeight;
-        }
-        setIsTransitionEnabled(false);
-        setCurrentIndex(0);
-        currentIndexRef.current = 0;
-      }
-    }
-  }, [cloneCount, itemsCount, shouldAutoSlide, visibleCount]);
-
-  const clearTimers = useCallback(() => {
-    if (autoTimerRef.current) {
-      clearInterval(autoTimerRef.current);
-      autoTimerRef.current = null;
-    }
-    if (resumeTimerRef.current) {
-      clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
-    }
-    if (resetTimerRef.current) {
-      clearTimeout(resetTimerRef.current);
-      resetTimerRef.current = null;
-    }
-  }, []);
-
-  // Xử lý chuyển tức thời không animation khi chạm ngưỡng clone (vòng lặp vô tận hoàn toàn không nháy giật)
-  const handleTransitionEnd = useCallback((e) => {
-    if (e) {
-      if (e.target !== e.currentTarget) return;
-      if (e.propertyName && e.propertyName !== 'transform') return;
-    }
-    if (resetTimerRef.current) {
-      clearTimeout(resetTimerRef.current);
-      resetTimerRef.current = null;
-    }
-    isSlidingRef.current = false;
-    if (!shouldAutoSlideRef.current) return;
-
-    const current = currentIndexRef.current;
-    const cCount = cloneCountRef.current;
-    const count = itemsCountRef.current;
-    const vCount = visibleCountRef.current || 1;
-
-    if (count === 0) return;
-
-    // Nếu đã trượt tới hoặc qua nhóm clone cuối -> nhảy không giật về vị trí gốc tương ứng
-    if (current >= cCount + count) {
-      const jumpTo = current - count;
-      if (trackRef.current) {
-        trackRef.current.style.transition = 'none';
-        trackRef.current.style.transform = `translateX(-${jumpTo * (100 / vCount)}%)`;
-        void trackRef.current.offsetHeight; // Bắt buộc browser reflow tức thì 0ms không chạy ngược
-      }
-      setIsTransitionEnabled(false);
-      setCurrentIndex(jumpTo);
-      currentIndexRef.current = jumpTo;
-    } else if (current < cCount) {
-      // Nếu đã trượt lùi qua nhóm clone đầu -> nhảy không giật về vị trí gốc tương ứng
-      const jumpTo = current + count;
-      if (trackRef.current) {
-        trackRef.current.style.transition = 'none';
-        trackRef.current.style.transform = `translateX(-${jumpTo * (100 / vCount)}%)`;
-        void trackRef.current.offsetHeight; // Bắt buộc browser reflow tức thì 0ms không chạy ngược
-      }
-      setIsTransitionEnabled(false);
-      setCurrentIndex(jumpTo);
-      currentIndexRef.current = jumpTo;
-    }
-  }, []);
-
-  const slideNext = useCallback(() => {
-    if (!shouldAutoSlideRef.current) return;
-    if (isSlidingRef.current) return;
-    isSlidingRef.current = true;
-
-    if (trackRef.current) {
-      trackRef.current.style.transition = 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)';
-    }
-    setIsTransitionEnabled(true);
-
-    setCurrentIndex(prev => {
-      const next = prev + 1;
-      currentIndexRef.current = next;
-      return next;
-    });
-
-    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-    resetTimerRef.current = setTimeout(() => {
-      handleTransitionEnd();
-    }, 650);
-  }, [handleTransitionEnd]);
-
-  const slidePrev = useCallback(() => {
-    if (!shouldAutoSlideRef.current) return;
-    if (isSlidingRef.current) return;
-    isSlidingRef.current = true;
-
-    if (trackRef.current) {
-      trackRef.current.style.transition = 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)';
-    }
-    setIsTransitionEnabled(true);
-
-    setCurrentIndex(prev => {
-      const next = prev - 1;
-      currentIndexRef.current = next;
-      return next;
-    });
-
-    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-    resetTimerRef.current = setTimeout(() => {
-      handleTransitionEnd();
-    }, 650);
-  }, [handleTransitionEnd]);
-
-  const goToIndex = useCallback((dotIdx) => {
-    if (!shouldAutoSlideRef.current) return;
-    if (isSlidingRef.current) return;
-    isSlidingRef.current = true;
-
-    if (trackRef.current) {
-      trackRef.current.style.transition = 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)';
-    }
-    setIsTransitionEnabled(true);
-
-    const target = cloneCountRef.current + dotIdx;
-    setCurrentIndex(target);
-    currentIndexRef.current = target;
-
-    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-    resetTimerRef.current = setTimeout(() => {
-      handleTransitionEnd();
-    }, 650);
-  }, [handleTransitionEnd]);
-
-  const startAutoPlay = useCallback(() => {
-    clearTimers();
-    if (!shouldAutoSlideRef.current) return;
-    autoTimerRef.current = setInterval(() => {
-      slideNext();
-    }, interval);
-  }, [clearTimers, slideNext, interval]);
-
-  const scheduleResumeAfterHold = useCallback(() => {
-    clearTimers();
-    if (!shouldAutoSlideRef.current) return;
-    resumeTimerRef.current = setTimeout(() => {
-      if (!isInteractingRef.current) {
-        slideNext();
-        startAutoPlay();
-      }
-    }, holdDelay);
-  }, [clearTimers, slideNext, startAutoPlay, holdDelay]);
-
-  const onInteractionStart = useCallback(() => {
-    isInteractingRef.current = true;
-    clearTimers();
-  }, [clearTimers]);
-
-  const onInteractionEnd = useCallback(() => {
-    isInteractingRef.current = false;
-    scheduleResumeAfterHold();
-  }, [scheduleResumeAfterHold]);
-
-  const onManualAction = useCallback((actionFn) => {
-    if (actionFn) actionFn();
-    clearTimers();
-    scheduleResumeAfterHold();
-  }, [clearTimers, scheduleResumeAfterHold]);
-
-  // Touch gesture handling
-  const handleTouchStart = useCallback((e) => {
-    hasSwipedRef.current = false;
-    if (e.targetTouches && e.targetTouches.length > 0) {
-      touchStartXRef.current = e.targetTouches[0].clientX;
-      touchStartYRef.current = e.targetTouches[0].clientY;
-    }
-    onInteractionStart();
-  }, [onInteractionStart]);
-
-  const handleTouchEnd = useCallback((e) => {
-    if (touchStartXRef.current !== null && e.changedTouches && e.changedTouches.length > 0) {
-      const diffX = touchStartXRef.current - e.changedTouches[0].clientX;
-      const diffY = touchStartYRef.current !== null ? Math.abs(touchStartYRef.current - e.changedTouches[0].clientY) : 0;
-      // Chỉ kích hoạt lật slide khi khoảng cách vuốt ngang lớn hơn dọc và > 40px
-      if (Math.abs(diffX) > diffY && Math.abs(diffX) > 40) {
-        hasSwipedRef.current = true;
-        setTimeout(() => { hasSwipedRef.current = false; }, 120);
-        if (diffX > 0) {
-          slideNext();
-        } else {
-          slidePrev();
-        }
-      }
-      touchStartXRef.current = null;
-      touchStartYRef.current = null;
-    }
-    onInteractionEnd();
-  }, [onInteractionEnd, slideNext, slidePrev]);
-
-  const handleTouchCancel = useCallback(() => {
-    touchStartXRef.current = null;
-    touchStartYRef.current = null;
-    onInteractionEnd();
-  }, [onInteractionEnd]);
-
-  // Khởi động auto-play khi đủ điều kiện
-  useEffect(() => {
-    if (shouldAutoSlide && !isInteractingRef.current) {
-      startAutoPlay();
-    } else {
-      clearTimers();
-    }
-    return () => clearTimers();
-  }, [shouldAutoSlide, startAutoPlay, clearTimers]);
-
-  // Tạm dừng khi chuyển tab trình duyệt
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        clearTimers();
-      } else if (shouldAutoSlideRef.current && !isInteractingRef.current) {
-        startAutoPlay();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [clearTimers, startAutoPlay]);
-
-  // Cleanup khi unmount
-  useEffect(() => {
-    return () => {
-      clearTimers();
-    };
-  }, [clearTimers]);
-
-  // Vị trí chấm tròn (Dot index) thực tế
-  const activeDotIndex = shouldAutoSlide && itemsCount > 0
-    ? ((currentIndex - cloneCount) % itemsCount + itemsCount) % itemsCount
-    : currentIndex;
-
-  return {
-    trackRef,
-    items: extendedItems,
-    currentIndex,
-    isTransitionEnabled,
-    activeDotIndex,
-    showNav: shouldAutoSlide,
-    handlePrev: () => onManualAction(slidePrev),
-    handleNext: () => onManualAction(slideNext),
-    goToIndex: (idx) => onManualAction(() => goToIndex(idx)),
-    handleTransitionEnd,
-    hasSwipedRef,
-    containerProps: {
-      onMouseEnter: onInteractionStart,
-      onMouseLeave: onInteractionEnd,
-      onTouchStart: handleTouchStart,
-      onTouchEnd: handleTouchEnd,
-      onTouchCancel: handleTouchCancel
-    }
-  };
-}
 
 export default function HomePage({ navigate, onSelectBranch }) {
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
@@ -614,15 +261,15 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
   const visibleCount = isMobile ? 1 : 3;
 
-  // Auto-slide controllers vòng lặp vô tận cho Món Mới và Chương Trình Ưu Đãi
-  const dishesCarousel = usePosterAutoSlide({
+  // Auto-slide controllers vòng lặp vô tận (Circular Conveyor) cho Món Mới và Chương Trình Ưu Đãi
+  const dishesCarousel = useInfiniteAutoSlide({
     items: newDishesItems,
     visibleCount,
     interval: 2000,
     holdDelay: 5000
   });
 
-  const promosCarousel = usePosterAutoSlide({
+  const promosCarousel = useInfiniteAutoSlide({
     items: promotionsItems,
     visibleCount,
     interval: 2000,
@@ -1080,16 +727,11 @@ export default function HomePage({ navigate, onSelectBranch }) {
                     ref={dishesCarousel.trackRef}
                     className="flex will-change-transform"
                     onTransitionEnd={dishesCarousel.handleTransitionEnd}
-                    style={{
-                      transform: `translateX(-${dishesCarousel.currentIndex * (100 / visibleCount)}%)`,
-                      transition: dishesCarousel.isTransitionEnabled 
-                        ? 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)' 
-                        : 'none'
-                    }}
+                    style={dishesCarousel.trackStyle}
                   >
                     {dishesCarousel.items.map((dish, idx) => (
                       <div 
-                        key={dish._extendedKey || dish.id || idx}
+                        key={dish.id || idx}
                         className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
                       >
                         <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">
@@ -1257,16 +899,11 @@ export default function HomePage({ navigate, onSelectBranch }) {
                     ref={promosCarousel.trackRef}
                     className="flex will-change-transform"
                     onTransitionEnd={promosCarousel.handleTransitionEnd}
-                    style={{
-                      transform: `translateX(-${promosCarousel.currentIndex * (100 / visibleCount)}%)`,
-                      transition: promosCarousel.isTransitionEnabled 
-                        ? 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)' 
-                        : 'none'
-                    }}
+                    style={promosCarousel.trackStyle}
                   >
                     {promosCarousel.items.map((promo, idx) => (
                       <div 
-                        key={promo._extendedKey || promo.id || idx}
+                        key={promo.id || idx}
                         className="w-full md:w-1/3 shrink-0 p-2 sm:p-3"
                       >
                         <div className="ios-glass-card rounded-[32px] overflow-hidden p-3.5 sm:p-4 border border-white/85 shadow-lg group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full bg-white/70 backdrop-blur-xl">

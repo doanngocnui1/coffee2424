@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getReviews, saveReviews } from '../data/reviews';
 import { getSiteConfig } from '../data/siteConfig';
+import { useInfiniteAutoSlide } from '../hooks/useInfiniteAutoSlide';
 
 export default function CustomerReviewsSection({ className = '', reviewsConfig }) {
   const [reviews, setReviews] = useState(getReviews);
@@ -31,15 +32,12 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
 
   const currentReviewsConfig = reviewsConfig || siteConfig?.reviewsSection;
 
-  // Carousel slider state
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
     }
     return false;
   });
-  const [touchStartX, setTouchStartX] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -70,17 +68,14 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
 
   const activeReviews = reviews.filter(r => r.active !== false);
   const visibleCount = isMobile ? 1 : 3;
-  const maxIndex = Math.max(0, activeReviews.length - visibleCount);
-  const safeIndex = Math.min(currentIndex, maxIndex);
-  const showNavButtons = activeReviews.length > visibleCount;
 
-  const handlePrev = () => {
-    setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
-  };
+  // Auto-slide carousel vô tận cho đánh giá khách hàng (tự cuộn mỗi 3.5 giây, giữ 5s khi chạm)
+  const reviewsCarousel = useInfiniteAutoSlide({
+    items: activeReviews,
+    visibleCount,
+    interval: 3500,
+    holdDelay: 5000
+  });
 
   const handleSubmitReview = (e) => {
     e.preventDefault();
@@ -124,12 +119,15 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
   return (
     <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-sans ${className}`}>
       {/* Horizontal Carousel (3 trên máy tính, 1 trên điện thoại) */}
-      <div className="relative group/reviewcarousel">
+      <div 
+        className="relative group/reviewcarousel"
+        {...reviewsCarousel.containerProps}
+      >
         {/* Navigation Arrow Left */}
-        {showNavButtons && (
+        {reviewsCarousel.showNav && (
           <button
             type="button"
-            onClick={handlePrev}
+            onClick={reviewsCarousel.handlePrev}
             className="absolute -left-3 sm:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
             aria-label="Xem đánh giá trước đó"
           >
@@ -138,10 +136,10 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
         )}
 
         {/* Navigation Arrow Right */}
-        {showNavButtons && (
+        {reviewsCarousel.showNav && (
           <button
             type="button"
-            onClick={handleNext}
+            onClick={reviewsCarousel.handleNext}
             className="absolute -right-3 sm:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-[#2b170e] text-[#2b170e] hover:text-white border border-stone-200/90 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md group"
             aria-label="Xem đánh giá tiếp theo"
           >
@@ -150,24 +148,14 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
         )}
 
         {/* Carousel Overflow Track */}
-        <div 
-          className="overflow-hidden w-full py-2"
-          onTouchStart={(e) => setTouchStartX(e.targetTouches[0].clientX)}
-          onTouchEnd={(e) => {
-            if (touchStartX === null) return;
-            const diff = touchStartX - e.changedTouches[0].clientX;
-            if (diff > 45) handleNext();
-            else if (diff < -45) handlePrev();
-            setTouchStartX(null);
-          }}
-        >
+        <div className="overflow-hidden w-full py-2 touch-pan-y">
           <div 
-            className="flex transition-transform duration-500 ease-out"
-            style={{
-              transform: `translateX(-${safeIndex * (100 / visibleCount)}%)`
-            }}
+            ref={reviewsCarousel.trackRef}
+            className="flex will-change-transform"
+            onTransitionEnd={reviewsCarousel.handleTransitionEnd}
+            style={reviewsCarousel.trackStyle}
           >
-            {activeReviews.map((rev) => (
+            {reviewsCarousel.items.map((rev) => (
               <div 
                 key={rev.id}
                 className="w-full md:w-1/3 shrink-0 p-2.5 sm:p-3"
@@ -230,15 +218,15 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
         </div>
 
         {/* Dots Indicator */}
-        {showNavButtons && maxIndex > 0 && (
+        {reviewsCarousel.showNav && activeReviews.length > 0 && (
           <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
-            {Array.from({ length: maxIndex + 1 }).map((_, dotIdx) => (
+            {activeReviews.map((_, dotIdx) => (
               <button
                 key={dotIdx}
                 type="button"
-                onClick={() => setCurrentIndex(dotIdx)}
+                onClick={() => reviewsCarousel.goToIndex(dotIdx)}
                 className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  safeIndex === dotIdx 
+                  reviewsCarousel.activeDotIndex === dotIdx 
                     ? 'w-8 bg-[#8c5932] shadow-xs' 
                     : 'w-2.5 bg-stone-300 hover:bg-stone-400'
                 }`}
