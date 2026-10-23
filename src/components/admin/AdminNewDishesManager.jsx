@@ -701,16 +701,16 @@ export default function AdminNewDishesManager({ config, onSaveConfig, triggerAle
         </div>
       </div>
 
-      {/* 5. Sticky Bottom Action Bar */}
-      <div className="sticky bottom-4 z-30 p-4 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-neutral-800 shadow-2xl flex items-center justify-between gap-4">
-        <div className="text-xs text-neutral-400 hidden sm:block">
+      {/* 5. Bottom Action Bar */}
+      <div className="mt-8 p-4 rounded-2xl bg-neutral-950 border border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="text-xs text-neutral-400">
           💡 Thẻ món mới sẽ tự động hiển thị trên Trang Chủ (3 thẻ trên máy tính, 1 thẻ trên điện thoại) kèm nút bấm điều hướng.
         </div>
-        <div className="flex items-center gap-2.5 ml-auto">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
           <button
             type="button"
             onClick={handleAddDish}
-            className="px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold cursor-pointer transition-colors"
           >
             + Thêm Món
           </button>
