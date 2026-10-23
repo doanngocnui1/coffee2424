@@ -24,29 +24,29 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
   const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [
     {
       id: 'promo-1',
-      tag: 'COMBO HOT',
-      title: 'Combo Sáng & Đêm Khuya 69K',
-      discount: 'CHỈ 69.000đ',
-      image: '/images/signature_drinks.jpg',
-      cta: 'Đặt Combo 69K',
-      link: '/dathang'
+      tag: 'GIỜ VÀNG',
+      title: 'Golden Hour - Cà Phê Đồng Giá 25K (16h - 19h)',
+      discount: '25.000đ',
+      image: '/images/promo_1.png',
+      cta: 'Nhận Ưu Đãi',
+      link: '/khuyenmai'
     },
     {
       id: 'promo-2',
-      tag: 'GIỜ VÀNG',
-      title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày',
-      discount: 'GIẢM 40%',
-      image: '/images/journey_espresso.jpg',
-      cta: 'Lấy Mã Giảm',
+      tag: 'COMBO ĐÊM',
+      title: 'Combo Cú Đêm 22h - 6h (Mì Hảo Hảo + Nước)',
+      discount: 'CHỈ TỪ 42K',
+      image: '/images/promo_2.png',
+      cta: 'Đặt Combo Cú Đêm',
       link: '/khuyenmai'
     },
     {
       id: 'promo-3',
-      tag: 'HỌC NHÓM',
-      title: 'Đi 4 Tính Tiền 3 - Cày Deadline Thâu Đêm',
-      discount: 'MUA 3 TẶNG 1',
-      image: '/images/promo_banner.jpg',
-      cta: 'Xem Chi Tiết',
+      tag: 'COMBO SÁNG',
+      title: 'Khởi Động Ngày Mới 4h - 10h (Bánh Mì / Croissant + Nước)',
+      discount: 'CHỈ TỪ 43K',
+      image: '/images/promo_3.png',
+      cta: 'Đặt Combo Sáng',
       link: '/khuyenmai'
     }
   ];

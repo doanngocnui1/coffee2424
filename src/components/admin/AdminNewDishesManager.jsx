@@ -25,28 +25,46 @@ export default function AdminNewDishesManager({ config, onSaveConfig, triggerAle
     {
       id: 'dish-1',
       tag: 'MÓN MỚI',
-      title: 'Matcha MK4 Latte & Cold Brew Cam Vàng',
-      price: '45.000đ',
-      image: '/images/promo_banner.jpg',
-      cta: 'Thử Món Mới',
+      title: 'Trà Nho Mẫu Đơn',
+      price: '59.000đ',
+      image: '/images/dish_1.png',
+      cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
     {
       id: 'dish-2',
       tag: 'SIGNATURE',
-      title: 'Cà Phê Muối Kem Béo & Bạc Xỉu 3 Tầng',
-      price: '39.000đ',
-      image: '/images/signature_drinks.jpg',
+      title: 'Matcha MK4',
+      price: '62.000đ',
+      image: '/images/dish_2.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
     {
       id: 'dish-3',
-      tag: 'BÁNH TƯƠI',
-      title: 'Croissant Bơ Pháp Nướng & Bánh Mì Que',
-      price: '29.000đ',
-      image: '/images/journey_espresso.jpg',
-      cta: 'Thưởng Thức',
+      tag: 'MÓN MỚI',
+      title: 'Trà Mận Tây Bắc',
+      price: '59.000đ',
+      image: '/images/dish_3.png',
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-4',
+      tag: 'ĐÁ XAY',
+      title: 'Caramel Freeze',
+      price: '62.000đ',
+      image: '/images/dish_4.png',
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-5',
+      tag: 'MÓN MỚI',
+      title: 'Cacao Mint',
+      price: '62.000đ',
+      image: '/images/dish_5.png',
+      cta: 'Đặt Món Ngay',
       link: '/dathang'
     }
   ];

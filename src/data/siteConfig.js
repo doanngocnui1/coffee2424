@@ -31,7 +31,7 @@ export const DEFAULT_SITE_CONFIG = {
   // 1. Ảnh Bìa / GIF / Video Hero 16:9 & Thiết Kế Trực Quan (Canvas Studio)
   heroBanner16x9: {
     type: 'auto', // 'auto' | 'image' | 'gif' | 'video'
-    mediaUrl: '/images/hero_banner.jpg',
+    mediaUrl: '/images/custom_hero_banner.jpg',
     link: '/dathang',
     alt: 'COFFEE 24/24 - Không Gian Cà Phê 24/7',
     fixedBackground: false,
@@ -233,28 +233,46 @@ export const DEFAULT_SITE_CONFIG = {
     {
       id: 'dish-1',
       tag: 'MÓN MỚI',
-      title: 'Matcha MK4 Latte & Cold Brew Cam Vàng',
-      price: '45.000đ',
-      image: '/images/promo_banner.jpg',
-      cta: 'Thử Món Mới',
+      title: 'Trà Nho Mẫu Đơn',
+      price: '59.000đ',
+      image: '/images/dish_1.png',
+      cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
     {
       id: 'dish-2',
       tag: 'SIGNATURE',
-      title: 'Cà Phê Muối Kem Béo & Bạc Xỉu 3 Tầng',
-      price: '39.000đ',
-      image: '/images/signature_drinks.jpg',
+      title: 'Matcha MK4',
+      price: '62.000đ',
+      image: '/images/dish_2.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
     {
       id: 'dish-3',
-      tag: 'BÁNH TƯƠI',
-      title: 'Croissant Bơ Pháp Nướng & Bánh Mì Que',
-      price: '29.000đ',
-      image: '/images/journey_espresso.jpg',
-      cta: 'Thưởng Thức',
+      tag: 'MÓN MỚI',
+      title: 'Trà Mận Tây Bắc',
+      price: '59.000đ',
+      image: '/images/dish_3.png',
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-4',
+      tag: 'ĐÁ XAY',
+      title: 'Caramel Freeze',
+      price: '62.000đ',
+      image: '/images/dish_4.png',
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
+    },
+    {
+      id: 'dish-5',
+      tag: 'MÓN MỚI',
+      title: 'Cacao Mint',
+      price: '62.000đ',
+      image: '/images/dish_5.png',
+      cta: 'Đặt Món Ngay',
       link: '/dathang'
     }
   ],
@@ -270,29 +288,29 @@ export const DEFAULT_SITE_CONFIG = {
   promotionsList: [
     {
       id: 'promo-1',
-      tag: 'COMBO HOT',
-      title: 'Combo Sáng & Đêm Khuya 69K',
-      discount: 'CHỈ 69.000đ',
-      image: '/images/signature_drinks.jpg',
-      cta: 'Đặt Combo 69K',
-      link: '/dathang'
+      tag: 'GIỜ VÀNG',
+      title: 'Golden Hour - Cà Phê Đồng Giá 25K (16h - 19h)',
+      discount: '25.000đ',
+      image: '/images/promo_1.png',
+      cta: 'Nhận Ưu Đãi',
+      link: '/khuyenmai'
     },
     {
       id: 'promo-2',
-      tag: 'GIỜ VÀNG',
-      title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày',
-      discount: 'GIẢM 40%',
-      image: '/images/journey_espresso.jpg',
-      cta: 'Lấy Mã Giảm',
+      tag: 'COMBO ĐÊM',
+      title: 'Combo Cú Đêm 22h - 6h (Mì Hảo Hảo + Nước)',
+      discount: 'CHỈ TỪ 42K',
+      image: '/images/promo_2.png',
+      cta: 'Đặt Combo Cú Đêm',
       link: '/khuyenmai'
     },
     {
       id: 'promo-3',
-      tag: 'HỌC NHÓM',
-      title: 'Đi 4 Tính Tiền 3 - Cày Deadline Thâu Đêm',
-      discount: 'MUA 3 TẶNG 1',
-      image: '/images/promo_banner.jpg',
-      cta: 'Xem Chi Tiết',
+      tag: 'COMBO SÁNG',
+      title: 'Khởi Động Ngày Mới 4h - 10h (Bánh Mì / Croissant + Nước)',
+      discount: 'CHỈ TỪ 43K',
+      image: '/images/promo_3.png',
+      cta: 'Đặt Combo Sáng',
       link: '/khuyenmai'
     }
   ],
@@ -456,28 +474,28 @@ export const DEFAULT_SITE_CONFIG = {
     {
       id: 'poster-1',
       tag: 'MÓN MỚI',
-      title: 'Matcha MK4 Latte & Cold Brew Cam Vàng',
-      discount: 'GIẢM 20%',
-      image: '/images/promo_banner.jpg',
-      cta: 'Thử Món Mới',
+      title: 'Trà Nho Mẫu Đơn',
+      discount: '59.000đ',
+      image: '/images/dish_1.png',
+      cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
     {
       id: 'poster-2',
-      tag: 'COMBO HOT',
-      title: 'Combo Sáng & Đêm Khuya 69K',
-      discount: 'CHỈ 69.000đ',
-      image: '/images/signature_drinks.jpg',
-      cta: 'Đặt Combo 69K',
-      link: '/dathang'
+      tag: 'COMBO ĐÊM',
+      title: 'Combo Cú Đêm 22h - 6h',
+      discount: 'CHỈ TỪ 42K',
+      image: '/images/promo_2.png',
+      cta: 'Đặt Combo',
+      link: '/khuyenmai'
     },
     {
       id: 'poster-3',
       tag: 'GIỜ VÀNG',
-      title: 'Happy Hour 16:00 - 19:00 Mỗi Ngày',
-      discount: 'GIẢM 40%',
-      image: '/images/journey_espresso.jpg',
-      cta: 'Lấy Mã Giảm',
+      title: 'Golden Hour Cà Phê Đồng Giá 25K',
+      discount: '25.000đ',
+      image: '/images/promo_1.png',
+      cta: 'Nhận Ưu Đãi',
       link: '/khuyenmai'
     }
   ],
@@ -843,6 +861,10 @@ export function getSiteConfig() {
     if (customHeroBannerMedia && (heroBannerConfig.mediaUrl === '__STORED_HERO_MEDIA__' || !heroBannerConfig.mediaUrl)) {
       heroBannerConfig.mediaUrl = customHeroBannerMedia;
     }
+    // Tự động nâng cấp sang ảnh mặt tiền quán thực tế nếu đang trỏ ảnh mẫu cũ
+    if (!heroBannerConfig.mediaUrl || heroBannerConfig.mediaUrl === '/images/hero_banner.jpg') {
+      heroBannerConfig.mediaUrl = '/images/custom_hero_banner.jpg';
+    }
 
     // Restore custom logo if stored in dedicated key
     const customLogo = localStorage.getItem('coffee2424_brand_logo_img');
@@ -859,6 +881,10 @@ export function getSiteConfig() {
 
     // Đồng bộ trạng thái hiển thị của khối Món Mới (newDishes) theo cấu hình người dùng lưu
     const isNewDishesExplicitlyEnabled = parsed.newDishesSection?.enabled !== false;
+    let resolvedHomeSections = (Array.isArray(parsed.homeSections) && parsed.homeSections.length > 0)
+      ? parsed.homeSections
+      : (DEFAULT_SITE_CONFIG.homeSections || []);
+
     resolvedHomeSections = resolvedHomeSections.map(sec => {
       if (sec.type === 'newDishes' || sec.id === 'sec-newDishes') {
         return { ...sec, enabled: isNewDishesExplicitlyEnabled };
@@ -868,6 +894,22 @@ export function getSiteConfig() {
       }
       return sec;
     });
+
+    // Tự động nâng cấp sang danh sách 5 món mới thực tế nếu rỗng hoặc chứa ảnh mockup
+    let resolvedNewDishes = (Array.isArray(parsed.newDishesList) && parsed.newDishesList.length > 0)
+      ? parsed.newDishesList
+      : DEFAULT_SITE_CONFIG.newDishesList;
+    if (resolvedNewDishes.some(d => d.image === '/images/promo_banner.jpg' || d.image === '/images/signature_drinks.jpg' || d.image === '/images/journey_espresso.jpg')) {
+      resolvedNewDishes = DEFAULT_SITE_CONFIG.newDishesList;
+    }
+
+    // Tự động nâng cấp sang danh sách 3 khuyến mãi thực tế nếu rỗng hoặc chứa ảnh mockup
+    let resolvedPromotions = (Array.isArray(parsed.promotionsList) && parsed.promotionsList.length > 0)
+      ? parsed.promotionsList
+      : DEFAULT_SITE_CONFIG.promotionsList;
+    if (resolvedPromotions.some(p => p.image === '/images/promo_banner.jpg' || p.image === '/images/signature_drinks.jpg' || p.image === '/images/journey_espresso.jpg')) {
+      resolvedPromotions = DEFAULT_SITE_CONFIG.promotionsList;
+    }
 
     return {
       ...DEFAULT_SITE_CONFIG,
@@ -882,6 +924,8 @@ export function getSiteConfig() {
       heroSection: heroConfig,
       heroBanner16x9: heroBannerConfig,
       glassBackground: glassBgConfig,
+      newDishesList: resolvedNewDishes,
+      promotionsList: resolvedPromotions,
       aboutPage: {
         ...DEFAULT_SITE_CONFIG.aboutPage,
         ...(parsed.aboutPage || {})
@@ -1096,9 +1140,24 @@ export async function syncSiteConfigWithCloud(force = false) {
           ...(currentConfig.newDishesSection || {}),
           ...(cloudConfig.newDishesSection || {})
         },
-        newDishesList: (Array.isArray(cloudConfig.newDishesList) && cloudConfig.newDishesList.length > 0)
-          ? cloudConfig.newDishesList
-          : (currentConfig.newDishesList || DEFAULT_SITE_CONFIG.newDishesList),
+        newDishesList: (() => {
+          const list = (Array.isArray(cloudConfig.newDishesList) && cloudConfig.newDishesList.length > 0)
+            ? cloudConfig.newDishesList
+            : (currentConfig.newDishesList || DEFAULT_SITE_CONFIG.newDishesList);
+          if (list.some(d => d.image === '/images/promo_banner.jpg' || d.image === '/images/signature_drinks.jpg' || d.image === '/images/journey_espresso.jpg')) {
+            return DEFAULT_SITE_CONFIG.newDishesList;
+          }
+          return list;
+        })(),
+        promotionsList: (() => {
+          const list = (Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0)
+            ? cloudConfig.promotionsList
+            : (currentConfig.promotionsList || DEFAULT_SITE_CONFIG.promotionsList);
+          if (list.some(p => p.image === '/images/promo_banner.jpg' || p.image === '/images/signature_drinks.jpg' || p.image === '/images/journey_espresso.jpg')) {
+            return DEFAULT_SITE_CONFIG.promotionsList;
+          }
+          return list;
+        })(),
         careersPage: {
           ...DEFAULT_SITE_CONFIG.careersPage,
           ...(currentConfig.careersPage || {}),
