@@ -1067,9 +1067,18 @@ export async function syncSiteConfigWithCloud(force = false) {
       const mergedConfig = { 
         ...currentConfig, 
         ...cloudConfig,
-        homeSections: (Array.isArray(cloudConfig.homeSections) && cloudConfig.homeSections.length > 0)
-          ? cloudConfig.homeSections
-          : currentConfig.homeSections,
+        homeSections: (() => {
+          const rawSections = (Array.isArray(cloudConfig.homeSections) && cloudConfig.homeSections.length > 0)
+            ? cloudConfig.homeSections
+            : currentConfig.homeSections;
+          const isNewDishesOn = (cloudConfig.newDishesSection?.enabled !== false);
+          return rawSections.map(sec => {
+            if (sec.id === 'sec-newDishes' || sec.type === 'newDishes') {
+              return { ...sec, enabled: isNewDishesOn };
+            }
+            return sec;
+          });
+        })(),
         offeringsList: (Array.isArray(cloudConfig.offeringsList) && cloudConfig.offeringsList.length > 0)
           ? cloudConfig.offeringsList
           : currentConfig.offeringsList,

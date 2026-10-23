@@ -2455,6 +2455,47 @@ export default function AdminPage({ navigate }) {
                 {activeTab === 'users' && <><span>🛡️</span> Tài Khoản & Phân Quyền</>}
               </span>
             </div>
+
+            {/* Trạng thái kết nối Database Supabase Cloud & Nút đồng bộ */}
+            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="hidden sm:inline text-emerald-200">Database:</span>
+                <span className="text-white font-extrabold">Supabase Cloud</span>
+                <div className="h-3.5 w-px bg-emerald-500/30 mx-1" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await pushLocalConfigToCloud();
+                    if (res?.success) {
+                      triggerAlert('✓ Đã đồng bộ toàn bộ dữ liệu & cấu hình lên Database Supabase Cloud!');
+                    } else {
+                      triggerAlert('⚠️ ' + (res?.error || 'Lỗi khi đẩy lên Database Cloud'));
+                    }
+                  }}
+                  title="Đẩy cấu hình mới nhất lên Database Cloud để áp dụng ngay ra website chính coffee2424.com"
+                  className="hover:bg-emerald-800/60 px-2 py-0.5 rounded text-[11px] text-emerald-200 hover:text-white transition-colors cursor-pointer flex items-center gap-1 font-bold"
+                >
+                  <span>☁️ Đẩy lên Cloud</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await pullCloudConfigToLocal();
+                    if (res) {
+                      setConfig(res);
+                      triggerAlert('✓ Đã kéo dữ liệu cấu hình từ Database Supabase Cloud về máy!');
+                    } else {
+                      triggerAlert('⚠️ Đã đồng bộ dữ liệu mới nhất từ Cloud.');
+                    }
+                  }}
+                  title="Tải cấu hình từ Database Supabase Cloud về máy"
+                  className="hover:bg-emerald-800/60 px-2 py-0.5 rounded text-[11px] text-emerald-200 hover:text-white transition-colors cursor-pointer flex items-center gap-1 font-bold"
+                >
+                  <span>📥 Kéo từ Cloud</span>
+                </button>
+              </div>
+            </div>
           </div>
 
         {/* TAB BỐ CỤC & THÊM THÀNH PHẦN TRANG CHỦ (PAGE BUILDER) */}
