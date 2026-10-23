@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Star, 
   Quote, 
@@ -83,14 +83,16 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
     };
   }, [isModalOpen]);
 
-  const activeReviews = reviews.filter(r => r.active !== false);
+  const activeReviews = useMemo(() => {
+    return reviews.filter(r => r.active !== false);
+  }, [reviews]);
   const visibleCount = isMobile ? 1 : 3;
 
-  // Auto-slide carousel vô tận cho đánh giá khách hàng (tự cuộn mỗi 3.5 giây, giữ 5s khi chạm)
+  // Auto-slide carousel vô tận cho đánh giá khách hàng (tự cuộn mỗi 2 giây, giữ 5s khi chạm/rê chuột)
   const reviewsCarousel = useInfiniteAutoSlide({
     items: activeReviews,
     visibleCount,
-    interval: 3500,
+    interval: 2000,
     holdDelay: 5000
   });
 

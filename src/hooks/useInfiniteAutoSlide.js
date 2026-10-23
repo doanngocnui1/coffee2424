@@ -1,18 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 /**
- * Hook quản lý băng chuyền chuyển tiếp mượt mà, triệt tiêu hoàn toàn nhấp nháy trên điện thoại:
- * - Mobile (visibleCount === 1): Sử dụng kiến trúc CSS Grid Slide Stage 2-lớp độc lập.
- *   Không bao giờ đảo thứ tự DOM (không array shuffle), không clone phần tử, không teleport transform.
- *   Mỗi bước chuyển slide từ A sang B (kể cả từ ảnh cuối về ảnh đầu) đều là một chuyển động lướt ngang
- *   (translate3d) phần cứng thuần túy, loại bỏ 100% hiện tượng flash/nhấp nháy trên mọi dòng điện thoại.
- * - Desktop (visibleCount > 1): Tự động dàn trang 3 cột. Nếu danh sách <= 3 món, giữ cố định;
- *   nếu > 3 món thì tự động cuộn mượt mà.
- * - Tự động chạy mỗi interval (mặc định 2s cho poster, 3.5s cho đánh giá).
- * - Tạm dừng ngay khi rê chuột (hover) hoặc chạm tay (touch) vào màn hình.
- * - Giữ lại đúng holdDelay (5s) kể từ lúc nhấc tay hoặc chuột rời khỏi rồi mới tiếp tục chạy.
- * - Hỗ trợ vuốt tay cảm ứng (touch swipe) trái/phải mượt mà.
- * - Đồng bộ hoàn hảo hệ thống chấm tròn (dots) và nút mũi tên (prev/next).
+ * Hook quản lý băng chuyền chuyển tiếp vô tận mượt mà:
+ * - Mobile (visibleCount === 1): Kiến trúc CSS Grid Slide Stage 2-lớp độc lập.
+ *   Lướt ngang phần cứng thuần túy (GPU translate3d), không bao giờ nhấp nháy.
+ * - Desktop (visibleCount > 1): Băng chuyền nối vòng vô tận 2 chiều (Bidirectional Circular Conveyor).
+ *   Hỗ trợ bấm Next/Prev liên tục mượt mà không bao giờ giật lùi.
+ * - Tự động chạy mỗi interval (mặc định 2s theo yêu cầu).
+ * - Khi có chuột di qua (hover) hay chạm vào từ màn hình cảm ứng: tạm dừng 5s rồi tự động chạy tiếp.
+ * - Khi người dùng bấm nút chuyển (Next/Prev): chuyển ngay lập tức và giữ 5s trước khi tiếp tục tự chạy.
+ * - Điều kiện kích hoạt:
+ *   + Điện thoại: chỉ khi có > 1 mục mới hiển thị nút bấm và tự chạy (nếu chỉ có 1 mục: ẩn nút, không chạy).
+ *   + Máy tính: chỉ khi có > 3 mục mới hiển thị nút bấm và tự chạy (nếu chỉ có <= 3 mục: ẩn nút, không chạy).
  */
 export function useInfiniteAutoSlide({
   items = [],
@@ -23,29 +22,33 @@ export function useInfiniteAutoSlide({
 }) {
   const itemsCount = items.length;
   const isMobileMode = visibleCount === 1;
-  const shouldAutoSlide = enabled && (isMobileMode ? itemsCount > 1 : itemsCount > visibleCount);
 
-  // Chỉ số slide đang hiển thị trên màn hình
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Điều kiện chuẩn xác:
+  // - Điện thoại (1 món): chỉ khi > 1 món mới hiện nút và tự chạy.
+  // - Máy tính (3 món): chỉ khi > 3 món mới hiện nút và tự chạy.
+  const shouldAutoSlide = Boolean(
+    enabled && (isMobileMode ? itemsCount > 1 : itemsCount > visibleCount)
+  );
 
-  // Trạng thái chuyển động của Mobile Slide Stage
-  // phase: 'idle' | 'sliding'
-  // direction: 'next' | 'prev'
-  const [slideState, setSlideState] = useState({
+  // Mobile state (0 đến itemsCount - 1)
+  const [mobileIndex, setMobileIndex] = useState(0);
+  const [mobileSlideState, setMobileSlideState] = useState({
     phase: 'idle',
     from: 0,
     to: 0,
     direction: 'next'
   });
 
-  // Trạng thái trượt dành cho Desktop multi-item track
-  const [desktopIndex, setDesktopIndex] = useState(0);
+  // Desktop state: Vòng lặp vô tận 2 chiều (Prepend Clones + Items + Append Clones)
+  // baseOffset = visibleCount (ví dụ 3). desktopIndex khởi đầu từ baseOffset.
+  const baseOffset = visibleCount;
+  const [desktopIndex, setDesktopIndex] = useState(baseOffset);
   const [desktopTransitioning, setDesktopTransitioning] = useState(false);
 
-  const isInteractingRef = useRef(false);
+  // Refs theo dõi trạng thái
   const isSlidingRef = useRef(false);
   const autoTimerRef = useRef(null);
-  const resumeTimerRef = useRef(null);
+  const holdTimerRef = useRef(null);
   const animTimeoutRef = useRef(null);
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
@@ -54,17 +57,20 @@ export function useInfiniteAutoSlide({
   const itemsCountRef = useRef(itemsCount);
   itemsCountRef.current = itemsCount;
 
-  const currentIndexRef = useRef(currentIndex);
-  currentIndexRef.current = currentIndex;
-
-  const shouldAutoSlideRef = useRef(shouldAutoSlide);
-  shouldAutoSlideRef.current = shouldAutoSlide;
+  const visibleCountRef = useRef(visibleCount);
+  visibleCountRef.current = visibleCount;
 
   const isMobileModeRef = useRef(isMobileMode);
   isMobileModeRef.current = isMobileMode;
 
-  const visibleCountRef = useRef(visibleCount);
-  visibleCountRef.current = visibleCount;
+  const shouldAutoSlideRef = useRef(shouldAutoSlide);
+  shouldAutoSlideRef.current = shouldAutoSlide;
+
+  const mobileIndexRef = useRef(mobileIndex);
+  mobileIndexRef.current = mobileIndex;
+
+  const desktopIndexRef = useRef(desktopIndex);
+  desktopIndexRef.current = desktopIndex;
 
   // Xóa các bộ đếm thời gian
   const clearTimers = useCallback(() => {
@@ -72,36 +78,45 @@ export function useInfiniteAutoSlide({
       clearInterval(autoTimerRef.current);
       autoTimerRef.current = null;
     }
-    if (resumeTimerRef.current) {
-      clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
     }
   }, []);
 
-  // Khi danh sách items thay đổi (ví dụ Admin chỉnh sửa), reset về trạng thái ban đầu an toàn
-  useEffect(() => {
-    setCurrentIndex(0);
-    setDesktopIndex(0);
-    setDesktopTransitioning(false);
-    setSlideState({
-      phase: 'idle',
-      from: 0,
-      to: 0,
-      direction: 'next'
-    });
-    isSlidingRef.current = false;
+  // Reset an toàn CHỈ KHI danh sách ID/tiêu đề của items thực sự thay đổi
+  const itemsSignature = useMemo(() => {
+    return items.map(it => (it ? (it.id ?? it.title ?? it.name ?? JSON.stringify(it)) : '')).join('|');
   }, [items]);
+  const prevSignatureRef = useRef(itemsSignature);
 
-  // Trượt sang slide tiếp theo (Next)
+  useEffect(() => {
+    if (prevSignatureRef.current !== itemsSignature) {
+      prevSignatureRef.current = itemsSignature;
+      setMobileIndex(0);
+      setDesktopIndex(baseOffset);
+      setDesktopTransitioning(false);
+      setMobileSlideState({
+        phase: 'idle',
+        from: 0,
+        to: 0,
+        direction: 'next'
+      });
+      isSlidingRef.current = false;
+    }
+  }, [itemsSignature, baseOffset]);
+
+  // Trượt sang mục kế tiếp (Next)
   const slideNext = useCallback(() => {
-    if (!shouldAutoSlideRef.current || isSlidingRef.current || itemsCountRef.current <= 1) return;
+    if (!shouldAutoSlideRef.current || itemsCountRef.current <= 1) return;
+    if (isSlidingRef.current) return;
     isSlidingRef.current = true;
 
     if (isMobileModeRef.current) {
-      const current = currentIndexRef.current;
+      const current = mobileIndexRef.current;
       const target = (current + 1) % itemsCountRef.current;
 
-      setSlideState({
+      setMobileSlideState({
         phase: 'sliding',
         from: current,
         to: target,
@@ -110,45 +125,47 @@ export function useInfiniteAutoSlide({
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
-        setCurrentIndex(target);
-        setSlideState({
+        setMobileIndex(target);
+        setMobileSlideState({
           phase: 'idle',
           from: target,
           to: target,
           direction: 'next'
         });
         isSlidingRef.current = false;
-      }, 560);
+      }, 500);
     } else {
-      // Desktop multi-item track
-      const maxIndex = itemsCountRef.current;
+      // Desktop track
+      const total = itemsCountRef.current;
+      const offset = visibleCountRef.current;
+      const nextIndex = desktopIndexRef.current + 1;
+
       setDesktopTransitioning(true);
-      setDesktopIndex(prev => prev + 1);
+      setDesktopIndex(nextIndex);
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
-        setDesktopIndex(current => {
-          if (current >= maxIndex) {
-            return 0;
-          }
-          return current;
-        });
-        setDesktopTransitioning(false);
+        // Nếu đã lướt hết vào cụm clones cuối, dịch tức thì về gốc tương ứng
+        if (nextIndex >= total + offset) {
+          setDesktopTransitioning(false);
+          setDesktopIndex(offset);
+        }
         isSlidingRef.current = false;
-      }, 580);
+      }, 520);
     }
   }, []);
 
-  // Trượt về slide trước đó (Prev)
+  // Trượt về mục trước đó (Prev)
   const slidePrev = useCallback(() => {
-    if (!shouldAutoSlideRef.current || isSlidingRef.current || itemsCountRef.current <= 1) return;
+    if (!shouldAutoSlideRef.current || itemsCountRef.current <= 1) return;
+    if (isSlidingRef.current) return;
     isSlidingRef.current = true;
 
     if (isMobileModeRef.current) {
-      const current = currentIndexRef.current;
+      const current = mobileIndexRef.current;
       const target = (current - 1 + itemsCountRef.current) % itemsCountRef.current;
 
-      setSlideState({
+      setMobileSlideState({
         phase: 'sliding',
         from: current,
         to: target,
@@ -157,51 +174,47 @@ export function useInfiniteAutoSlide({
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
-        setCurrentIndex(target);
-        setSlideState({
+        setMobileIndex(target);
+        setMobileSlideState({
           phase: 'idle',
           from: target,
           to: target,
           direction: 'prev'
         });
         isSlidingRef.current = false;
-      }, 560);
+      }, 500);
     } else {
-      // Desktop multi-item track
-      const maxIndex = itemsCountRef.current;
-      setDesktopIndex(prev => {
-        if (prev <= 0) {
-          // Khi ở đầu, snap về clone cuối rồi lùi về trước
-          setDesktopTransitioning(false);
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              setDesktopTransitioning(true);
-              setDesktopIndex(maxIndex - 1);
-            });
-          });
-          return maxIndex;
-        }
-        setDesktopTransitioning(true);
-        return prev - 1;
-      });
+      // Desktop track
+      const total = itemsCountRef.current;
+      const offset = visibleCountRef.current;
+      const prevIndex = desktopIndexRef.current - 1;
+
+      setDesktopTransitioning(true);
+      setDesktopIndex(prevIndex);
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
+        // Nếu đã lùi quá cụm clones đầu, dịch tức thì về gốc tương ứng
+        if (prevIndex < offset) {
+          setDesktopTransitioning(false);
+          setDesktopIndex(prevIndex + total);
+        }
         isSlidingRef.current = false;
-      }, 580);
+      }, 520);
     }
   }, []);
 
   // Nhảy tới slide cụ thể khi click chấm tròn (dots)
   const goToIndex = useCallback((targetIndex) => {
-    if (!shouldAutoSlideRef.current || isSlidingRef.current || targetIndex === currentIndexRef.current) return;
-    isSlidingRef.current = true;
-
-    const current = currentIndexRef.current;
-    const direction = targetIndex > current ? 'next' : 'prev';
+    if (!shouldAutoSlideRef.current || isSlidingRef.current) return;
 
     if (isMobileModeRef.current) {
-      setSlideState({
+      const current = mobileIndexRef.current;
+      if (targetIndex === current) return;
+      isSlidingRef.current = true;
+      const direction = targetIndex > current ? 'next' : 'prev';
+
+      setMobileSlideState({
         phase: 'sliding',
         from: current,
         to: targetIndex,
@@ -210,26 +223,27 @@ export function useInfiniteAutoSlide({
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
-        setCurrentIndex(targetIndex);
-        setSlideState({
+        setMobileIndex(targetIndex);
+        setMobileSlideState({
           phase: 'idle',
           from: targetIndex,
           to: targetIndex,
           direction
         });
         isSlidingRef.current = false;
-      }, 560);
+      }, 500);
     } else {
+      isSlidingRef.current = true;
       setDesktopTransitioning(true);
-      setDesktopIndex(targetIndex);
+      setDesktopIndex(baseOffset + targetIndex);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
         isSlidingRef.current = false;
-      }, 620);
+      }, 520);
     }
-  }, []);
+  }, [baseOffset]);
 
-  // Khởi động vòng lặp tự động chạy
+  // Khởi động chu kỳ tự động chạy mỗi 2s
   const startAutoPlay = useCallback(() => {
     clearTimers();
     if (!shouldAutoSlideRef.current) return;
@@ -238,43 +252,31 @@ export function useInfiniteAutoSlide({
     }, interval);
   }, [clearTimers, slideNext, interval]);
 
-  // Giữ lại đúng 5 giây sau khi nhấc tay / rời chuột rồi mới tiếp tục chạy
-  const scheduleResumeAfterHold = useCallback(() => {
+  // Tạm dừng 5 giây (khi hover, touch hoặc bấm chuyển) rồi mới tiếp tục chạy
+  const pauseAndHold = useCallback(() => {
     clearTimers();
     if (!shouldAutoSlideRef.current) return;
-    resumeTimerRef.current = setTimeout(() => {
-      if (!isInteractingRef.current) {
-        slideNext();
-        startAutoPlay();
-      }
+    holdTimerRef.current = setTimeout(() => {
+      slideNext();
+      startAutoPlay();
     }, holdDelay);
   }, [clearTimers, slideNext, startAutoPlay, holdDelay]);
 
-  const onInteractionStart = useCallback(() => {
-    isInteractingRef.current = true;
-    clearTimers();
-  }, [clearTimers]);
-
-  const onInteractionEnd = useCallback(() => {
-    isInteractingRef.current = false;
-    scheduleResumeAfterHold();
-  }, [scheduleResumeAfterHold]);
-
-  const onManualAction = useCallback((actionFn) => {
+  // Xử lý khi người dùng tương tác bằng tay (click Prev / Next / Dot)
+  const handleManualAction = useCallback((actionFn) => {
     if (actionFn) actionFn();
-    clearTimers();
-    scheduleResumeAfterHold();
-  }, [clearTimers, scheduleResumeAfterHold]);
+    pauseAndHold();
+  }, [pauseAndHold]);
 
-  // Touch gesture handling cho màn hình cảm ứng
+  // Touch gesture handling trên màn hình cảm ứng
   const handleTouchStart = useCallback((e) => {
     hasSwipedRef.current = false;
     if (e.targetTouches && e.targetTouches.length > 0) {
       touchStartXRef.current = e.targetTouches[0].clientX;
       touchStartYRef.current = e.targetTouches[0].clientY;
     }
-    onInteractionStart();
-  }, [onInteractionStart]);
+    pauseAndHold();
+  }, [pauseAndHold]);
 
   const handleTouchEnd = useCallback((e) => {
     if (touchStartXRef.current !== null && e.changedTouches && e.changedTouches.length > 0) {
@@ -292,18 +294,18 @@ export function useInfiniteAutoSlide({
       touchStartXRef.current = null;
       touchStartYRef.current = null;
     }
-    onInteractionEnd();
-  }, [onInteractionEnd, slideNext, slidePrev]);
+    pauseAndHold();
+  }, [pauseAndHold, slideNext, slidePrev]);
 
   const handleTouchCancel = useCallback(() => {
     touchStartXRef.current = null;
     touchStartYRef.current = null;
-    onInteractionEnd();
-  }, [onInteractionEnd]);
+    pauseAndHold();
+  }, [pauseAndHold]);
 
-  // Khởi động auto-play
+  // Bắt đầu vòng lặp auto-play
   useEffect(() => {
-    if (shouldAutoSlide && !isInteractingRef.current) {
+    if (shouldAutoSlide) {
       startAutoPlay();
     } else {
       clearTimers();
@@ -311,12 +313,12 @@ export function useInfiniteAutoSlide({
     return () => clearTimers();
   }, [shouldAutoSlide, startAutoPlay, clearTimers]);
 
-  // Tạm dừng khi chuyển tab trình duyệt
+  // Tạm dừng khi chuyển tab trình duyệt và tự tiếp tục khi quay lại
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         clearTimers();
-      } else if (shouldAutoSlideRef.current && !isInteractingRef.current) {
+      } else if (shouldAutoSlideRef.current) {
         startAutoPlay();
       }
     };
@@ -333,8 +335,8 @@ export function useInfiniteAutoSlide({
 
   // Helper trả về style & class cho từng thẻ trên Mobile Slide Stage
   const getMobileSlideProps = useCallback((idx) => {
-    if (slideState.phase === 'idle') {
-      const isActive = idx === currentIndex;
+    if (mobileSlideState.phase === 'idle') {
+      const isActive = idx === mobileIndex;
       return {
         style: {
           gridArea: '1 / 1',
@@ -348,11 +350,11 @@ export function useInfiniteAutoSlide({
     }
 
     // Phase: sliding
-    const isFrom = idx === slideState.from;
-    const isTo = idx === slideState.to;
+    const isFrom = idx === mobileSlideState.from;
+    const isTo = idx === mobileSlideState.to;
 
     if (isFrom) {
-      const animClass = slideState.direction === 'next' 
+      const animClass = mobileSlideState.direction === 'next' 
         ? 'animate-carousel-out-left' 
         : 'animate-carousel-out-right';
       return {
@@ -367,7 +369,7 @@ export function useInfiniteAutoSlide({
     }
 
     if (isTo) {
-      const animClass = slideState.direction === 'next' 
+      const animClass = mobileSlideState.direction === 'next' 
         ? 'animate-carousel-in-right' 
         : 'animate-carousel-in-left';
       return {
@@ -390,39 +392,50 @@ export function useInfiniteAutoSlide({
       },
       className: 'w-full'
     };
-  }, [slideState, currentIndex]);
+  }, [mobileSlideState, mobileIndex]);
 
-  // Desktop track items (kèm clones để chuyển tiếp vòng lặp vô tận trên máy tính)
-  const desktopClonesCount = Math.min(visibleCount, itemsCount);
-  const desktopItems = shouldAutoSlide && !isMobileMode && itemsCount > visibleCount
-    ? [...items, ...items.slice(0, desktopClonesCount)]
-    : items;
+  // Desktop items: Thêm clones cả trước và sau để tạo băng chuyền nối vòng vô tận 2 chiều
+  const desktopItems = useMemo(() => {
+    if (!shouldAutoSlide || isMobileMode || itemsCount <= visibleCount) {
+      return items;
+    }
+    const prependClones = items.slice(-visibleCount);
+    const appendClones = items.slice(0, visibleCount);
+    return [...prependClones, ...items, ...appendClones];
+  }, [items, shouldAutoSlide, isMobileMode, itemsCount, visibleCount]);
 
-  const desktopTranslatePct = -(desktopIndex * (100 / (visibleCount || 3)));
+  const effectiveDesktopIndex = (shouldAutoSlide && !isMobileMode && itemsCount > visibleCount)
+    ? desktopIndex
+    : 0;
+
+  const desktopTranslatePct = -(effectiveDesktopIndex * (100 / (visibleCount || 3)));
   const trackStyle = {
     transform: `translate3d(${desktopTranslatePct}%, 0, 0)`,
     transition: desktopTransitioning
-      ? 'transform 550ms cubic-bezier(0.25, 1, 0.5, 1)'
+      ? 'transform 500ms cubic-bezier(0.25, 1, 0.5, 1)'
       : 'none'
   };
 
-  const activeDot = isMobileMode ? currentIndex : (desktopIndex % itemsCount);
+  const activeDot = isMobileMode 
+    ? mobileIndex 
+    : (itemsCount > 0 ? (((desktopIndex - baseOffset) % itemsCount + itemsCount) % itemsCount) : 0);
 
   return {
     items,
     desktopItems,
-    currentIndex,
+    currentIndex: isMobileMode ? mobileIndex : activeDot,
     activeDotIndex: activeDot,
     showNav: shouldAutoSlide,
-    handlePrev: () => onManualAction(slidePrev),
-    handleNext: () => onManualAction(slideNext),
-    goToIndex: (idx) => onManualAction(() => goToIndex(idx)),
+    handlePrev: () => handleManualAction(slidePrev),
+    handleNext: () => handleManualAction(slideNext),
+    goToIndex: (idx) => handleManualAction(() => goToIndex(idx)),
     hasSwipedRef,
     getMobileSlideProps,
     trackStyle,
     containerProps: {
-      onMouseEnter: onInteractionStart,
-      onMouseLeave: onInteractionEnd,
+      onMouseEnter: pauseAndHold,
+      onMouseMove: pauseAndHold,
+      onMouseLeave: pauseAndHold,
       onTouchStart: handleTouchStart,
       onTouchEnd: handleTouchEnd,
       onTouchCancel: handleTouchCancel
