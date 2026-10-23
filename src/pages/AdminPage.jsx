@@ -1418,9 +1418,9 @@ export default function AdminPage({ navigate }) {
           <div className="p-3 sm:p-3.5 space-y-2.5 flex-1 overflow-y-auto">
             
             {/* NHÓM 1: 🏠 TRANG CHỦ */}
-            {['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
+            {['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].some(p => hasPermission(currentUser, p)) && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                ['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                   ? 'bg-amber-500/10 border-amber-600/40 shadow-xs'
                   : 'bg-white/70 hover:bg-white/90 border-white/80'
               }`}>
@@ -1429,7 +1429,7 @@ export default function AdminPage({ navigate }) {
                   type="button"
                   onClick={() => {
                     toggleGroup('home');
-                    if (!['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+                    if (!['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
                       setActiveTab('homeSections');
                     }
                   }}
@@ -1437,7 +1437,7 @@ export default function AdminPage({ navigate }) {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                      ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
+                      ['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)
                         ? 'bg-[#2b170e] text-amber-300 shadow-xs'
                         : 'bg-white/90 text-[#8c5932] group-hover:bg-[#2b170e] group-hover:text-amber-300'
                     }`}>
@@ -1586,6 +1586,37 @@ export default function AdminPage({ navigate }) {
                           </div>
                         </div>
                         <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'orderOnline' ? 'translate-x-0.5 text-white' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                      </button>
+                    )}
+
+                    {/* 1.1b2: Món Mới Trình Làng (Poster 3:4) */}
+                    {hasPermission(currentUser, 'newDishes') && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('newDishes'); setMobileSidebarOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                          activeTab === 'newDishes'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <UtensilsCrossed className={`w-4 h-4 shrink-0 ${activeTab === 'newDishes' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                          <div className="truncate">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Món Mới Trình Làng</span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'newDishes' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                              Poster món mới 3:4
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${
+                            activeTab === 'newDishes' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
+                          }`}>
+                            {(config.newDishesList || []).length || 3}
+                          </span>
+                          <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'newDishes' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                        </div>
                       </button>
                     )}
 
