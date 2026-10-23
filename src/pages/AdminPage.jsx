@@ -51,7 +51,9 @@ import {
   Heart,
   Armchair,
   UtensilsCrossed,
-  Percent
+  Percent,
+  ShoppingBag,
+  FileSpreadsheet
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
@@ -90,6 +92,8 @@ import AdminReviewsHeaderCard from '../components/admin/AdminReviewsHeaderCard';
 import AdminOfferingsManager from '../components/admin/AdminOfferingsManager';
 import AdminHomeSectionsManager from '../components/admin/AdminHomeSectionsManager';
 import AdminSystemSettingsManager from '../components/admin/AdminSystemSettingsManager';
+import AdminOrderOnlineManager from '../components/admin/AdminOrderOnlineManager';
+import AdminCareersManager from '../components/admin/AdminCareersManager';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -124,13 +128,13 @@ export default function AdminPage({ navigate }) {
 
   // Automatically expand group containing activeTab when activeTab changes
   useEffect(() => {
-    if (['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
+    if (['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, home: true }));
     } else if (activeTab === 'about') {
       setOpenGroups(prev => ({ ...prev, about: true }));
     } else if (activeTab === 'articles') {
       setOpenGroups(prev => ({ ...prev, articles: true }));
-    } else if (activeTab === 'jobs') {
+    } else if (['jobs', 'careersGoogleSync', 'candidates', 'careersLayout'].includes(activeTab)) {
       setOpenGroups(prev => ({ ...prev, jobs: true }));
     } else if (activeTab === 'branches') {
       setOpenGroups(prev => ({ ...prev, branches: true }));
@@ -219,7 +223,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['homeSections', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'branches', 'users'];
+      const allTabs = ['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'careersGoogleSync', 'candidates', 'careersLayout', 'branches', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
@@ -276,6 +280,10 @@ export default function AdminPage({ navigate }) {
       );
 
       if (!createRes.success) {
+        if (createRes.isRateLimited) {
+          alert(`⚠️ ${createRes.error}\n\n(Lưu ý: Mọi thông tin bạn đã nhập vẫn được giữ nguyên, bạn không cần nhập lại.)`);
+          return;
+        }
         alert('Lỗi tạo tài khoản trên Supabase: ' + createRes.error);
         return;
       }
@@ -372,6 +380,25 @@ export default function AdminPage({ navigate }) {
     verified: true,
     active: true
   });
+
+  // Đóng các modal Admin bằng phím ESC và khóa cuộn trang nền khi mở modal
+  useEffect(() => {
+    if (!editingArticle && !editingJob && !editingAccount && !isReviewModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (editingArticle) setEditingArticle(null);
+        if (editingJob) setEditingJob(null);
+        if (editingAccount) setEditingAccount(null);
+        if (isReviewModalOpen) setIsReviewModalOpen(false);
+      }
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editingArticle, editingJob, editingAccount, isReviewModalOpen]);
 
   // Save articles helper
   const handleSaveArticle = (e) => {
@@ -1535,31 +1562,30 @@ export default function AdminPage({ navigate }) {
                       </button>
                     )}
 
-                    {/* 1.1b: Món Mới Trình Làng (Poster 3:4) */}
-                    {hasPermission(currentUser, 'newDishes') && (
+                    {/* 1.1b: Web Đặt Hàng KiotViet (Thay thế quản lý món menu thủ công) */}
+                    {hasPermission(currentUser, 'orderOnline') && (
                       <button
                         type="button"
-                        onClick={() => { setActiveTab('newDishes'); setMobileSidebarOpen(false); }}
+                        onClick={() => { setActiveTab('orderOnline'); setMobileSidebarOpen(false); }}
                         className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
-                          activeTab === 'newDishes'
-                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
-                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                          activeTab === 'orderOnline'
+                            ? 'active-sidebar-tab bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-md font-bold'
+                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/90 border border-emerald-500/30 bg-emerald-500/10'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <UtensilsCrossed className={`w-4 h-4 shrink-0 ${activeTab === 'newDishes' ? 'text-amber-300' : 'text-orange-600'}`} />
+                          <ShoppingBag className={`w-4 h-4 shrink-0 ${activeTab === 'orderOnline' ? 'text-white' : 'text-emerald-700'}`} />
                           <div className="truncate">
-                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Món Mới Trình Làng</span>
-                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'newDishes' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
-                              Poster món mới 3:4
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-black block truncate leading-tight flex items-center gap-1.5">
+                              <span>Web Đặt Hàng KiotViet</span>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-400 text-emerald-950 font-black">ONLINE</span>
+                            </span>
+                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'orderOnline' ? 'text-emerald-100' : 'text-[#7a5843]'}`}>
+                              Mở web bán hàng & nhập link
                             </span>
                           </div>
                         </div>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
-                          activeTab === 'newDishes' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
-                        }`}>
-                          {(config.newDishesList || []).length || 3}
-                        </span>
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'orderOnline' ? 'translate-x-0.5 text-white' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
                       </button>
                     )}
 
@@ -1587,34 +1613,6 @@ export default function AdminPage({ navigate }) {
                           activeTab === 'promotions' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
                         }`}>
                           {(config.promotionsList || []).length || 3}
-                        </span>
-                      </button>
-                    )}
-
-                    {/* 1.1d: Coffee 24/24 Bán Gì? (7 Nhóm Món) */}
-                    {hasPermission(currentUser, 'offerings') && (
-                      <button
-                        type="button"
-                        onClick={() => { setActiveTab('offerings'); setMobileSidebarOpen(false); }}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
-                          activeTab === 'offerings'
-                            ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
-                            : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Coffee className={`w-4 h-4 shrink-0 ${activeTab === 'offerings' ? 'text-amber-300' : 'text-amber-700'}`} />
-                          <div className="truncate">
-                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Coffee 24/24 Bán Gì?</span>
-                            <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'offerings' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
-                              Sân khấu 7 nhóm món
-                            </span>
-                          </div>
-                        </div>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
-                          activeTab === 'offerings' ? 'bg-white/20 text-white' : 'bg-white/90 text-[#2b170e] border border-stone-200/60'
-                        }`}>
-                          {(config.offeringsList || []).length || 7}
                         </span>
                       </button>
                     )}
@@ -1986,6 +1984,7 @@ export default function AdminPage({ navigate }) {
                 {/* Sub-items (Sổ xuống) */}
                 {openGroups.jobs && (
                   <div className="px-2 pb-2.5 pt-1 space-y-1.5 border-t border-amber-900/10 bg-white/40">
+                    {/* 4.1: Quản lý 12 vị trí */}
                     <button
                       type="button"
                       onClick={() => { setActiveTab('jobs'); setMobileSidebarOpen(false); }}
@@ -2005,6 +2004,53 @@ export default function AdminPage({ navigate }) {
                         </div>
                       </div>
                       <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'jobs' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                    </button>
+
+                    {/* 4.2: CẤU HÌNH GOOGLE APPS SCRIPT WEBHOOK & SHEET (NỔI BẬT DỄ THẤY) */}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('careersGoogleSync'); setMobileSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                        activeTab === 'careersGoogleSync'
+                          ? 'active-sidebar-tab bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-md font-bold'
+                          : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/90 border border-emerald-500/40 bg-emerald-500/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <FileSpreadsheet className={`w-4 h-4 shrink-0 ${activeTab === 'careersGoogleSync' ? 'text-white' : 'text-emerald-700'}`} />
+                        <div className="truncate">
+                          <span className="sidebar-item-title text-xs sm:text-[13.5px] font-black block truncate leading-tight flex items-center gap-1.5">
+                            <span>Google Sheet & Web App</span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-400 text-emerald-950 font-black">WEBHOOK</span>
+                          </span>
+                          <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'careersGoogleSync' ? 'text-emerald-100' : 'text-emerald-800'}`}>
+                            Cấu hình link Apps Script & Drive
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'careersGoogleSync' ? 'translate-x-0.5 text-white' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                    </button>
+
+                    {/* 4.3: Hồ sơ ứng viên đã nộp */}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('candidates'); setMobileSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                        activeTab === 'candidates'
+                          ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                          : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Users className={`w-4 h-4 shrink-0 ${activeTab === 'candidates' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                        <div className="truncate">
+                          <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Hồ Sơ Ứng Viên</span>
+                          <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'candidates' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                            Danh sách ứng tuyển
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'candidates' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
                     </button>
                   </div>
                 )}
@@ -2338,13 +2384,13 @@ export default function AdminPage({ navigate }) {
               </span>
               <span className="text-neutral-700">/</span>
               <span className="text-neutral-400 font-bold">
-                {['heroSlide', 'glassBg', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab) 
+                {['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'reviews', 'socialZalo'].includes(activeTab) 
                   ? 'Trang Chủ' 
                   : activeTab === 'about'
                     ? 'Trang Giới Thiệu'
                     : activeTab === 'articles'
                       ? 'Trang Bài Viết'
-                      : activeTab === 'jobs'
+                      : ['jobs', 'careersGoogleSync', 'candidates', 'careersLayout'].includes(activeTab)
                         ? 'Trang Tuyển Dụng'
                         : activeTab === 'branches'
                           ? 'Trang Chi Nhánh & Hotline'
@@ -2355,6 +2401,7 @@ export default function AdminPage({ navigate }) {
               <span className="text-neutral-700">/</span>
               <span className="text-amber-400 font-bold">
                 {activeTab === 'homeSections' && <><span>🏗️</span> Bố Cục & Thêm Thành Phần Trang Chủ</>}
+                {activeTab === 'orderOnline' && <><span>🛒</span> Web Bán Hàng Trực Tuyến KiotViet</>}
                 {activeTab === 'offerings' && <><span>☕</span> Quản Lý "Coffee 24/24 Bán Gì?"</>}
                 {activeTab === 'heroSlide' && <><span>✨</span> Ảnh Bìa / Video 16:9 Đầu Trang</>}
                 {activeTab === 'glassBg' && <><span>🎨</span> Hình Nền & Kính Mờ</>}
@@ -2370,6 +2417,9 @@ export default function AdminPage({ navigate }) {
                 {activeTab === 'about' && <><span>✨</span> Trang Giới Thiệu</>}
                 {activeTab === 'articles' && <><span>📝</span> Bài Viết & Tối Ưu SEO</>}
                 {activeTab === 'jobs' && <><span>💼</span> Tuyển Dụng (12 Vị Trí)</>}
+                {activeTab === 'careersGoogleSync' && <><span>📊</span> Google Sheet & Apps Script Webhook</>}
+                {activeTab === 'candidates' && <><span>👥</span> Danh Sách Hồ Sơ Ứng Viên</>}
+                {activeTab === 'careersLayout' && <><span>🎨</span> Bố Cục Giao Diện Tuyển Dụng</>}
                 {activeTab === 'branches' && <><span>📍</span> Hotline & 2 Chi Nhánh</>}
                 {activeTab === 'users' && <><span>🛡️</span> Tài Khoản & Phân Quyền</>}
               </span>
@@ -2455,6 +2505,18 @@ export default function AdminPage({ navigate }) {
             }} 
             triggerAlert={triggerAlert}
             onNavigateTab={(tab) => setActiveTab(tab)}
+          />
+        )}
+
+        {/* TAB WEB ĐẶT HÀNG TRỰC TUYẾN KIOTVIET */}
+        {activeTab === 'orderOnline' && (
+          <AdminOrderOnlineManager 
+            config={config} 
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
           />
         )}
 
@@ -4365,20 +4427,68 @@ export default function AdminPage({ navigate }) {
               </div>
             </div>
 
-            {/* 2 Chi Nhánh Thực Tế */}
+            {/* Chi Nhánh Thực Tế */}
             <div id="branches-locations" className="space-y-4">
-              <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">
-                2. Thông Tin Chi Tiết 2 Chi Nhánh
-              </h3>
+              <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+                <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">
+                  2. Thông Tin Chi Tiết Các Chi Nhánh ({branchesList.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newId = 'cn-' + Date.now().toString(36);
+                    const newCode = `CN${branchesList.length + 1}`;
+                    const newBranch = {
+                      id: newId,
+                      code: newCode,
+                      name: `Coffee 24/24 Chi Nhánh ${branchesList.length + 1}`,
+                      shortName: `Chi Nhánh ${branchesList.length + 1}`,
+                      address: '',
+                      district: 'Hồ Chí Minh',
+                      hotline: '0906916816',
+                      hours: 'Mở cửa 24/7',
+                      status: 'Đang mở cửa',
+                      image: '/images/branch_downtown.jpg',
+                      menuUrl: 'https://coffee2424.web-store.online',
+                      mapUrl: '',
+                      features: ['Phục vụ 24/7', 'Wifi tốc độ cao', 'Ổ cắm điện'],
+                      description: 'Không gian cà phê mở cửa 24/7 chào đón bạn.'
+                    };
+                    setBranchesList(prev => [...prev, newBranch]);
+                    triggerAlert('Đã thêm 1 chi nhánh mới vào danh sách. Vui lòng nhập thông tin & link KiotViet rồi bấm LƯU!');
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 cursor-pointer transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm Chi Nhánh Mới</span>
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {branchesList.map((branch, idx) => (
-                  <div key={branch.id} className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800 space-y-4">
+                  <div key={branch.id || idx} className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800 space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
                       <span className="text-xs font-mono font-black px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        MÃ: {branch.code}
+                        MÃ: {branch.code || `CN${idx + 1}`}
                       </span>
-                      <span className="text-xs text-emerald-400 font-bold">24/7 OPEN</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-emerald-400 font-bold">24/7 OPEN</span>
+                        {idx >= 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Bạn có chắc muốn xóa chi nhánh "${branch.name}"?`)) {
+                                setBranchesList(prev => prev.filter((_, i) => i !== idx));
+                                triggerAlert('Đã xóa chi nhánh. Hãy bấm LƯU để lưu thay đổi!');
+                              }
+                            }}
+                            className="p-1 text-neutral-500 hover:text-rose-400 cursor-pointer"
+                            title="Xóa chi nhánh này"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -4965,238 +5075,17 @@ export default function AdminPage({ navigate }) {
           </div>
         )}
 
-        {/* TAB 7: QUẢN LÝ 12 VỊ TRÍ TUYỂN DỤNG */}
-        {activeTab === 'jobs' && (
-          <div className="space-y-6">
-            {/* Header Box */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                    <Briefcase className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-white flex items-center gap-2">
-                      Quản Lý Tin Tuyển Dụng (12 Vị Trí)
-                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                        {jobsList.filter(j => j.active !== false).length}/12 Đang Mở Tuyển
-                      </span>
-                    </h2>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      Bật / Tắt trạng thái mở tuyển cho từng vị trí. Khi tắt, vị trí sẽ tự động ẩn khỏi trang Tuyển Dụng và dropdown nộp hồ sơ.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleToggleAllJobs(true)}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Bật Tuyển Tất Cả</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleToggleAllJobs(false)}
-                  className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-rose-400 border border-rose-500/30 text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  <span>Tạm Dừng Tất Cả</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/tuyendung')}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Xem Trang Tuyển Dụng</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 3 KPI Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xl">
-                  {jobsList.length}
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-400 block font-medium">Tổng vị trí quy hoạch</span>
-                  <span className="text-base font-black text-white">12 Vị Trí Tuyển Dụng</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-emerald-500/20 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-black text-xl">
-                  {jobsList.filter(j => j.active !== false).length}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-emerald-400 font-bold block">Đang Bật Mở Tuyển</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  </div>
-                  <span className="text-base font-black text-white">Hiển thị trên website</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-neutral-800 text-neutral-400 flex items-center justify-center font-black text-xl">
-                  {jobsList.filter(j => j.active === false).length}
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-400 block font-medium">Tạm dừng tuyển dụng</span>
-                  <span className="text-base font-black text-neutral-300">Đã ẩn khỏi trang khách</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Search and Filters Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-neutral-950 p-4 rounded-2xl border border-neutral-800">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-neutral-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={jobSearchQuery}
-                  onChange={(e) => setJobSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm vị trí (VD: Tổng quản lý, Pha chế, Bảo vệ, Marketing, QC...)..."
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl pl-10 pr-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                <select
-                  value={jobFilterDept}
-                  onChange={(e) => setJobFilterDept(e.target.value)}
-                  className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 font-medium"
-                >
-                  <option value="ALL">Tất cả phòng ban</option>
-                  <option value="Ban Điều Hành">Ban Điều Hành</option>
-                  <option value="Phòng Kế Toán - Tài Chính">Kế Toán - Tài Chính</option>
-                  <option value="Phòng Marketing & Thương Hiệu">Marketing & Brand</option>
-                  <option value="Vận Hành Cửa Hàng">Vận Hành Cửa Hàng</option>
-                  <option value="Khối An Ninh & Trật Tự">Bảo Vệ & An Ninh</option>
-                  <option value="Khối Vệ Sinh & Tạp Vụ">Vệ Sinh & Tạp Vụ</option>
-                  <option value="Khối Đảm Bảo Chất Lượng (QA/QC)">QC - Quản Lý Chất Lượng</option>
-                  <option value="Phòng Hành Chính - Nhân Sự (HR)">HR - Nhân Sự</option>
-                </select>
-
-                <select
-                  value={jobFilterStatus}
-                  onChange={(e) => setJobFilterStatus(e.target.value)}
-                  className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 font-medium"
-                >
-                  <option value="ALL">Tất cả trạng thái</option>
-                  <option value="ACTIVE">Chỉ vị trí ĐANG BẬT</option>
-                  <option value="INACTIVE">Chỉ vị trí ĐÃ TẮT</option>
-                </select>
-              </div>
-            </div>
-
-            {/* 12 JOBS LIST */}
-            <div className="space-y-3">
-              {jobsList
-                .filter(job => {
-                  if (jobFilterDept !== 'ALL' && job.department !== jobFilterDept) return false;
-                  if (jobFilterStatus === 'ACTIVE' && job.active === false) return false;
-                  if (jobFilterStatus === 'INACTIVE' && job.active !== false) return false;
-                  if (jobSearchQuery.trim()) {
-                    const q = jobSearchQuery.toLowerCase();
-                    return job.title.toLowerCase().includes(q) || 
-                           job.department.toLowerCase().includes(q) ||
-                           job.salary.toLowerCase().includes(q);
-                  }
-                  return true;
-                })
-                .map((job, idx) => {
-                  const isActive = job.active !== false;
-                  return (
-                    <div
-                      key={job.id}
-                      className={`p-5 rounded-2xl transition-all border ${
-                        isActive
-                          ? 'bg-neutral-950 border-neutral-800 hover:border-amber-500/40 shadow-sm'
-                          : 'bg-neutral-950/40 border-neutral-900 opacity-60 hover:opacity-90'
-                      }`}
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3.5">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 mt-0.5 ${
-                            isActive
-                              ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                              : 'bg-neutral-800 text-neutral-500'
-                          }`}>
-                            {idx + 1}
-                          </div>
-
-                          <div className="space-y-1.5 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className={`text-base font-black ${isActive ? 'text-white' : 'text-neutral-400 line-through'}`}>
-                                {job.title}
-                              </h3>
-                              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800 font-medium">
-                                {job.department}
-                              </span>
-                              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
-                                {job.salary}
-                              </span>
-                            </div>
-
-                            <p className="text-xs text-neutral-400 line-clamp-2 max-w-3xl leading-relaxed">
-                              {job.description}
-                            </p>
-
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-neutral-500">
-                              <span>🕒 {job.shift}</span>
-                              <span>•</span>
-                              <span>📍 {job.locations?.join(' | ')}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* TOGGLE BUTTON & ACTIONS */}
-                        <div className="flex items-center gap-2.5 self-end lg:self-center shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setEditingJob({ ...job })}
-                            className="p-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 transition-colors cursor-pointer text-xs font-semibold flex items-center gap-1.5"
-                            title="Chỉnh sửa chi tiết vị trí này"
-                          >
-                            <Edit3 className="w-3.5 h-3.5 text-amber-500" />
-                            <span className="hidden sm:inline">Chỉnh sửa</span>
-                          </button>
-
-                          {/* TOGGLE SWITCH BUTTON */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleJobActive(job.id)}
-                            className={`px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
-                              isActive
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30 shadow-md shadow-emerald-500/10'
-                                : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:bg-neutral-800'
-                            }`}
-                          >
-                            {isActive ? (
-                              <>
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
-                                <span>ĐANG BẬT TUYỂN</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-4 h-4 text-neutral-500 stroke-[2.5]" />
-                                <span>TẠM DỪNG TUYỂN</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
+        {/* TAB 7: QUẢN LÝ TIN TUYỂN DỤNG, BÀI VIẾT, GOOGLE SYNC & HỒ SƠ ỨNG VIÊN */}
+        {(activeTab === 'jobs' || activeTab === 'careersGoogleSync' || activeTab === 'candidates' || activeTab === 'careersLayout') && (
+          <AdminCareersManager 
+            config={config} 
+            initialSubTab={activeTab === 'careersGoogleSync' ? 'googleSync' : (activeTab === 'candidates' ? 'candidates' : (activeTab === 'careersLayout' ? 'layout' : 'jobs'))}
+            onSaveConfig={(newConf) => {
+              setConfig(newConf);
+              saveSiteConfig(newConf);
+            }} 
+            triggerAlert={triggerAlert} 
+          />
         )}
 
         {/* TAB 8: QUẢN LÝ ĐÁNH GIÁ KHÁCH HÀNG (CUSTOMER REVIEWS REDESIGN) */}
@@ -6113,8 +6002,14 @@ export default function AdminPage({ navigate }) {
 
       {/* ARTICLE EDITOR MODAL */}
       {editingArticle && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl">
+        <div 
+          onClick={() => setEditingArticle(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
+          >
             
             <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <h3 className="text-lg font-black text-white">
@@ -6241,8 +6136,14 @@ export default function AdminPage({ navigate }) {
 
       {/* JOB QUICK EDITOR MODAL */}
       {editingJob && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl">
+        <div 
+          onClick={() => setEditingJob(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <div>
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
@@ -6369,8 +6270,14 @@ export default function AdminPage({ navigate }) {
 
       {/* USER ACCOUNT MODAL */}
       {editingAccount && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl">
+        <div 
+          onClick={() => setEditingAccount(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
+          >
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
@@ -6459,6 +6366,17 @@ export default function AdminPage({ navigate }) {
                   <span className="text-[10.5px] text-neutral-500 mt-1 block">
                     Mật khẩu sẽ được mã hóa Bcrypt trên máy chủ Supabase và không lưu vào code web.
                   </span>
+                  
+                  {/* Hướng dẫn bảo mật Supabase Rate Limit */}
+                  <div className="mt-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-amber-400">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>Lưu ý giới hạn bảo mật Supabase (Rate Limit):</span>
+                    </div>
+                    <p className="text-neutral-300 leading-relaxed text-[10.5px]">
+                      Supabase Cloud mặc định giới hạn tạo 1 tài khoản/phút để phòng chống spam. Nếu bạn vừa tạo 1 tài khoản, vui lòng đợi khoảng 50-60 giây để tạo tiếp, hoặc đăng nhập <strong className="text-white">Supabase Dashboard → Authentication → Users → Add User</strong> để tạo không giới hạn.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 text-[11px] text-neutral-300 flex items-center gap-2.5">

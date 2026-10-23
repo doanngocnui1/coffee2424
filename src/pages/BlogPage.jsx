@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Calendar, 
@@ -36,6 +36,20 @@ export default function BlogPage({ navigate }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [readingArticle, setReadingArticle] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // Khóa cuộn body và lắng nghe phím ESC để đóng modal đọc bài viết
+  useEffect(() => {
+    if (!readingArticle) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setReadingArticle(null);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [readingArticle]);
 
   const categories = ['Tất cả', 'Không Gian 24/7', 'Góc Học Nhóm & Sinh Viên', 'Chạy Deadline & Freelancer', 'Xả Stress & Một Mình', 'Giao Lưu & Hợp Tác', 'Tiện Nghi 24/7'];
 
@@ -206,8 +220,14 @@ export default function BlogPage({ navigate }) {
 
       {/* READING ARTICLE MODAL (Frosted Glass) */}
       {readingArticle && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white/95 backdrop-blur-3xl border border-white rounded-[36px] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-10 space-y-6 shadow-2xl">
+        <div 
+          onClick={() => setReadingArticle(null)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white/95 backdrop-blur-3xl border border-white rounded-[36px] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-10 space-y-6 shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
+          >
             
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#f3ece3] text-[#2b170e]">

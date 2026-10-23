@@ -47,6 +47,20 @@ export default function AboutUnifiedPage({ navigate, initialSection = 'story' })
   const [readingArticle, setReadingArticle] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  // Khóa cuộn body và lắng nghe phím ESC để đóng modal đọc bài viết
+  useEffect(() => {
+    if (!readingArticle) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setReadingArticle(null);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [readingArticle]);
+
   // Jobs state & Application Form
   const activeJobs = jobs.filter(job => job.active !== false);
   const [formData, setFormData] = useState({
@@ -478,8 +492,14 @@ export default function AboutUnifiedPage({ navigate, initialSection = 'story' })
 
       {/* READING ARTICLE MODAL */}
       {readingArticle && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#16120e] border border-[#261f1a] rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-10 space-y-6 shadow-2xl text-stone-100">
+        <div 
+          onClick={() => setReadingArticle(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#16120e] border border-[#261f1a] rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-10 space-y-6 shadow-2xl text-stone-100 relative my-auto animate-in zoom-in-95 duration-200"
+          >
             
             <div className="flex items-center justify-between pb-3 border-b border-[#261f1a]">
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#1f1813] text-amber-400 border border-[#2d221b]">

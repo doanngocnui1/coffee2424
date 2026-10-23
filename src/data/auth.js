@@ -10,6 +10,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const ALL_PERMISSIONS = [
   { id: 'homeSections', label: 'Bố Cục & Thêm Thành Phần', group: 'Trang Chủ', desc: 'Thêm, xóa, sắp xếp thứ tự và cấu hình các khối thành phần Trang Chủ' },
+  { id: 'orderOnline', label: 'Web Đặt Hàng (KiotViet)', group: 'Trang Chủ', desc: 'Cấu hình link web bán hàng KiotViet & tự động chuyển hướng khi đặt món' },
   { id: 'heroSlide', label: 'Hero Slide 1 & Hình Ảnh', group: 'Trang Chủ', desc: 'Tùy chỉnh hình ảnh ly cà phê, chữ, màu sắc, hiệu ứng' },
   { id: 'glassBg', label: 'Hình Nền & Kính Mờ', group: 'Trang Chủ', desc: 'Đổi hình nền phía sau lớp kính mờ, độ mờ xuyên thấu' },
   { id: 'newDishes', label: 'Món Mới Trình Làng', group: 'Trang Chủ', desc: 'Quản lý danh sách poster món mới 3x4 Trang Chủ' },
@@ -39,7 +40,7 @@ export const ROLE_PRESETS = {
   marketing: {
     role: 'marketing',
     roleName: 'Biên Tập & Marketing',
-    permissions: ['homeSections', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles']
+    permissions: ['homeSections', 'orderOnline', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles']
   },
   hr: {
     role: 'hr',
@@ -299,6 +300,12 @@ export function hasPermission(user, permissionId) {
   if (!user.permissions || !Array.isArray(user.permissions)) return true;
   if (user.permissions.includes('all')) return true;
   if (user.permissions.includes(permissionId)) return true;
+  if ((permissionId === 'careersGoogleSync' || permissionId === 'candidates' || permissionId === 'careersLayout') && user.permissions.includes('jobs')) {
+    return true;
+  }
+  if (permissionId === 'orderOnline' && (user.permissions.includes('homeSections') || user.permissions.includes('branches'))) {
+    return true;
+  }
   if ((permissionId === 'newDishes' || permissionId === 'promotions') && user.permissions.includes('whatsNew')) {
     return true;
   }
@@ -459,12 +466,15 @@ export async function deleteAdminProfileFromCloud(id) {
 export async function createAdminUserOnCloud(email, password, metadata = {}) {
   if (!isSupabaseConfigured) return { success: false, error: 'Chưa kết nối Supabase' };
   try {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password: password.trim(),
+      email: cleanEmail,
+      password: cleanPassword,
       options: {
         data: {
-          name: metadata.name || email.split('@')[0],
+          name: metadata.name || cleanEmail.split('@')[0],
           role: metadata.role || 'marketing',
           roleName: metadata.roleName || 'Biên Tập & Marketing'
         }
@@ -472,7 +482,27 @@ export async function createAdminUserOnCloud(email, password, metadata = {}) {
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      const msg = error.message || '';
+      // Bắt lỗi rate limit của Supabase Auth: "For security purposes, you can only request this after XX seconds."
+      if (msg.toLowerCase().includes('security purposes') || msg.toLowerCase().includes('after')) {
+        const secMatch = msg.match(/after\s+(\d+)\s+seconds/i);
+        const waitSec = secMatch ? secMatch[1] : '50';
+        return { 
+          success: false, 
+          isRateLimited: true,
+          waitSeconds: waitSec,
+          error: `Supabase Auth giới hạn bảo mật 1 tài khoản mới/phút để chống spam. Bạn vui lòng đợi ${waitSec} giây rồi bấm lại! (Hoặc có thể vào Supabase Dashboard -> Authentication -> Users -> Add User để tạo ngay không bị giới hạn).`
+        };
+      }
+
+      if (msg.includes('already registered')) {
+        return {
+          success: false,
+          error: 'Email này đã được đăng ký tài khoản trên Supabase! Bạn có thể chỉnh sửa phân quyền trực tiếp ở danh sách bên dưới.'
+        };
+      }
+
+      return { success: false, error: msg };
     }
 
     return { success: true, user: data?.user };

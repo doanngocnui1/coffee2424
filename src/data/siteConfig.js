@@ -18,6 +18,16 @@ export const DEFAULT_SITE_CONFIG = {
     text: '⚡ Thưởng thức bộ sưu tập cà phê mộc & specialty mới nhất tại Coffee 24/24!',
     linkPath: '/dathang'
   },
+  // 0. Quản lý Web Đặt Hàng Trực Tuyến & Liên Kết KiotViet (Mở web khi nhấn Đặt hàng, Đặt món, Thực đơn)
+  orderOnline: {
+    enabled: true, // Khi bật: mọi nút Đặt Hàng, Đặt Món, Thực Đơn sẽ tự động mở trang web bán hàng KiotViet
+    url: 'https://coffee2424.web-store.online', // Ô nhập địa chỉ web đặt hàng chính bên KiotViet
+    openMode: 'new_tab', // 'new_tab' | 'same_tab'
+    buttonText: 'Mở Web Đặt Hàng KiotViet',
+    disableLocalMenus: true, // Tắt hiển thị các món menu thủ công trên web
+    branch413PhiUrl: 'https://coffee2424.web-store.online/menu/363688',
+    branch96D5Url: 'https://coffee2424.web-store.online/menu/363827'
+  },
   // 1. Ảnh Bìa / GIF / Video Hero 16:9 & Thiết Kế Trực Quan (Canvas Studio)
   heroBanner16x9: {
     type: 'auto', // 'auto' | 'image' | 'gif' | 'video'
@@ -191,6 +201,24 @@ export const DEFAULT_SITE_CONFIG = {
       image: '/images/poster_vertical_right.jpg',
       link: '/khuyenmai'
     }
+  },
+  // Cấu hình Trang Tuyển Dụng & Đồng bộ Google Sheets / Drive
+  careersPage: {
+    heroBadge: 'CƠ HỘI NGHỀ NGHIỆP 24/24',
+    heroTitle: 'GIA NHẬP ĐỘI NGŨ',
+    heroTitleHighlight: 'COFFEE 24/24',
+    heroDescription: 'COFFEE 24/24 chào đón các nhân tài ở mọi vị trí từ Ban Điều Hành, Văn Phòng đến Khối Cửa Hàng Vận Hành 24/7. Môi trường trẻ trung, chế độ đãi ngộ cạnh tranh và lộ trình thăng tiến rõ ràng.',
+    badges: [
+      { text: 'Cà phê miễn phí mỗi ca', icon: 'coffee' },
+      { text: 'Phụ cấp ca đêm & thưởng KPI', icon: 'award' },
+      { text: 'BHXH đầy đủ & ESOP quản lý', icon: 'shield' }
+    ],
+    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1dt8IW_QR7ap30BaEwPkKNa38QNt0k_i4zpomMlGiKYE/edit?gid=0#gid=0',
+    googleSheetId: '1dt8IW_QR7ap30BaEwPkKNa38QNt0k_i4zpomMlGiKYE',
+    googleDriveFolderUrl: 'https://drive.google.com/drive/folders/1s2L6e8FhQ5rgeYgfIkoHZHTwV8sOOhz-',
+    googleDriveFolderId: '1s2L6e8FhQ5rgeYgfIkoHZHTwV8sOOhz-',
+    googleScriptUrl: '',
+    showFormInHero: true
   },
   // Khối 1: Món Mới Trình Làng (Trang Chủ)
   newDishesSection: {
@@ -408,7 +436,7 @@ export const DEFAULT_SITE_CONFIG = {
     { id: 'sec-newDishes', type: 'newDishes', title: 'Món Mới Trình Làng (Poster 3:4)', enabled: true },
     { id: 'sec-promotions', type: 'promotions', title: 'Chương Trình Ưu Đãi (Poster 3:4)', enabled: true },
     { id: 'sec-spaceAmenities', type: 'spaceAmenities', title: 'Không Gian & Tiện Nghi 24/7', enabled: true },
-    { id: 'sec-offerings', type: 'offerings', title: 'Coffee 24/24 Bán Gì? (Sân Khấu 7 Nhóm Món)', enabled: true },
+    { id: 'sec-offerings', type: 'offerings', title: 'Coffee 24/24 Bán Gì? (Sân Khấu 7 Nhóm Món)', enabled: false },
     { id: 'sec-reviews', type: 'reviews', title: 'Cảm Nhận & Đánh Giá Khách Hàng', enabled: true },
     { id: 'sec-social', type: 'social', title: 'Kết Nối Mạng Xã Hội & Fanpage', enabled: true },
   ],
@@ -759,6 +787,8 @@ export function getSiteConfig() {
     };
     if (customGlassBgImg && (glassBgConfig.image === '__STORED_GLASS_BG__' || !glassBgConfig.image)) {
       glassBgConfig.image = customGlassBgImg;
+    } else if (glassBgConfig.image === '__STORED_GLASS_BG__') {
+      glassBgConfig.image = DEFAULT_SITE_CONFIG.glassBackground.image;
     }
 
     const heroConfig = {
@@ -822,11 +852,29 @@ export function getSiteConfig() {
     }
     updateDocumentFavicon(resolvedLogo);
 
+    const orderOnlineConfig = {
+      ...DEFAULT_SITE_CONFIG.orderOnline,
+      ...(parsed.orderOnline || {})
+    };
+
+    // Đồng bộ trạng thái hiển thị của khối Món Mới (newDishes) theo cấu hình người dùng lưu
+    const isNewDishesExplicitlyEnabled = parsed.newDishesSection?.enabled !== false;
+    resolvedHomeSections = resolvedHomeSections.map(sec => {
+      if (sec.type === 'newDishes' || sec.id === 'sec-newDishes') {
+        return { ...sec, enabled: isNewDishesExplicitlyEnabled };
+      }
+      if (orderOnlineConfig.disableLocalMenus !== false && (sec.type === 'offerings' || sec.id === 'sec-offerings')) {
+        return { ...sec, enabled: false };
+      }
+      return sec;
+    });
+
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
       logo: resolvedLogo,
       favicon: resolvedLogo,
+      orderOnline: orderOnlineConfig,
       navMenu: currentNavMenu,
       slogan: updatedSlogan,
       socialMedia: socialConfig,
@@ -851,9 +899,11 @@ export function getSiteConfig() {
         left: leftConfig,
         right: rightConfig
       },
-      homeSections: (Array.isArray(parsed.homeSections) && parsed.homeSections.length > 0)
-        ? parsed.homeSections
-        : DEFAULT_SITE_CONFIG.homeSections,
+      homeSections: resolvedHomeSections,
+      careersPage: {
+        ...DEFAULT_SITE_CONFIG.careersPage,
+        ...(parsed.careersPage || {})
+      },
       offeringsSection: {
         ...DEFAULT_SITE_CONFIG.offeringsSection,
         ...(parsed.offeringsSection || {})
@@ -866,6 +916,22 @@ export function getSiteConfig() {
     console.error('Error loading config:', e);
   }
   return DEFAULT_SITE_CONFIG;
+}
+
+/**
+ * Hàm tiện ích mở trực tiếp Web Đặt Hàng KiotViet khi nhấn Đặt Hàng / Đặt Món / Thực Đơn
+ * @param {string} customUrl - URL tùy chỉnh (hoặc URL của từng chi nhánh)
+ */
+export function openOrderOnlineWeb(customUrl) {
+  if (typeof window === 'undefined') return;
+  const cfg = getSiteConfig();
+  const targetUrl = customUrl || cfg.orderOnline?.url || 'https://coffee2424.web-store.online';
+  const openMode = cfg.orderOnline?.openMode || 'new_tab';
+  if (openMode === 'same_tab') {
+    window.location.href = targetUrl;
+  } else {
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }
 }
 
 export function saveSiteConfig(newConfig) {
@@ -971,14 +1037,10 @@ export function saveSiteConfig(newConfig) {
     updateDocumentFavicon(brandLogo || '/images/logo.jpg');
     window.dispatchEvent(new Event('site-config-updated'));
 
-    // Chỉ đồng bộ lên Supabase Cloud khi KHÔNG PHẢI Localhost (môi trường Production)
-    if (!isLocalhost) {
-      saveCloudSiteConfig(newConfig).catch(err => {
-        console.warn('Không thể đồng bộ Supabase Cloud:', err);
-      });
-    } else {
-      console.info('💻 Đã lưu vào bộ nhớ Localhost cục bộ (hoàn toàn tách biệt Supabase Cloud).');
-    }
+    // Tự động đồng bộ lên Supabase Cloud để dữ liệu không bị mất khi reload
+    saveCloudSiteConfig(newConfig).catch(err => {
+      console.warn('Không thể đồng bộ Supabase Cloud:', err);
+    });
 
     return true;
   } catch (e) {
@@ -1014,6 +1076,24 @@ export async function syncSiteConfigWithCloud(force = false) {
         offeringsSection: {
           ...currentConfig.offeringsSection,
           ...(cloudConfig.offeringsSection || {})
+        },
+        glassBackground: {
+          ...DEFAULT_SITE_CONFIG.glassBackground,
+          ...(currentConfig.glassBackground || {}),
+          ...(cloudConfig.glassBackground || {})
+        },
+        newDishesSection: {
+          ...DEFAULT_SITE_CONFIG.newDishesSection,
+          ...(currentConfig.newDishesSection || {}),
+          ...(cloudConfig.newDishesSection || {})
+        },
+        newDishesList: (Array.isArray(cloudConfig.newDishesList) && cloudConfig.newDishesList.length > 0)
+          ? cloudConfig.newDishesList
+          : (currentConfig.newDishesList || DEFAULT_SITE_CONFIG.newDishesList),
+        careersPage: {
+          ...DEFAULT_SITE_CONFIG.careersPage,
+          ...(currentConfig.careersPage || {}),
+          ...(cloudConfig.careersPage || {})
         }
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedConfig));

@@ -214,10 +214,20 @@ export default function AdminNewDishesManager({ config, onSaveConfig, triggerAle
   };
 
   const handleSaveAll = () => {
+    const isEnabled = sectionConfig.enabled !== false;
+    const currentHomeSections = config?.homeSections || DEFAULT_SITE_CONFIG.homeSections;
+    const updatedHomeSections = currentHomeSections.map(sec => {
+      if (sec.type === 'newDishes' || sec.id === 'sec-newDishes') {
+        return { ...sec, enabled: isEnabled };
+      }
+      return sec;
+    });
+
     const updatedConfig = {
       ...config,
       newDishesSection: sectionConfig,
-      newDishesList: dishes
+      newDishesList: dishes,
+      homeSections: updatedHomeSections
     };
     onSaveConfig?.(updatedConfig);
     triggerAlert?.('✓ Đã lưu toàn bộ Cấu Hình & Danh Sách Món Mới thành công! Trang chủ đã tự động cập nhật.');

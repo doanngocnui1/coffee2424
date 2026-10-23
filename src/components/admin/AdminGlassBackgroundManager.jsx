@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Palette, 
   Upload, 
@@ -6,12 +6,30 @@ import {
   Eye, 
   RotateCcw, 
   Sparkles, 
-  Image as ImageIcon
+  Image as ImageIcon,
+  Save,
+  Check,
+  Loader2,
+  Smartphone,
+  RefreshCw,
+  Info
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
+import { uploadImageToSupabase, saveCloudSiteConfig } from '../../lib/supabase';
 
 export default function AdminGlassBackgroundManager({ config, onSaveConfig, triggerAlert }) {
-  const glassBg = config.glassBackground || DEFAULT_SITE_CONFIG.glassBackground;
+  const [localGlassBg, setLocalGlassBg] = useState(() => {
+    return config.glassBackground || DEFAULT_SITE_CONFIG.glassBackground;
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (config.glassBackground) {
+      setLocalGlassBg(config.glassBackground);
+    }
+  }, [config.glassBackground]);
 
   // Curated wallpaper presets
   const wallpaperPresets = [
@@ -59,62 +77,112 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
     }
   ];
 
+  // Update field locally for silky-smooth slider response & live DOM preview
   const updateGlassBg = (field, val) => {
     const updated = {
-      ...(config.glassBackground || DEFAULT_SITE_CONFIG.glassBackground),
+      ...localGlassBg,
       [field]: val
     };
+    setLocalGlassBg(updated);
+    setSaveSuccess(false);
+    // Cập nhật cấu hình lên trình duyệt máy tính ngay lập tức để nhìn thấy trực tiếp
     onSaveConfig({ ...config, glassBackground: updated });
   };
 
   const handleApplyPreset = (preset) => {
     const updated = {
-      ...(config.glassBackground || DEFAULT_SITE_CONFIG.glassBackground),
+      ...localGlassBg,
       image: preset.image,
       preset: preset.id,
       ...preset.presetSettings
     };
+    setLocalGlassBg(updated);
+    setSaveSuccess(false);
     onSaveConfig({ ...config, glassBackground: updated });
-    triggerAlert(`Đã áp dụng hình nền: ${preset.label}!`);
+    triggerAlert(`Đã chọn mẫu hình nền: ${preset.label}! Bấm "Lưu Cấu Hình" để đồng bộ sang điện thoại.`);
   };
 
-  const handleUploadWallpaper = (e) => {
+  // Upload ảnh lên Supabase Storage thay vì Base64 (tránh lỗi 413 Payload Too Large làm điện thoại không cập nhật)
+  const handleUploadWallpaper = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 6 * 1024 * 1024) {
-      alert('File ảnh quá lớn (>6MB). Vui lòng chọn ảnh dung lượng nhỏ hơn.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File ảnh quá lớn (>10MB). Vui lòng chọn ảnh dung lượng nhỏ hơn.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (loadEvt) => {
-      const dataUrl = loadEvt.target.result;
-      updateGlassBg('image', dataUrl);
-      updateGlassBg('preset', 'custom');
-      triggerAlert('Đã tải hình nền thành công!');
-    };
-    reader.readAsDataURL(file);
+    setIsUploading(true);
+    try {
+      const cloudUrl = await uploadImageToSupabase(file, 'glass_bg');
+      if (cloudUrl) {
+        updateGlassBg('image', cloudUrl);
+        updateGlassBg('preset', 'custom');
+        triggerAlert('✓ Đã tải ảnh lên đám mây thành công! Bấm "Lưu Cấu Hình" để đồng bộ sang điện thoại.');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (loadEvt) => {
+          const dataUrl = loadEvt.target.result;
+          updateGlassBg('image', dataUrl);
+          updateGlassBg('preset', 'custom');
+          triggerAlert('Đã tải ảnh lên trình duyệt. Vui lòng bấm "Lưu Cấu Hình"!');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải ảnh nền:', err);
+      alert('Lỗi tải ảnh: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Đồng bộ cấu hình lên Supabase Cloud (để điện thoại nhận được ngay)
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      const updatedConfig = { ...config, glassBackground: localGlassBg };
+      onSaveConfig(updatedConfig);
+
+      // Đẩy trực tiếp lên Supabase Cloud
+      const cloudRes = await saveCloudSiteConfig(updatedConfig);
+      if (cloudRes?.success !== false) {
+        setSaveSuccess(true);
+        triggerAlert('✓ ĐÃ ĐỒNG BỘ LÊN MÁY CHỦ THÀNH CÔNG! Mở điện thoại vuốt tải lại trang (F5) để thấy độ mờ mới.');
+      } else {
+        triggerAlert('⚠️ Đã lưu trên máy tính nhưng máy chủ báo lỗi: ' + (cloudRes?.error || 'Không rõ nguyên nhân'));
+      }
+    } catch (err) {
+      console.error('Lỗi lưu cấu hình:', err);
+      triggerAlert('⚠️ Lỗi: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleResetDefaults = () => {
     if (window.confirm('Khôi phục toàn bộ cài đặt hình nền và kính mờ về mặc định?')) {
+      const def = DEFAULT_SITE_CONFIG.glassBackground;
+      setLocalGlassBg(def);
       onSaveConfig({
         ...config,
-        glassBackground: DEFAULT_SITE_CONFIG.glassBackground
+        glassBackground: def
       });
       try {
         localStorage.removeItem('coffee2424_glass_bg_img');
       } catch {}
-      triggerAlert('Đã khôi phục cài đặt hình nền kính mờ mặc định!');
+      triggerAlert('Đã khôi phục cài đặt hình nền kính mờ mặc định! Nhớ bấm "Lưu Cấu Hình" để đồng bộ sang điện thoại.');
     }
   };
+
+  const glassBg = localGlassBg;
 
   return (
     <div className="space-y-6 font-sans">
       
-      {/* HEADER BANNER */}
-      <div className="p-6 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* HEADER BANNER & ACTION BAR */}
+      <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-xl border border-white/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 text-xs font-black tracking-wider uppercase mb-2">
             <Palette className="w-3.5 h-3.5 text-amber-600" />
@@ -128,14 +196,65 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleResetDefaults}
-          className="px-3.5 py-2 rounded-xl bg-white hover:bg-stone-100 text-stone-700 text-xs font-bold border border-stone-200/80 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
-        >
-          <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
-          <span>Khôi Phục Gốc</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={handleResetDefaults}
+            className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-700 text-xs font-bold border border-stone-200/80 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+            <span>Khôi Phục Gốc</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-wide flex items-center gap-2 shadow-md transition-all cursor-pointer ${
+              saveSuccess
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                : 'bg-gradient-to-r from-[#2b170e] via-[#4a2818] to-[#2b170e] hover:brightness-110 text-white shadow-[#2b170e]/20'
+            }`}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                <span>Đang Đồng Bộ Lên Đám Mây...</span>
+              </>
+            ) : saveSuccess ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-200" />
+                <span>Đã Đồng Bộ Lên Điện Thoại!</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 text-amber-400" />
+                <span>LƯU CẤU HÌNH & ĐỒNG BỘ ĐIỆN THOẠI</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE SYNC INSTRUCTION NOTICE */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-600/30 flex items-start gap-3.5 shadow-xs">
+        <Smartphone className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
+        <div className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
+          <strong className="text-[#2b170e] font-black uppercase tracking-wide block">
+            Tại sao chỉnh trên máy tính mà điện thoại chưa đổi ngay?
+          </strong>
+          <p className="mt-1">
+            1. Máy tính và Điện thoại là 2 thiết bị độc lập. Sau khi kéo chỉnh độ mờ trên máy tính, bạn cần bấm nút <strong>"LƯU CẤU HÌNH & ĐỒNG BỘ ĐIỆN THOẠI"</strong> để gửi thông số mới lên máy chủ đám mây.
+          </p>
+          <p className="mt-1 flex items-center gap-1.5 flex-wrap">
+            <span>2. Sau khi lưu, trên điện thoại hãy</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white text-[#2b170e] font-black border border-amber-600/30">
+              <RefreshCw className="w-3 h-3 text-amber-600" />
+              Vuốt màn hình từ trên xuống để tải lại (Pull to refresh)
+            </span>
+            <span>thì điện thoại sẽ cập nhật ngay lập tức!</span>
+          </p>
+        </div>
       </div>
 
       {/* LIVE INTERACTIVE GLASS SIMULATOR PREVIEW */}
@@ -162,7 +281,8 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
               style={{
                 backgroundImage: `url(${glassBg.image})`,
                 opacity: glassBg.opacity ?? 0.38,
-                filter: `blur(${glassBg.blur ?? 6}px) brightness(${glassBg.brightness ?? 95}%) contrast(${glassBg.contrast ?? 105}%) saturate(${glassBg.saturate ?? 110}%)`
+                filter: `blur(${glassBg.blur ?? 6}px) brightness(${glassBg.brightness ?? 95}%) contrast(${glassBg.contrast ?? 105}%) saturate(${glassBg.saturate ?? 110}%)`,
+                WebkitFilter: `blur(${glassBg.blur ?? 6}px) brightness(${glassBg.brightness ?? 95}%) contrast(${glassBg.contrast ?? 105}%) saturate(${glassBg.saturate ?? 110}%)`
               }}
             />
           )}
@@ -230,7 +350,7 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
               updateGlassBg('glassBgOpacity', 0.16);
               updateGlassBg('glassBlur', 16);
               updateGlassBg('opacity', 0.50);
-              triggerAlert('Đã bật chế độ Kính Siêu Trong Suốt (Thấy rõ nền nhất)!');
+              triggerAlert('Đã bật chế độ Kính Siêu Trong Suốt (Thấy rõ nền nhất)! Nhớ bấm "Lưu Cấu Hình".');
             }}
             className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 text-xs font-bold border border-amber-600/30 cursor-pointer transition-colors"
           >
@@ -289,13 +409,21 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
           {/* Upload or Custom URL */}
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#5c3d2e] block">Tải ảnh nền từ máy tính của bạn:</label>
-              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2b170e] hover:bg-[#180d08] text-white text-xs font-bold cursor-pointer transition-all shadow-xs">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Tải Ảnh Lên</span>
+              <div>
+                <label className="text-xs font-bold text-[#5c3d2e] block">Tải ảnh nền từ máy tính của bạn:</label>
+                <span className="text-[11px] text-stone-500">Tự động tải lên Supabase Storage chuẩn nét cho điện thoại</span>
+              </div>
+              <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#2b170e] hover:bg-[#180d08] text-white text-xs font-bold cursor-pointer transition-all shadow-xs">
+                {isUploading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                <span>{isUploading ? 'Đang Tải Lên...' : 'Tải Ảnh Lên'}</span>
                 <input 
                   type="file" 
                   accept="image/*" 
+                  disabled={isUploading}
                   onChange={handleUploadWallpaper} 
                   className="hidden" 
                 />
@@ -303,7 +431,7 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
             </div>
             
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-stone-500 block">Hoặc nhập link URL ảnh:</label>
+              <label className="text-[11px] font-bold text-stone-500 block">Hoặc dán đường link URL ảnh:</label>
               <input 
                 type="text" 
                 value={glassBg.image || ''} 
@@ -560,6 +688,51 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
 
         </div>
 
+      </div>
+
+      {/* BOTTOM FLOATING SAVE BAR */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-white/90 backdrop-blur-xl border border-white/90 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/15 flex items-center justify-center shrink-0">
+            <Smartphone className="w-5 h-5 text-amber-700" />
+          </div>
+          <div>
+            <h4 className="text-xs sm:text-sm font-black text-[#2b170e]">
+              Đồng bộ hình nền & độ mờ sang điện thoại
+            </h4>
+            <p className="text-[11px] text-stone-500">
+              Nhấn nút bên cạnh để áp dụng lên máy chủ đám mây Supabase Cloud.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          className={`w-full sm:w-auto px-6 py-3 rounded-2xl text-xs font-black tracking-wide flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer ${
+            saveSuccess
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+              : 'bg-gradient-to-r from-[#2b170e] via-[#4a2818] to-[#2b170e] hover:brightness-110 text-white shadow-[#2b170e]/25'
+          }`}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+              <span>Đang Đồng Bộ Lên Đám Mây...</span>
+            </>
+          ) : saveSuccess ? (
+            <>
+              <Check className="w-4 h-4 text-emerald-200" />
+              <span>Đã Đồng Bộ Lên Điện Thoại Thành Công!</span>
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 text-amber-400" />
+              <span>LƯU CẤU HÌNH & ĐỒNG BỘ ĐIỆN THOẠI</span>
+            </>
+          )}
+        </button>
       </div>
 
     </div>

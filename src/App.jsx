@@ -10,6 +10,7 @@ import BlogPage from './pages/BlogPage';
 import AdminPage from './pages/AdminPage';
 
 import SideBanners from './components/SideBanners';
+import BranchOrderModal from './components/BranchOrderModal';
 import { getSiteConfig, syncSiteConfigWithCloud, updateDocumentFavicon } from './data/siteConfig';
 import { subscribeToCloudSiteConfig } from './lib/supabase';
 
@@ -17,6 +18,7 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [siteConfig, setSiteConfig] = useState(getSiteConfig);
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
 
   // Sync favicon whenever siteConfig.logo changes
   useEffect(() => {
@@ -37,9 +39,12 @@ export default function App() {
       updateDocumentFavicon(fresh.logo);
     };
 
+    const handleOpenBranchModal = () => setIsBranchModalOpen(true);
+
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('site-config-updated', handleConfigUpdate);
     window.addEventListener('storage', handleConfigUpdate);
+    window.addEventListener('open-branch-order-modal', handleOpenBranchModal);
 
     // Tự động kéo cấu hình mới nhất từ Supabase Cloud khi mở trang
     syncSiteConfigWithCloud();
@@ -57,6 +62,7 @@ export default function App() {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('site-config-updated', handleConfigUpdate);
       window.removeEventListener('storage', handleConfigUpdate);
+      window.removeEventListener('open-branch-order-modal', handleOpenBranchModal);
       if (typeof unsubscribeCloud === 'function') unsubscribeCloud();
     };
   }, []);
@@ -64,6 +70,12 @@ export default function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const navigate = (path) => {
+    // Khi nhấn đặt hàng, đặt món, thực đơn -> mở bảng lựa chọn chi nhánh (KiotViet 2 chi nhánh)
+    if ((path === '/dathang' || path === '/order' || path === '/menu') && siteConfig.orderOnline?.enabled !== false) {
+      setIsBranchModalOpen(true);
+      return;
+    }
+
     if (path === currentPath) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -125,8 +137,20 @@ export default function App() {
           <HomePage 
             navigate={navigate} 
             onSelectBranch={(branch) => {
-              setSelectedBranch(branch);
-              navigate('/dathang');
+              if (siteConfig.orderOnline?.enabled !== false) {
+                const branchUrl = branch?.id === 'cn-413phi'
+                  ? (siteConfig.orderOnline?.branch413PhiUrl || branch?.menuUrl)
+                  : (siteConfig.orderOnline?.branch96D5Url || branch?.menuUrl);
+                const targetUrl = branchUrl || siteConfig.orderOnline?.url || 'https://coffee2424.web-store.online';
+                if (siteConfig.orderOnline?.openMode === 'same_tab') {
+                  window.location.href = targetUrl;
+                } else {
+                  window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                }
+              } else {
+                setSelectedBranch(branch);
+                navigate('/dathang');
+              }
             }} 
           />
         );
@@ -152,7 +176,7 @@ export default function App() {
       )}
 
       {/* Dynamic Background Wallpaper (Visible through frosted glass) */}
-      {glassBg.enabled && glassBg.image && (
+      {(glassBg.enabled !== false) && glassBg.image && (
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
           <div 
             className={`absolute inset-0 bg-cover bg-center transition-all duration-700 ${
@@ -162,7 +186,11 @@ export default function App() {
               backgroundImage: `url(${glassBg.image})`,
               opacity: glassBg.opacity ?? 0.38,
               filter: `blur(${glassBg.blur ?? 6}px) brightness(${glassBg.brightness ?? 95}%) contrast(${glassBg.contrast ?? 105}%) saturate(${glassBg.saturate ?? 110}%)`,
-              transform: glassBg.animation === 'ken_burns' ? 'scale(1.06)' : 'scale(1.01)'
+              WebkitFilter: `blur(${glassBg.blur ?? 6}px) brightness(${glassBg.brightness ?? 95}%) contrast(${glassBg.contrast ?? 105}%) saturate(${glassBg.saturate ?? 110}%)`,
+              transform: glassBg.animation === 'ken_burns' ? 'scale(1.06) translate3d(0,0,0)' : 'scale(1.01) translate3d(0,0,0)',
+              WebkitTransform: glassBg.animation === 'ken_burns' ? 'scale(1.06) translate3d(0,0,0)' : 'scale(1.01) translate3d(0,0,0)',
+              WebkitBackfaceVisibility: 'hidden',
+              willChange: 'filter, transform'
             }}
           />
           {/* Tint Overlay */}
@@ -218,6 +246,13 @@ export default function App() {
       <div className="relative z-10">
         <Footer currentPath={currentPath} navigate={navigate} />
       </div>
+
+      {/* Global Branch Order Modal (Chọn chi nhánh khi bấm Đặt món / Thực đơn) */}
+      <BranchOrderModal 
+        isOpen={isBranchModalOpen} 
+        onClose={() => setIsBranchModalOpen(false)} 
+        navigate={navigate} 
+      />
     </div>
   );
 }

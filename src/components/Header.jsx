@@ -76,6 +76,11 @@ export default function Header({ currentPath, navigate }) {
   const navLinks = (siteConfig.navMenu || []).filter(item => item.visible !== false);
 
   const handleNav = (path) => {
+    if (path === '/dathang' && siteConfig.orderOnline?.enabled !== false) {
+      window.dispatchEvent(new Event('open-branch-order-modal'));
+      setMobileMenuOpen(false);
+      return;
+    }
     navigate(path);
     setMobileMenuOpen(false);
     setIsVisible(true);

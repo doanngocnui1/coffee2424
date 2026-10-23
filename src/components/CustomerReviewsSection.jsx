@@ -66,6 +66,20 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
     };
   }, []);
 
+  // Khóa cuộn body và lắng nghe phím ESC để đóng modal
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isModalOpen]);
+
   const activeReviews = reviews.filter(r => r.active !== false);
   const visibleCount = isMobile ? 1 : 3;
 
@@ -323,8 +337,14 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
 
       {/* Writing Modal (Frosted Glass) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white/90 backdrop-blur-2xl border border-white rounded-[32px] max-w-lg w-full p-6 sm:p-8 space-y-5 text-[#2b170e] shadow-2xl relative">
+        <div 
+          onClick={() => setIsModalOpen(false)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white/95 backdrop-blur-2xl border border-white rounded-[32px] max-w-lg w-full p-6 sm:p-8 space-y-5 text-[#2b170e] shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
+          >
             <div className="flex items-center justify-between border-b border-[#2b170e]/10 pb-3">
               <h3 className="font-black text-lg uppercase text-[#2b170e]">Chia Sẻ Trải Nghiệm</h3>
               <button 

@@ -260,16 +260,9 @@ export function getJobs() {
     const saved = localStorage.getItem('coffee2424_jobs');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length >= 12) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed;
       }
-      // Migration: merge active states if user toggled any, but guarantee all 12 positions
-      const merged = DEFAULT_JOBS.map(defJob => {
-        const found = parsed.find(p => p.id === defJob.id);
-        return found ? { ...defJob, ...found } : defJob;
-      });
-      localStorage.setItem('coffee2424_jobs', JSON.stringify(merged));
-      return merged;
     }
   } catch (e) {
     console.error('Error reading jobs:', e);
@@ -287,3 +280,61 @@ export function saveJobs(jobsList) {
     return false;
   }
 }
+
+export function createJob(jobData) {
+  const current = getJobs();
+  const slug = (jobData.title || 'vi-tri-moi')
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, "-");
+  
+  const newJob = {
+    id: slug + '-' + Date.now().toString(36),
+    title: jobData.title || 'Vị trí tuyển dụng mới',
+    department: jobData.department || 'Khối Cửa Hàng Vận Hành',
+    type: jobData.type || 'Toàn thời gian (Full-time)',
+    salary: jobData.salary || 'Thương lượng hấp dẫn',
+    shift: jobData.shift || 'Linh hoạt theo ca',
+    locations: Array.isArray(jobData.locations) ? jobData.locations : ['Hệ thống chi nhánh Coffee 24/24'],
+    description: jobData.description || '',
+    responsibilities: Array.isArray(jobData.responsibilities) ? jobData.responsibilities : [],
+    requirements: Array.isArray(jobData.requirements) ? jobData.requirements : ['Nhiệt tình, trách nhiệm và yêu thích ngành F&B'],
+    benefits: Array.isArray(jobData.benefits) ? jobData.benefits : ['Cà phê miễn phí mỗi ca', 'Chế độ đãi ngộ cạnh tranh'],
+    deadline: jobData.deadline || 'Tuyển liên tục',
+    urgent: jobData.urgent || false,
+    featured: jobData.featured || false,
+    image: jobData.image || '',
+    active: jobData.active !== false
+  };
+
+  const updated = [newJob, ...current];
+  saveJobs(updated);
+  return newJob;
+}
+
+export function updateJob(id, jobData) {
+  const current = getJobs();
+  const idx = current.findIndex(j => j.id === id);
+  if (idx !== -1) {
+    current[idx] = { ...current[idx], ...jobData };
+    saveJobs(current);
+    return current[idx];
+  }
+  return null;
+}
+
+export function deleteJob(id) {
+  const current = getJobs();
+  const filtered = current.filter(j => j.id !== id);
+  saveJobs(filtered);
+  return true;
+}
+
+export function resetDefaultJobs() {
+  saveJobs(DEFAULT_JOBS);
+  return DEFAULT_JOBS;
+}
+

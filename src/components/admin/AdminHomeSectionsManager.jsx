@@ -185,9 +185,15 @@ export default function AdminHomeSectionsManager({ config, onSaveConfig, trigger
 
   // Lưu cấu hình
   const handleSaveSections = () => {
+    const newDishesSec = sections.find(s => s.type === 'newDishes' || s.id === 'sec-newDishes');
+    const isNewDishesEnabled = newDishesSec ? newDishesSec.enabled !== false : true;
     const updatedConfig = {
       ...config,
-      homeSections: sections
+      homeSections: sections,
+      newDishesSection: {
+        ...(config?.newDishesSection || DEFAULT_SITE_CONFIG.newDishesSection),
+        enabled: isNewDishesEnabled
+      }
     };
     onSaveConfig?.(updatedConfig);
     triggerAlert?.('✓ Đã lưu bố cục & thứ tự các thành phần Trang Chủ thành công! Trang chủ đã tự động cập nhật.');
