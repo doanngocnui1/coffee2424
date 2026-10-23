@@ -1344,9 +1344,39 @@ export async function syncSiteConfigWithCloud(force = false) {
           ...(currentConfig.promotionsSection || {}),
           ...(cloudConfig.promotionsSection || {})
         },
-        promotionsList: (Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0)
-          ? cloudConfig.promotionsList
-          : (currentConfig.promotionsList || DEFAULT_SITE_CONFIG.promotionsList),
+        promotionsList: (() => {
+          const currentList = Array.isArray(currentConfig.promotionsList) && currentConfig.promotionsList.length > 0
+            ? currentConfig.promotionsList
+            : [];
+          const cloudList = Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0
+            ? cloudConfig.promotionsList
+            : [];
+
+          if (currentList.length === 0) return cloudList.length > 0 ? cloudList : DEFAULT_SITE_CONFIG.promotionsList;
+          if (cloudList.length === 0) return currentList;
+
+          // Hợp nhất dữ liệu: Ưu tiên giữ nguyên mọi cấu hình tùy chỉnh và các nút bật/tắt (showVoucherCode, showCopyBtn, showCtaBtn) ở Local
+          const merged = currentList.map(localItem => {
+            const cloudMatch = cloudList.find(c => c.id === localItem.id);
+            if (!cloudMatch) return localItem;
+            return {
+              ...cloudMatch,
+              ...localItem,
+              showVoucherCode: localItem.showVoucherCode !== undefined ? localItem.showVoucherCode : cloudMatch.showVoucherCode,
+              showCopyBtn: localItem.showCopyBtn !== undefined ? localItem.showCopyBtn : cloudMatch.showCopyBtn,
+              showCtaBtn: localItem.showCtaBtn !== undefined ? localItem.showCtaBtn : cloudMatch.showCtaBtn
+            };
+          });
+
+          // Bổ sung các ưu đãi mới từ cloud nếu chưa có trong danh sách local
+          cloudList.forEach(cloudItem => {
+            if (!merged.some(m => m.id === cloudItem.id)) {
+              merged.push(cloudItem);
+            }
+          });
+
+          return merged;
+        })(),
         careersPage: {
           ...DEFAULT_SITE_CONFIG.careersPage,
           ...(currentConfig.careersPage || {}),

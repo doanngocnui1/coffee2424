@@ -40,7 +40,7 @@ import {
   Clock,
   Info
 } from 'lucide-react';
-import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
+import { DEFAULT_SITE_CONFIG, saveSiteConfig } from '../../data/siteConfig';
 import { uploadImageToSupabase } from '../../lib/supabase';
 
 export default function AdminPromotionsManager({ config, onSaveConfig, triggerAlert }) {
@@ -320,6 +320,58 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     });
   };
 
+  // Bật / tắt tức thì 3 nút trên thẻ ưu đãi và TỰ ĐỘNG LƯU NGAY LẬP TỨC (không để mất khi reload trang)
+  const handleTogglePromotionField = (index, field) => {
+    const target = promotions[index];
+    if (!target) return;
+    const currentVal = target[field];
+    const newVal = currentVal === false; // Nếu đang false thì chuyển true; nếu true/undefined thì chuyển false
+
+    const updatedPromotions = promotions.map((p, i) => {
+      if (i === index) {
+        return {
+          ...p,
+          [field]: newVal
+        };
+      }
+      return p;
+    });
+
+    setPromotions(updatedPromotions);
+
+    const currentNavMenu = Array.isArray(config?.navMenu) && config.navMenu.length > 0 
+      ? config.navMenu 
+      : DEFAULT_SITE_CONFIG.navMenu;
+    const updatedNavMenu = currentNavMenu.map(item => {
+      if (item.id === 'promo') {
+        return {
+          ...item,
+          visible: headerMenuVisible,
+          label: headerMenuLabel.trim() || 'Khuyến Mãi'
+        };
+      }
+      return item;
+    });
+
+    const updatedConfig = {
+      ...config,
+      navMenu: updatedNavMenu,
+      promotionsSection: sectionConfig,
+      promotionsList: updatedPromotions,
+      promotionsPageConfig: pageConfig
+    };
+
+    // Tự động lưu tức thì vào LocalStorage & phát sự kiện để toàn trang áp dụng ngay và không bị mất khi reload
+    onSaveConfig?.(updatedConfig);
+    saveSiteConfig(updatedConfig);
+    window.dispatchEvent(new Event('site-config-updated'));
+
+    const fieldLabel = field === 'showVoucherCode' 
+      ? 'Mã Voucher' 
+      : (field === 'showCopyBtn' ? 'Nút Chép mã' : 'Nút Dùng ngay');
+    triggerAlert?.(`✓ Đã ${newVal ? 'BẬT' : 'ẨN'} "${fieldLabel}" và tự động lưu áp dụng ngay!`);
+  };
+
   const handleUploadPromotionImage = async (index, file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -471,6 +523,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       promotionsPageConfig: pageConfig
     };
     onSaveConfig?.(updatedConfig);
+    saveSiteConfig(updatedConfig);
     window.dispatchEvent(new Event('site-config-updated'));
     triggerAlert?.('✓ Đã lưu toàn bộ cấu hình Khuyến Mãi (Voucher, 3 Bước, Hero & Trang Chủ) thành công!');
   };
@@ -724,33 +777,39 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                       <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#5c3d2e]">
                         <button
                           type="button"
-                          onClick={() => handleUpdatePromotionField(realIndex, 'showVoucherCode', promo.showVoucherCode === false)}
-                          className={`px-2 py-1 rounded-lg transition-all text-[11px] cursor-pointer ${
-                            promo.showVoucherCode !== false ? 'bg-amber-500 text-neutral-950 font-black shadow-2xs' : 'bg-transparent text-neutral-400 hover:text-neutral-600'
+                          onClick={() => handleTogglePromotionField(realIndex, 'showVoucherCode')}
+                          className={`px-2.5 py-1 rounded-lg transition-all text-[11px] cursor-pointer ${
+                            promo.showVoucherCode !== false 
+                              ? 'bg-amber-500 text-neutral-950 font-black shadow-2xs' 
+                              : 'bg-neutral-100 text-neutral-400 hover:text-neutral-600 line-through'
                           }`}
-                          title="Bật/Tắt hiển thị Mã Voucher"
+                          title="Bật/Tắt hiển thị Mã Voucher (Tự động lưu ngay)"
                         >
                           Mã {promo.showVoucherCode !== false ? '✓' : '✕'}
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => handleUpdatePromotionField(realIndex, 'showCopyBtn', promo.showCopyBtn === false)}
-                          className={`px-2 py-1 rounded-lg transition-all text-[11px] cursor-pointer ${
-                            promo.showCopyBtn !== false ? 'bg-amber-500 text-neutral-950 font-black shadow-2xs' : 'bg-transparent text-neutral-400 hover:text-neutral-600'
+                          onClick={() => handleTogglePromotionField(realIndex, 'showCopyBtn')}
+                          className={`px-2.5 py-1 rounded-lg transition-all text-[11px] cursor-pointer ${
+                            promo.showCopyBtn !== false 
+                              ? 'bg-amber-500 text-neutral-950 font-black shadow-2xs' 
+                              : 'bg-neutral-100 text-neutral-400 hover:text-neutral-600 line-through'
                           }`}
-                          title="Bật/Tắt Nút Chép Mã"
+                          title="Bật/Tắt Nút Chép Mã (Tự động lưu ngay)"
                         >
                           Chép {promo.showCopyBtn !== false ? '✓' : '✕'}
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => handleUpdatePromotionField(realIndex, 'showCtaBtn', promo.showCtaBtn === false)}
-                          className={`px-2 py-1 rounded-lg transition-all text-[11px] cursor-pointer ${
-                            promo.showCtaBtn !== false ? 'bg-amber-500 text-neutral-950 font-black shadow-2xs' : 'bg-transparent text-neutral-400 hover:text-neutral-600'
+                          onClick={() => handleTogglePromotionField(realIndex, 'showCtaBtn')}
+                          className={`px-2.5 py-1 rounded-lg transition-all text-[11px] cursor-pointer ${
+                            promo.showCtaBtn !== false 
+                              ? 'bg-amber-500 text-neutral-950 font-black shadow-2xs' 
+                              : 'bg-neutral-100 text-neutral-400 hover:text-neutral-600 line-through'
                           }`}
-                          title="Bật/Tắt Nút Dùng Ngay"
+                          title="Bật/Tắt Nút Dùng Ngay (Tự động lưu ngay)"
                         >
                           Dùng Ngay {promo.showCtaBtn !== false ? '✓' : '✕'}
                         </button>
@@ -960,6 +1019,44 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                                 onChange={(e) => handleUpdatePromotionField(realIndex, 'cta', e.target.value)}
                                 className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
                               />
+                            </div>
+                          </div>
+
+                          {/* 3 Nút Bật/Tắt Chi Tiết (Tự động lưu tức thì) */}
+                          <div className="p-4 rounded-2xl bg-white border border-[#dfd4c7] space-y-2.5">
+                            <span className="text-xs font-black uppercase text-[#7a5843] block">
+                              Ẩn / Hiện các thành phần nút bấm ở góc thẻ ưu đãi:
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                              <label className="flex items-center gap-2 text-xs font-bold text-[#2b170e] cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={promo.showVoucherCode !== false}
+                                  onChange={() => handleTogglePromotionField(realIndex, 'showVoucherCode')}
+                                  className="w-4 h-4 accent-amber-600 rounded"
+                                />
+                                <span>Hiển thị Mã ({promo.code || 'PROMO24'})</span>
+                              </label>
+
+                              <label className="flex items-center gap-2 text-xs font-bold text-[#2b170e] cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={promo.showCopyBtn !== false}
+                                  onChange={() => handleTogglePromotionField(realIndex, 'showCopyBtn')}
+                                  className="w-4 h-4 accent-amber-600 rounded"
+                                />
+                                <span>Hiển thị Nút Chép Mã</span>
+                              </label>
+
+                              <label className="flex items-center gap-2 text-xs font-bold text-[#2b170e] cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={promo.showCtaBtn !== false}
+                                  onChange={() => handleTogglePromotionField(realIndex, 'showCtaBtn')}
+                                  className="w-4 h-4 accent-amber-600 rounded"
+                                />
+                                <span>Hiển thị Nút Dùng Ngay</span>
+                              </label>
                             </div>
                           </div>
 

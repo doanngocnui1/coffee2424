@@ -52,7 +52,24 @@ export default function App() {
     // Lắng nghe cập nhật Realtime từ Supabase (khi có ai sửa từ máy khác)
     const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData) => {
       setSiteConfig(prev => {
-        const merged = { ...prev, ...newCloudData };
+        const localPromos = prev?.promotionsList || [];
+        const cloudPromos = newCloudData?.promotionsList || [];
+        const safePromos = localPromos.map(localP => {
+          const cloudP = cloudPromos.find(c => c.id === localP.id);
+          return cloudP ? { 
+            ...cloudP, 
+            ...localP,
+            showVoucherCode: localP.showVoucherCode !== undefined ? localP.showVoucherCode : cloudP.showVoucherCode,
+            showCopyBtn: localP.showCopyBtn !== undefined ? localP.showCopyBtn : cloudP.showCopyBtn,
+            showCtaBtn: localP.showCtaBtn !== undefined ? localP.showCtaBtn : cloudP.showCtaBtn
+          } : localP;
+        });
+
+        const merged = { 
+          ...prev, 
+          ...newCloudData,
+          promotionsList: safePromos.length > 0 ? safePromos : (newCloudData?.promotionsList || prev?.promotionsList)
+        };
         if (merged.logo) updateDocumentFavicon(merged.logo);
         return merged;
       });

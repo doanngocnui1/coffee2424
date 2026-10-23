@@ -53,7 +53,7 @@ export default function PromotionsPage({ navigate }) {
 
   const livePromotions = (siteConfig?.promotionsList && Array.isArray(siteConfig.promotionsList) && siteConfig.promotionsList.length > 0)
     ? siteConfig.promotionsList
-    : PROMOTIONS;
+    : (DEFAULT_SITE_CONFIG.promotionsList || PROMOTIONS);
 
   const activePromo = livePromotions[0] || null;
   const heroImage = activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
