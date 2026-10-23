@@ -1,6 +1,6 @@
 import { saveCloudSiteConfig, fetchCloudSiteConfig, isLocalhost } from '../lib/supabase.js';
 
-export const STORAGE_KEY = isLocalhost ? 'coffee2424_local_site_config' : 'coffee2424_site_config';
+export const STORAGE_KEY = 'coffee2424_site_config';
 
 export const DEFAULT_SITE_CONFIG = {
   brandName: 'COFFEE 24/24',
@@ -31,7 +31,7 @@ export const DEFAULT_SITE_CONFIG = {
   // 1. Ảnh Bìa / GIF / Video Hero 16:9 & Thiết Kế Trực Quan (Canvas Studio)
   heroBanner16x9: {
     type: 'auto', // 'auto' | 'image' | 'gif' | 'video'
-    mediaUrl: '/images/custom_hero_banner.jpg',
+    mediaUrl: '/images/hero_banner.jpg',
     link: '/dathang',
     alt: 'COFFEE 24/24 - Không Gian Cà Phê 24/7',
     fixedBackground: false,
@@ -235,7 +235,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'MÓN MỚI',
       title: 'Trà Nho Mẫu Đơn',
       price: '59.000đ',
-      image: '/images/dish_1.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406173532_rzg1kt5.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
@@ -244,7 +244,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'SIGNATURE',
       title: 'Matcha MK4',
       price: '62.000đ',
-      image: '/images/dish_2.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406184326_kvva36f.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
@@ -253,7 +253,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'MÓN MỚI',
       title: 'Trà Mận Tây Bắc',
       price: '59.000đ',
-      image: '/images/dish_3.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406189009_5luykyx.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
@@ -262,7 +262,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'ĐÁ XAY',
       title: 'Caramel Freeze',
       price: '62.000đ',
-      image: '/images/dish_4.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406204620_9xajc2e.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
@@ -271,7 +271,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'MÓN MỚI',
       title: 'Cacao Mint',
       price: '62.000đ',
-      image: '/images/dish_5.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406210235_0s0pfau.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     }
@@ -291,7 +291,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'GIỜ VÀNG',
       title: 'Golden Hour - Cà Phê Đồng Giá 25K (16h - 19h)',
       discount: '25.000đ',
-      image: '/images/promo_1.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
       cta: 'Nhận Ưu Đãi',
       link: '/khuyenmai'
     },
@@ -300,7 +300,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'COMBO ĐÊM',
       title: 'Combo Cú Đêm 22h - 6h (Mì Hảo Hảo + Nước)',
       discount: 'CHỈ TỪ 42K',
-      image: '/images/promo_2.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406324015_rce3jj8.png',
       cta: 'Đặt Combo Cú Đêm',
       link: '/khuyenmai'
     },
@@ -309,7 +309,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'COMBO SÁNG',
       title: 'Khởi Động Ngày Mới 4h - 10h (Bánh Mì / Croissant + Nước)',
       discount: 'CHỈ TỪ 43K',
-      image: '/images/promo_3.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406330432_gtr3gbp.png',
       cta: 'Đặt Combo Sáng',
       link: '/khuyenmai'
     }
@@ -476,7 +476,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'MÓN MỚI',
       title: 'Trà Nho Mẫu Đơn',
       discount: '59.000đ',
-      image: '/images/dish_1.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406173532_rzg1kt5.png',
       cta: 'Đặt Món Ngay',
       link: '/dathang'
     },
@@ -485,7 +485,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'COMBO ĐÊM',
       title: 'Combo Cú Đêm 22h - 6h',
       discount: 'CHỈ TỪ 42K',
-      image: '/images/promo_2.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406324015_rce3jj8.png',
       cta: 'Đặt Combo',
       link: '/khuyenmai'
     },
@@ -494,7 +494,7 @@ export const DEFAULT_SITE_CONFIG = {
       tag: 'GIỜ VÀNG',
       title: 'Golden Hour Cà Phê Đồng Giá 25K',
       discount: '25.000đ',
-      image: '/images/promo_1.png',
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
       cta: 'Nhận Ưu Đãi',
       link: '/khuyenmai'
     }
@@ -861,10 +861,6 @@ export function getSiteConfig() {
     if (customHeroBannerMedia && (heroBannerConfig.mediaUrl === '__STORED_HERO_MEDIA__' || !heroBannerConfig.mediaUrl)) {
       heroBannerConfig.mediaUrl = customHeroBannerMedia;
     }
-    // Tự động nâng cấp sang ảnh mặt tiền quán thực tế nếu đang trỏ ảnh mẫu cũ
-    if (!heroBannerConfig.mediaUrl || heroBannerConfig.mediaUrl === '/images/hero_banner.jpg') {
-      heroBannerConfig.mediaUrl = '/images/custom_hero_banner.jpg';
-    }
 
     // Restore custom logo if stored in dedicated key
     const customLogo = localStorage.getItem('coffee2424_brand_logo_img');
@@ -895,21 +891,13 @@ export function getSiteConfig() {
       return sec;
     });
 
-    // Tự động nâng cấp sang danh sách 5 món mới thực tế nếu rỗng hoặc chứa ảnh mockup
-    let resolvedNewDishes = (Array.isArray(parsed.newDishesList) && parsed.newDishesList.length > 0)
+    const resolvedNewDishes = (Array.isArray(parsed.newDishesList) && parsed.newDishesList.length > 0)
       ? parsed.newDishesList
-      : DEFAULT_SITE_CONFIG.newDishesList;
-    if (resolvedNewDishes.some(d => d.image === '/images/promo_banner.jpg' || d.image === '/images/signature_drinks.jpg' || d.image === '/images/journey_espresso.jpg')) {
-      resolvedNewDishes = DEFAULT_SITE_CONFIG.newDishesList;
-    }
+      : (DEFAULT_SITE_CONFIG.newDishesList || []);
 
-    // Tự động nâng cấp sang danh sách 3 khuyến mãi thực tế nếu rỗng hoặc chứa ảnh mockup
-    let resolvedPromotions = (Array.isArray(parsed.promotionsList) && parsed.promotionsList.length > 0)
+    const resolvedPromotions = (Array.isArray(parsed.promotionsList) && parsed.promotionsList.length > 0)
       ? parsed.promotionsList
-      : DEFAULT_SITE_CONFIG.promotionsList;
-    if (resolvedPromotions.some(p => p.image === '/images/promo_banner.jpg' || p.image === '/images/signature_drinks.jpg' || p.image === '/images/journey_espresso.jpg')) {
-      resolvedPromotions = DEFAULT_SITE_CONFIG.promotionsList;
-    }
+      : (DEFAULT_SITE_CONFIG.promotionsList || []);
 
     return {
       ...DEFAULT_SITE_CONFIG,
@@ -1098,12 +1086,6 @@ export function saveSiteConfig(newConfig) {
  * @param {boolean} force - Ép buộc kéo về ngay cả khi đang chạy trên localhost
  */
 export async function syncSiteConfigWithCloud(force = false) {
-  // Trên localhost: Tuyệt đối không tự động kéo từ Supabase Cloud về đè local
-  if (isLocalhost && !force) {
-    console.info('💻 Chế độ Localhost: Bỏ qua tự động tải từ Supabase Cloud để tối ưu tốc độ & không đè dữ liệu.');
-    return null;
-  }
-
   try {
     const cloudConfig = await fetchCloudSiteConfig();
     if (cloudConfig && typeof cloudConfig === 'object') {
@@ -1114,7 +1096,7 @@ export async function syncSiteConfigWithCloud(force = false) {
         homeSections: (() => {
           const rawSections = (Array.isArray(cloudConfig.homeSections) && cloudConfig.homeSections.length > 0)
             ? cloudConfig.homeSections
-            : currentConfig.homeSections;
+            : (currentConfig.homeSections || DEFAULT_SITE_CONFIG.homeSections);
           const isNewDishesOn = (cloudConfig.newDishesSection?.enabled !== false);
           return rawSections.map(sec => {
             if (sec.id === 'sec-newDishes' || sec.type === 'newDishes') {
@@ -1140,31 +1122,47 @@ export async function syncSiteConfigWithCloud(force = false) {
           ...(currentConfig.newDishesSection || {}),
           ...(cloudConfig.newDishesSection || {})
         },
-        newDishesList: (() => {
-          const list = (Array.isArray(cloudConfig.newDishesList) && cloudConfig.newDishesList.length > 0)
-            ? cloudConfig.newDishesList
-            : (currentConfig.newDishesList || DEFAULT_SITE_CONFIG.newDishesList);
-          if (list.some(d => d.image === '/images/promo_banner.jpg' || d.image === '/images/signature_drinks.jpg' || d.image === '/images/journey_espresso.jpg')) {
-            return DEFAULT_SITE_CONFIG.newDishesList;
-          }
-          return list;
-        })(),
-        promotionsList: (() => {
-          const list = (Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0)
-            ? cloudConfig.promotionsList
-            : (currentConfig.promotionsList || DEFAULT_SITE_CONFIG.promotionsList);
-          if (list.some(p => p.image === '/images/promo_banner.jpg' || p.image === '/images/signature_drinks.jpg' || p.image === '/images/journey_espresso.jpg')) {
-            return DEFAULT_SITE_CONFIG.promotionsList;
-          }
-          return list;
-        })(),
+        newDishesList: (Array.isArray(cloudConfig.newDishesList) && cloudConfig.newDishesList.length > 0)
+          ? cloudConfig.newDishesList
+          : (currentConfig.newDishesList || DEFAULT_SITE_CONFIG.newDishesList),
+        promotionsSection: {
+          ...DEFAULT_SITE_CONFIG.promotionsSection,
+          ...(currentConfig.promotionsSection || {}),
+          ...(cloudConfig.promotionsSection || {})
+        },
+        promotionsList: (Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0)
+          ? cloudConfig.promotionsList
+          : (currentConfig.promotionsList || DEFAULT_SITE_CONFIG.promotionsList),
         careersPage: {
           ...DEFAULT_SITE_CONFIG.careersPage,
           ...(currentConfig.careersPage || {}),
           ...(cloudConfig.careersPage || {})
         }
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedConfig));
+
+      // Bảo vệ hạn mức localStorage khi ảnh nền là chuỗi base64 lớn
+      const heroMedia = mergedConfig.heroBanner16x9?.mediaUrl;
+      if (heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video'))) {
+        try {
+          localStorage.setItem('coffee2424_hero_banner_media', heroMedia);
+        } catch (_) {}
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedConfig));
+      } catch (quotaErr) {
+        console.warn('LocalStorage quota exceeded on cloud sync, saving safe reference config:', quotaErr);
+        const safeConfig = {
+          ...mergedConfig,
+          heroBanner16x9: {
+            ...mergedConfig.heroBanner16x9,
+            mediaUrl: heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video')) ? '__STORED_HERO_MEDIA__' : heroMedia
+          }
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(safeConfig));
+        } catch (_) {}
+      }
+
       window.dispatchEvent(new Event('site-config-updated'));
       console.info('✓ Đã đồng bộ cấu hình thành công từ Supabase Cloud!');
       return mergedConfig;

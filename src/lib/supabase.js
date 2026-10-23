@@ -107,7 +107,7 @@ export async function saveCloudSiteConfig(config) {
  * Lắng nghe thay đổi Realtime từ Supabase
  */
 export function subscribeToCloudSiteConfig(onUpdate) {
-  if (!isSupabaseConfigured || isLocalhost) return () => {};
+  if (!isSupabaseConfigured) return () => {};
 
   try {
     const channel = supabase

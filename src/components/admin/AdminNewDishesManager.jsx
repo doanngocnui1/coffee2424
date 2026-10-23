@@ -21,53 +21,7 @@ import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
 import { uploadImageToSupabase } from '../../lib/supabase';
 
 export default function AdminNewDishesManager({ config, onSaveConfig, triggerAlert }) {
-  const defaultDishes = DEFAULT_SITE_CONFIG.newDishesList || [
-    {
-      id: 'dish-1',
-      tag: 'MÓN MỚI',
-      title: 'Trà Nho Mẫu Đơn',
-      price: '59.000đ',
-      image: '/images/dish_1.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-2',
-      tag: 'SIGNATURE',
-      title: 'Matcha MK4',
-      price: '62.000đ',
-      image: '/images/dish_2.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-3',
-      tag: 'MÓN MỚI',
-      title: 'Trà Mận Tây Bắc',
-      price: '59.000đ',
-      image: '/images/dish_3.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-4',
-      tag: 'ĐÁ XAY',
-      title: 'Caramel Freeze',
-      price: '62.000đ',
-      image: '/images/dish_4.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-5',
-      tag: 'MÓN MỚI',
-      title: 'Cacao Mint',
-      price: '62.000đ',
-      image: '/images/dish_5.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    }
-  ];
+  const defaultDishes = DEFAULT_SITE_CONFIG.newDishesList || [];
 
   const defaultSectionConfig = DEFAULT_SITE_CONFIG.newDishesSection || {
     enabled: true,

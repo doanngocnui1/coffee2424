@@ -21,35 +21,7 @@ import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
 import { uploadImageToSupabase } from '../../lib/supabase';
 
 export default function AdminPromotionsManager({ config, onSaveConfig, triggerAlert }) {
-  const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [
-    {
-      id: 'promo-1',
-      tag: 'GIỜ VÀNG',
-      title: 'Golden Hour - Cà Phê Đồng Giá 25K (16h - 19h)',
-      discount: '25.000đ',
-      image: '/images/promo_1.png',
-      cta: 'Nhận Ưu Đãi',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-2',
-      tag: 'COMBO ĐÊM',
-      title: 'Combo Cú Đêm 22h - 6h (Mì Hảo Hảo + Nước)',
-      discount: 'CHỈ TỪ 42K',
-      image: '/images/promo_2.png',
-      cta: 'Đặt Combo Cú Đêm',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-3',
-      tag: 'COMBO SÁNG',
-      title: 'Khởi Động Ngày Mới 4h - 10h (Bánh Mì / Croissant + Nước)',
-      discount: 'CHỈ TỪ 43K',
-      image: '/images/promo_3.png',
-      cta: 'Đặt Combo Sáng',
-      link: '/khuyenmai'
-    }
-  ];
+  const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [];
 
   const defaultSectionConfig = DEFAULT_SITE_CONFIG.promotionsSection || {
     enabled: true,

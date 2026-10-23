@@ -428,6 +428,21 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
     }
 
     const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    triggerAlert('⏳ Đang tải ảnh nền lên Supabase Storage...');
+
+    try {
+      const cloudUrl = await uploadImageToSupabase(file, 'hero');
+      if (cloudUrl) {
+        setMediaUrl(cloudUrl);
+        setMediaType(isGif ? 'gif' : 'image');
+        triggerAlert('✓ Đã tải ảnh lên Supabase Storage thành công! Bấm "LƯU THIẾT KẾ TRANG CHỦ" để áp dụng.');
+        e.target.value = '';
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi tải ảnh lên Supabase:', err);
+    }
+
     const reader = new FileReader();
     reader.onload = (loadEvt) => {
       const raw = loadEvt.target.result;

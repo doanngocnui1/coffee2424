@@ -189,101 +189,19 @@ export default function HomePage({ navigate, onSelectBranch }) {
 
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
-  // 5 Highlight Posters Món Mới Dọc 3x4
-  const defaultNewDishes = [
-    {
-      id: 'dish-1',
-      tag: 'MÓN MỚI',
-      title: 'Trà Nho Mẫu Đơn',
-      price: '59.000đ',
-      image: '/images/dish_1.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-2',
-      tag: 'SIGNATURE',
-      title: 'Matcha MK4',
-      price: '62.000đ',
-      image: '/images/dish_2.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-3',
-      tag: 'MÓN MỚI',
-      title: 'Trà Mận Tây Bắc',
-      price: '59.000đ',
-      image: '/images/dish_3.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-4',
-      tag: 'ĐÁ XAY',
-      title: 'Caramel Freeze',
-      price: '62.000đ',
-      image: '/images/dish_4.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    },
-    {
-      id: 'dish-5',
-      tag: 'MÓN MỚI',
-      title: 'Cacao Mint',
-      price: '62.000đ',
-      image: '/images/dish_5.png',
-      cta: 'Đặt Món Ngay',
-      link: '/dathang'
-    }
-  ];
+  // 5 Highlight Posters Món Mới Dọc 3x4 (Supabase Cloud Storage)
+  const defaultNewDishes = DEFAULT_SITE_CONFIG.newDishesList || [];
 
-  // 3 Highlight Posters Chương Trình Ưu Đãi Dọc 3x4
-  const defaultPromotions = [
-    {
-      id: 'promo-1',
-      tag: 'GIỜ VÀNG',
-      title: 'Golden Hour - Cà Phê Đồng Giá 25K (16h - 19h)',
-      discount: '25.000đ',
-      image: '/images/promo_1.png',
-      cta: 'Nhận Ưu Đãi',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-2',
-      tag: 'COMBO ĐÊM',
-      title: 'Combo Cú Đêm 22h - 6h (Mì Hảo Hảo + Nước)',
-      discount: 'CHỈ TỪ 42K',
-      image: '/images/promo_2.png',
-      cta: 'Đặt Combo Cú Đêm',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-3',
-      tag: 'COMBO SÁNG',
-      title: 'Khởi Động Ngày Mới 4h - 10h (Bánh Mì / Croissant + Nước)',
-      discount: 'CHỈ TỪ 43K',
-      image: '/images/promo_3.png',
-      cta: 'Đặt Combo Sáng',
-      link: '/khuyenmai'
-    }
-  ];
+  // 3 Highlight Posters Chương Trình Ưu Đãi Dọc 3x4 (Supabase Cloud Storage)
+  const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [];
 
-  const rawDishes = (siteConfig.newDishesList && siteConfig.newDishesList.length > 0)
+  const newDishesItems = (siteConfig.newDishesList && siteConfig.newDishesList.length > 0)
     ? siteConfig.newDishesList
     : (siteConfig.homePosters && siteConfig.homePosters.length > 0 ? siteConfig.homePosters : defaultNewDishes);
 
-  const newDishesItems = rawDishes.some(d => d.image === '/images/promo_banner.jpg' || d.image === '/images/signature_drinks.jpg' || d.image === '/images/journey_espresso.jpg')
-    ? defaultNewDishes
-    : rawDishes;
-
-  const rawPromos = (siteConfig.promotionsList && siteConfig.promotionsList.length > 0)
+  const promotionsItems = (siteConfig.promotionsList && siteConfig.promotionsList.length > 0)
     ? siteConfig.promotionsList
     : defaultPromotions;
-
-  const promotionsItems = rawPromos.some(p => p.image === '/images/promo_banner.jpg' || p.image === '/images/signature_drinks.jpg' || p.image === '/images/journey_espresso.jpg')
-    ? defaultPromotions
-    : rawPromos;
 
   const visibleCount = isMobile ? 1 : 3;
 
