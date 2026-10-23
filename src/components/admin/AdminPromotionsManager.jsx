@@ -80,7 +80,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       tag: 'ƯU ĐÃI HOT',
       title: 'Chương Trình Ưu Đãi Mới COFFEE 24/24',
       discount: 'GIẢM 25%',
-      image: '/images/promo_banner.jpg',
+      image: DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
       cta: 'Nhận Ưu Đãi',
       link: '/khuyenmai'
     };
@@ -219,13 +219,13 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-white">Quản Lý Chương Trình Ưu Đãi</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-white">Quản Lý Trang Khuyến Mãi & Ưu Đãi</h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30">
                 {promotions.length} Ưu Đãi
               </span>
             </div>
             <p className="text-xs sm:text-sm text-neutral-400 mt-1">
-              Quản lý thẻ poster dọc 3x4 các chương trình khuyến mãi, giờ vàng, voucher và combo trên Trang Chủ.
+              Quản lý các poster khuyến mãi 3:4, voucher và combo đồng bộ trực tiếp giữa Trang Khuyến Mãi (/khuyenmai) và khối Ưu Đãi trên Trang Chủ.
             </p>
           </div>
         </div>
@@ -440,7 +440,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                         src={promo.image} 
                         alt={promo.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => { e.currentTarget.src = '/images/promo_banner.jpg'; }}
+                        onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
                       />
                       {promo.tag && (
                         <div className="absolute top-2.5 left-2.5 z-10">
@@ -560,7 +560,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                     src={promo.image} 
                     alt={promo.title}
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = '/images/promo_banner.jpg'; }}
+                    onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
                   />
                   <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center gap-1.5 text-white text-xs font-bold cursor-pointer transition-opacity backdrop-blur-xs">
                     <Upload className="w-5 h-5 text-orange-400" />

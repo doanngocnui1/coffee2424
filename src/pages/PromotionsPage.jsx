@@ -24,8 +24,18 @@ import {
   PhoneCall
 } from 'lucide-react';
 import { PROMOTIONS, PROMOTION_CATEGORIES } from '../data/promotions';
+import { getSiteConfig } from '../data/siteConfig';
 
 export default function PromotionsPage({ navigate }) {
+  const [siteConfig] = useState(() => getSiteConfig());
+  const activePromo = (siteConfig?.promotionsList && siteConfig.promotionsList.length > 0)
+    ? siteConfig.promotionsList[0]
+    : null;
+  const heroImage = activePromo?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
+  const heroTitle = activePromo?.title || 'Giờ Vàng Giảm 40% Tất Cả Đồ Uống';
+  const heroTag = activePromo?.tag || 'ƯU ĐÃI NỔI BẬT NHẤT';
+  const heroDiscount = activePromo?.discount || 'GIẢM 40%';
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [copiedCode, setCopiedCode] = useState(null);
   const [expandedConditions, setExpandedConditions] = useState({});
@@ -150,9 +160,10 @@ export default function PromotionsPage({ navigate }) {
                 <div className="relative rounded-[32px] overflow-hidden border border-white/80 shadow-2xl bg-white/70">
                   <div className="relative h-72 sm:h-96 overflow-hidden">
                     <img 
-                      src="/images/promo_banner.jpg" 
-                      alt="Khuyến mãi đặc sắc Coffee 24/24" 
+                      src={heroImage} 
+                      alt={heroTitle} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      onError={(e) => { e.currentTarget.src = 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/90 via-[#2b170e]/20 to-transparent" />
                     
@@ -161,13 +172,13 @@ export default function PromotionsPage({ navigate }) {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider flex items-center gap-1.5">
                           <Flame className="w-4 h-4 fill-orange-600 text-orange-600" />
-                          ƯU ĐÃI NỔI BẬT NHẤT
+                          {heroTag}
                         </span>
                         <span className="text-xs font-black bg-red-600 text-white px-2.5 py-0.5 rounded-full">
-                          GIẢM 40%
+                          {heroDiscount}
                         </span>
                       </div>
-                      <div className="text-base font-black text-[#2b170e]">Giờ Vàng Giảm 40% Tất Cả Đồ Uống</div>
+                      <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
                       <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
                         <span>Mã: <strong className="font-mono text-[#8c5932] font-black">HAPPY40</strong></span>
                         <span className="text-[#8c5932] font-bold">16:00 - 19:00 Mỗi ngày</span>
