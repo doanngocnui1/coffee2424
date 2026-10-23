@@ -14,17 +14,24 @@ import {
   Briefcase 
 } from 'lucide-react';
 import { getSiteConfig } from '../data/siteConfig';
+import { getBranches } from '../data/branches';
 
 export default function AboutPage({ navigate }) {
   const [config, setConfig] = useState(getSiteConfig);
+  const [branches, setBranches] = useState(getBranches);
 
   useEffect(() => {
     const handleUpdate = () => setConfig(getSiteConfig());
+    const handleBranches = () => setBranches(getBranches());
     window.addEventListener('site-config-updated', handleUpdate);
+    window.addEventListener('branches-updated', handleBranches);
     window.addEventListener('storage', handleUpdate);
+    window.addEventListener('storage', handleBranches);
     return () => {
       window.removeEventListener('site-config-updated', handleUpdate);
+      window.removeEventListener('branches-updated', handleBranches);
       window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('storage', handleBranches);
     };
   }, []);
 
@@ -206,43 +213,46 @@ export default function AboutPage({ navigate }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="ios-glass-card rounded-[32px] overflow-hidden group">
-            <div className="h-64 sm:h-72 overflow-hidden bg-stone-100">
-              <img 
-                src="/images/branch_downtown.jpg" 
-                alt="Chi nhánh 413 Phan Huy Ích" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-            </div>
-            <div className="p-8 space-y-3">
-              <span className="text-xs sm:text-sm font-bold text-[#8c5932] uppercase tracking-wider block">
-                CHI NHÁNH 413 PHAN HUY ÍCH
-              </span>
-              <h3 className="text-2xl font-black text-[#2b170e]">413 Phan Huy Ích, P. An Hội Tây</h3>
-              <p className="text-base text-[#4a3528] leading-relaxed">
-                Không gian 2 tầng rộng thoáng, máy lạnh mát rượi 24/24, ổ cắm 3 chấu từng bàn, phục vụ mì xào & bánh nướng thâu đêm.
-              </p>
-            </div>
-          </div>
+          {branches.map((branch, idx) => (
+            <div key={branch.id || idx} className="ios-glass-card rounded-[32px] overflow-hidden group flex flex-col justify-between">
+              <div>
+                <div className="h-64 sm:h-72 overflow-hidden bg-stone-100 relative">
+                  <img 
+                    src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
+                    alt={branch.name || branch.shortName} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold border border-white/20">
+                      {branch.hours || 'Mở cửa 24/7'}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-8 space-y-3">
+                  <span className="text-xs sm:text-sm font-bold text-[#8c5932] uppercase tracking-wider block">
+                    {branch.shortName ? `CHI NHÁNH ${branch.shortName.toUpperCase()}` : (branch.name || '').toUpperCase()}
+                  </span>
+                  <h3 className="text-2xl font-black text-[#2b170e]">
+                    {branch.address}
+                  </h3>
+                  <p className="text-base text-[#4a3528] leading-relaxed">
+                    {branch.description}
+                  </p>
+                </div>
+              </div>
 
-          <div className="ios-glass-card rounded-[32px] overflow-hidden group">
-            <div className="h-64 sm:h-72 overflow-hidden bg-stone-100">
-              <img 
-                src="/images/branch_rooftop.jpg" 
-                alt="Chi nhánh 96 Đường D5" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
+              {branch.features && Array.isArray(branch.features) && branch.features.length > 0 && (
+                <div className="px-8 pb-6 flex flex-wrap gap-2">
+                  {branch.features.map((feat, fIdx) => (
+                    <span key={fIdx} className="text-xs font-medium px-3 py-1 rounded-full bg-white/70 text-[#5c3d2e] border border-stone-200/60 shadow-2xs">
+                      {feat}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="p-8 space-y-3">
-              <span className="text-xs sm:text-sm font-bold text-[#8c5932] uppercase tracking-wider block">
-                CHI NHÁNH 96 ĐƯỜNG D5
-              </span>
-              <h3 className="text-2xl font-black text-[#2b170e]">96 Đường D5, P. Thạnh Mỹ Tây</h3>
-              <p className="text-base text-[#4a3528] leading-relaxed">
-                Bàn dài học nhóm chuyên biệt, wifi Gigabit cực mạnh, góc sofa êm ái xả stress và ngắm phố đêm Sài Gòn.
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="text-center pt-6">

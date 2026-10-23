@@ -22,7 +22,9 @@ import {
   ChevronRight,
   Info,
   PhoneCall,
-  X
+  X,
+  List,
+  LayoutGrid
 } from 'lucide-react';
 import { PROMOTIONS, PROMOTION_CATEGORIES } from '../data/promotions';
 import { getSiteConfig, DEFAULT_SITE_CONFIG } from '../data/siteConfig';
@@ -64,6 +66,7 @@ export default function PromotionsPage({ navigate }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [copiedCode, setCopiedCode] = useState(null);
   const [selectedDetailPromo, setSelectedDetailPromo] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' (ưu tiên mặc định) | 'grid'
 
   // Khóa cuộn màn hình và phím ESC khi mở modal xem chi tiết
   useEffect(() => {
@@ -224,7 +227,7 @@ export default function PromotionsPage({ navigate }) {
         {/* 2. CATEGORY FILTER TABS & VOUCHER GRID */}
         <section id="voucher-grid" className="space-y-8">
           
-          {/* Section title & Subtext */}
+          {/* Section title & View Mode Switcher */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-2">
               <span className="text-xs font-black text-[#8c5932] uppercase tracking-widest flex items-center gap-1.5">
@@ -235,12 +238,44 @@ export default function PromotionsPage({ navigate }) {
                 Săn Phiếu Quà Tặng & Voucher
               </h2>
               <p className="text-sm sm:text-base text-[#5c3d2e]">
-                Bấm "Chép mã" hoặc "Dùng ngay" để tự động áp dụng ưu đãi khi chọn món.
+                Tổng hợp các voucher giảm giá và ưu đãi độc quyền dành riêng cho bạn tại COFFEE 24/24.
               </p>
             </div>
 
-            <div className="text-sm font-bold text-[#5c3d2e] bg-white/70 border border-white/90 px-4 py-2 rounded-full w-fit shadow-xs">
-              Hiển thị <span className="font-black text-[#2b170e]">{filteredPromotions.length}</span> ưu đãi
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="text-sm font-bold text-[#5c3d2e] bg-white/70 border border-white/90 px-4 py-2 rounded-full w-fit shadow-xs">
+                Hiển thị <span className="font-black text-[#2b170e]">{filteredPromotions.length}</span> ưu đãi
+              </div>
+
+              {/* View Mode Toggle: Danh sách (Ưu tiên mặc định) & Lưới */}
+              <div className="inline-flex items-center bg-white/80 p-1 rounded-full border border-white/90 shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === 'list'
+                      ? 'bg-[#2b170e] text-white shadow-xs font-black'
+                      : 'text-[#5c3d2e] hover:text-[#2b170e]'
+                  }`}
+                  title="Xem dạng danh sách (Ưu tiên)"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Danh sách</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-[#2b170e] text-white shadow-xs font-black'
+                      : 'text-[#5c3d2e] hover:text-[#2b170e]'
+                  }`}
+                  title="Xem dạng lưới"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Dạng lưới</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -274,142 +309,286 @@ export default function PromotionsPage({ navigate }) {
             })}
           </div>
 
-          {/* Voucher Ticket Stubs Grid (Portrait 3:4 Cards - Clean, Crisp & Clickable) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPromotions.map((promo, idx) => (
-              <div 
-                key={promo.id || idx}
-                onClick={() => setSelectedDetailPromo(promo)}
-                className="ios-glass-card rounded-[32px] overflow-hidden flex flex-col justify-between group relative border border-white/80 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 bg-white/75 backdrop-blur-xl cursor-pointer"
-              >
-                {/* TOP: Image (3:4 Ratio), Badges & Overlays */}
-                <div>
-                  <div className="relative w-full aspect-[3/4] bg-stone-900 overflow-hidden rounded-t-[32px]">
-                    <img 
-                      src={promo.image} 
-                      alt={promo.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
-                    
-                    {/* Floating badges */}
-                    <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                      <span className="px-3.5 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-xs font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
-                        <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
-                        {promo.badge || promo.tag || 'HOT DEAL 🔥'}
-                      </span>
-                    </div>
+          {/* HIỂN THỊ DẠNG DANH SÁCH (ƯU TIÊN MẶC ĐỊNH) */}
+          {viewMode === 'list' ? (
+            <div className="space-y-6">
+              {filteredPromotions.map((promo, idx) => {
+                const hasButtons = !(promo.showVoucherCode === false && promo.showCopyBtn === false && promo.showCtaBtn === false);
 
-                    <div className="absolute top-3.5 right-3.5">
-                      <span className="px-3.5 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
-                        {promo.discount || 'ƯU ĐÃI'}
-                      </span>
-                    </div>
-
-                    {/* Time validity tag */}
-                    <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
-                      <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
-                        <Clock className="w-3.5 h-3.5 text-amber-300" />
-                        {promo.validUntil || 'Cả ngày & đêm 24/24'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* MIDDLE BODY: Title, Subtitle & Click hint (NO LONG DESCRIPTION CLUTTER) */}
-                  <div className="p-6 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
-                        {promo.subtitle || 'Ưu Đãi Đặc Quyền'}
-                      </span>
-                      <span className="text-sm font-black text-[#8c5932]">
-                        {promo.discountValue || promo.discount}
-                      </span>
-                    </div>
-
-                    <h3 className="font-black text-[#2b170e] text-lg sm:text-xl leading-snug group-hover:text-[#8c5932] transition-colors">
-                      {promo.title}
-                    </h3>
-
-                    {/* Click prompt to view details */}
-                    <div className="pt-2 flex items-center justify-between text-xs text-[#8c5932] font-bold">
-                      <span className="inline-flex items-center gap-1.5 group-hover:underline">
-                        <span>Nhấn để xem chi tiết & thể lệ</span>
-                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* TICKET NOTCH PERFORATION CUTOUTS */}
-                <div className="relative my-0">
-                  <div className="border-t-2 border-dashed border-[#dfd4c7] w-full" />
-                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-r border-[#dfd4c7]" />
-                  <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-l border-[#dfd4c7]" />
-                </div>
-
-                {/* BOTTOM VOUCHER STUB ACTIONS (Controlled by Admin Toggles) */}
-                {promo.showVoucherCode === false && promo.showCopyBtn === false && promo.showCtaBtn === false ? (
-                  <div className="p-4 bg-white/40 border-t border-white/60 flex items-center justify-between text-xs font-bold text-[#8c5932]">
-                    <span>COFFEE 24/24 Đặc Quyền</span>
-                    <span className="flex items-center gap-1">Bấm Xem Chi Tiết <ArrowRight className="w-3.5 h-3.5" /></span>
-                  </div>
-                ) : (
-                  <div className="p-5 bg-white/40 border-t border-white/60 flex items-center justify-between gap-3">
-                    {promo.showVoucherCode !== false && (
-                      <div>
-                        <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
-                        <span className="text-sm sm:text-base font-mono font-black text-[#2b170e] bg-white/80 border border-white/90 px-2.5 py-1 rounded-xl inline-block shadow-xs mt-0.5">
-                          {promo.code || 'PROMO24'}
+                return (
+                  <div
+                    key={promo.id || idx}
+                    onClick={() => setSelectedDetailPromo(promo)}
+                    className="ios-glass-card rounded-[32px] overflow-hidden flex flex-col md:flex-row group relative border border-white/80 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white/75 backdrop-blur-xl cursor-pointer"
+                  >
+                    {/* LEFT: Image Poster (Tỉ lệ 3:4) & Overlays */}
+                    <div className="relative w-full md:w-72 md:aspect-[3/4] aspect-[16/10] bg-stone-900 overflow-hidden shrink-0">
+                      <img 
+                        src={promo.image} 
+                        alt={promo.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+                      
+                      {/* Floating badges */}
+                      <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-[11px] font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
+                          <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
+                          {promo.badge || promo.tag || 'HOT DEAL 🔥'}
                         </span>
                       </div>
+
+                      <div className="absolute top-3.5 right-3.5">
+                        <span className="px-3 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
+                          {promo.discount || 'ƯU ĐÃI'}
+                        </span>
+                      </div>
+
+                      {/* Time validity tag */}
+                      <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs font-bold">
+                        <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
+                          <Clock className="w-3.5 h-3.5 text-amber-300" />
+                          {promo.validUntil || 'Cả ngày & đêm 24/24'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* MIDDLE: Content (Tiêu đề, danh mục, thời gian) */}
+                    <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-3">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
+                            {promo.subtitle || 'Ưu Đãi Đặc Quyền'}
+                          </span>
+                          <span className="text-sm font-black text-[#8c5932]">
+                            {promo.discountValue || promo.discount}
+                          </span>
+                        </div>
+
+                        <h3 className="font-black text-[#2b170e] text-xl sm:text-2xl leading-snug group-hover:text-[#8c5932] transition-colors">
+                          {promo.title}
+                        </h3>
+
+                        {promo.description && (
+                          <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed line-clamp-2">
+                            {promo.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 flex items-center gap-3 text-xs text-[#7a5843]">
+                        <span className="flex items-center gap-1.5 font-bold">
+                          <Calendar className="w-3.5 h-3.5 text-[#8c5932]" />
+                          <span>Áp dụng 24/7 tại toàn bộ chi nhánh & đặt online</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* RIGHT: TICKET STUB ACTIONS (Chỉ hiện khi có ít nhất 1 nút được bật) */}
+                    {hasButtons && (
+                      <>
+                        {/* Perforation Dashed Line (Desktop) */}
+                        <div className="hidden md:flex flex-col justify-between relative self-stretch py-5 shrink-0">
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-b border-[#dfd4c7]" />
+                          <div className="border-r-2 border-dashed border-[#dfd4c7] h-full mx-auto" />
+                          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-t border-[#dfd4c7]" />
+                        </div>
+
+                        {/* Perforation Dashed Line (Mobile) */}
+                        <div className="md:hidden relative my-0">
+                          <div className="border-t-2 border-dashed border-[#dfd4c7] w-full" />
+                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-r border-[#dfd4c7]" />
+                          <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-l border-[#dfd4c7]" />
+                        </div>
+
+                        {/* Action buttons stub */}
+                        <div className="p-5 sm:p-7 bg-white/40 border-t md:border-t-0 md:border-l border-white/60 flex flex-col justify-center items-stretch md:items-end gap-3 min-w-[210px] shrink-0">
+                          {promo.showVoucherCode !== false && (
+                            <div className="text-left md:text-right">
+                              <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
+                              <span className="text-base font-mono font-black text-[#2b170e] bg-white/80 border border-white/90 px-3 py-1 rounded-xl inline-block shadow-xs mt-0.5">
+                                {promo.code || 'PROMO24'}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 w-full md:w-auto">
+                            {promo.showCopyBtn !== false && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(promo.code || 'PROMO24');
+                                }}
+                                className="flex-1 md:flex-none px-3.5 py-2.5 rounded-full bg-white/80 hover:bg-white text-[#2b170e] text-xs font-bold border border-white/90 shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                title="Sao chép mã"
+                              >
+                                {copiedCode === (promo.code || 'PROMO24') ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                                    <span className="text-emerald-700">Đã chép</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5 text-[#8c5932]" />
+                                    <span>Chép mã</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+
+                            {promo.showCtaBtn !== false && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUseNow(promo.code || 'PROMO24');
+                                }}
+                                className="flex-1 md:flex-none ios-btn-primary px-4 py-2.5 rounded-full font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                              >
+                                <span>{promo.cta || 'Dùng ngay'}</span>
+                                <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* HIỂN THỊ DẠNG LƯỚI (GRID VIEW) */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPromotions.map((promo, idx) => {
+                const hasButtons = !(promo.showVoucherCode === false && promo.showCopyBtn === false && promo.showCtaBtn === false);
+
+                return (
+                  <div 
+                    key={promo.id || idx}
+                    onClick={() => setSelectedDetailPromo(promo)}
+                    className="ios-glass-card rounded-[32px] overflow-hidden flex flex-col justify-between group relative border border-white/80 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 bg-white/75 backdrop-blur-xl cursor-pointer"
+                  >
+                    {/* TOP: Image (3:4 Ratio), Badges & Overlays */}
+                    <div>
+                      <div className="relative w-full aspect-[3/4] bg-stone-900 overflow-hidden rounded-t-[32px]">
+                        <img 
+                          src={promo.image} 
+                          alt={promo.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+                        
+                        {/* Floating badges */}
+                        <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                          <span className="px-3.5 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-xs font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
+                            <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
+                            {promo.badge || promo.tag || 'HOT DEAL 🔥'}
+                          </span>
+                        </div>
+
+                        <div className="absolute top-3.5 right-3.5">
+                          <span className="px-3.5 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
+                            {promo.discount || 'ƯU ĐÃI'}
+                          </span>
+                        </div>
+
+                        {/* Time validity tag */}
+                        <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
+                          <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
+                            <Clock className="w-3.5 h-3.5 text-amber-300" />
+                            {promo.validUntil || 'Cả ngày & đêm 24/24'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* MIDDLE BODY: Title & Subtitle (KHÔNG CÓ DÒNG HƯỚNG DẪN DƯ THỪA) */}
+                      <div className="p-6 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
+                            {promo.subtitle || 'Ưu Đãi Đặc Quyền'}
+                          </span>
+                          <span className="text-sm font-black text-[#8c5932]">
+                            {promo.discountValue || promo.discount}
+                          </span>
+                        </div>
+
+                        <h3 className="font-black text-[#2b170e] text-lg sm:text-xl leading-snug group-hover:text-[#8c5932] transition-colors">
+                          {promo.title}
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* TICKET NOTCH & STUB: Chỉ render khi có ít nhất 1 nút được bật. Nếu tắt hết thì thẻ ngắn gọn tự nhiên! */}
+                    {hasButtons && (
+                      <>
+                        <div className="relative my-0">
+                          <div className="border-t-2 border-dashed border-[#dfd4c7] w-full" />
+                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-r border-[#dfd4c7]" />
+                          <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ede6dc] border-l border-[#dfd4c7]" />
+                        </div>
+
+                        <div className="p-5 bg-white/40 border-t border-white/60 flex items-center justify-between gap-3">
+                          {promo.showVoucherCode !== false && (
+                            <div>
+                              <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
+                              <span className="text-sm sm:text-base font-mono font-black text-[#2b170e] bg-white/80 border border-white/90 px-2.5 py-1 rounded-xl inline-block shadow-xs mt-0.5">
+                                {promo.code || 'PROMO24'}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 ml-auto">
+                            {promo.showCopyBtn !== false && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(promo.code || 'PROMO24');
+                                }}
+                                className="px-3.5 py-2 rounded-full bg-white/80 hover:bg-white text-[#2b170e] text-xs font-bold border border-white/90 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                title="Sao chép mã"
+                              >
+                                {copiedCode === (promo.code || 'PROMO24') ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                                    <span className="text-emerald-700">Đã chép</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5 text-[#8c5932]" />
+                                    <span>Chép mã</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+
+                            {promo.showCtaBtn !== false && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUseNow(promo.code || 'PROMO24');
+                                }}
+                                className="ios-btn-primary px-4 py-2 rounded-full font-black text-xs shadow-md transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                              >
+                                <span>{promo.cta || 'Dùng ngay'}</span>
+                                <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </>
                     )}
 
-                    <div className="flex items-center gap-2 ml-auto">
-                      {promo.showCopyBtn !== false && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(promo.code || 'PROMO24');
-                          }}
-                          className="px-3.5 py-2 rounded-full bg-white/80 hover:bg-white text-[#2b170e] text-xs font-bold border border-white/90 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                          title="Sao chép mã"
-                        >
-                          {copiedCode === (promo.code || 'PROMO24') ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
-                              <span className="text-emerald-700">Đã chép</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5 text-[#8c5932]" />
-                              <span>Chép mã</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-
-                      {promo.showCtaBtn !== false && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUseNow(promo.code || 'PROMO24');
-                          }}
-                          className="ios-btn-primary px-4 py-2 rounded-full font-black text-xs shadow-md transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                        >
-                          <span>{promo.cta || 'Dùng ngay'}</span>
-                          <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
-                        </button>
-                      )}
-                    </div>
                   </div>
-                )}
-
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
         </section>
 
@@ -540,7 +719,7 @@ export default function PromotionsPage({ navigate }) {
       {/* 6. MODAL CHI TIẾT CHƯƠNG TRÌNH KHUYẾN MÃI (KHI BẤM VÀO THẺ) */}
       {selectedDetailPromo && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn"
           onClick={() => setSelectedDetailPromo(null)}
         >
           <div 

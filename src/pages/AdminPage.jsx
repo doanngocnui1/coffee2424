@@ -64,7 +64,7 @@ import {
   pushLocalConfigToCloud, 
   pullCloudConfigToLocal 
 } from '../data/siteConfig';
-import { supabase, isSupabaseConfigured, isLocalhost } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, isLocalhost, uploadImageToSupabase } from '../lib/supabase';
 import { getJobs, saveJobs } from '../data/jobs';
 import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
@@ -355,6 +355,7 @@ export default function AdminPage({ navigate }) {
 
   // Branches state
   const [branchesList, setBranchesList] = useState(getBranches);
+  const [uploadingBranchIdx, setUploadingBranchIdx] = useState(null);
 
   // Jobs state (12 vị trí tuyển dụng)
   const [jobsList, setJobsList] = useState(getJobs);
@@ -508,6 +509,35 @@ export default function AdminPage({ navigate }) {
     setConfig(updatedConfig);
     saveSiteConfig(updatedConfig);
     triggerAlert('Đã lưu thông tin 2 chi nhánh & Hotline thành công!');
+  };
+
+  const handleUploadBranchImage = async (e, idx) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingBranchIdx(idx);
+      const publicUrl = await uploadImageToSupabase(file, 'branches');
+      if (publicUrl) {
+        const copy = [...branchesList];
+        copy[idx].image = publicUrl;
+        setBranchesList(copy);
+        triggerAlert('Đã tải ảnh chi nhánh lên Supabase Cloud thành công!');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const copy = [...branchesList];
+          copy[idx].image = event.target?.result;
+          setBranchesList(copy);
+          triggerAlert('Đã chọn ảnh chi nhánh (lưu nội bộ). Nhớ bấm LƯU!');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Error uploading branch image:', err);
+      triggerAlert('Lỗi tải ảnh chi nhánh!');
+    } finally {
+      setUploadingBranchIdx(null);
+    }
   };
 
   const triggerAlert = (msg) => {
@@ -2140,7 +2170,7 @@ export default function AdminPage({ navigate }) {
               </div>
             )}
 
-            {/* NHÓM 5: 📍 TRANG CHI NHÁNH & HOTLINE */}
+            {/* NHÓM 5: 📍 CẤU HÌNH CHI NHÁNH & HOTLINE */}
             {hasPermission(currentUser, 'branches') && (
               <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
                 activeTab === 'branches'
@@ -2167,16 +2197,16 @@ export default function AdminPage({ navigate }) {
                     </div>
                     <div className="truncate">
                       <span className="text-sm font-extrabold text-[#1f0f09] block truncate leading-tight">
-                        Trang Chi Nhánh
+                        Cấu Hình Chi Nhánh
                       </span>
                       <span className="text-[11.5px] font-medium text-[#7a5843] block truncate mt-0.5">
-                        Hotline & 2 cơ sở 24/7
+                        Ảnh cơ sở, địa chỉ & hotline
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[11px] font-bold text-[#7a5843] bg-white/90 px-2 py-0.5 rounded-full border border-stone-200/60 shadow-2xs">
-                      2 cơ sở
+                      {branchesList.length} cơ sở
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openGroups.branches ? 'rotate-180 text-amber-600' : 'text-stone-400 group-hover:text-stone-600'}`} />
                   </div>
@@ -2206,10 +2236,25 @@ export default function AdminPage({ navigate }) {
                       className="w-full text-left px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-between text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90 group"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
+                        <ImageIcon className="w-4 h-4 text-[#8c5932] shrink-0" />
+                        <div className="truncate">
+                          <span className="text-xs sm:text-[13px] font-bold block truncate">Ảnh Không Gian & Thông Tin</span>
+                          <span className="text-[10.5px] text-[#7a5843] block truncate">Thay ảnh hiển thị Hình 5</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('branches'); scrollToAnchor('branches-locations'); setMobileSidebarOpen(false); }}
+                      className="w-full text-left px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-between text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90 group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <MapPin className="w-4 h-4 text-[#8c5932] shrink-0" />
                         <div className="truncate">
-                          <span className="text-xs sm:text-[13px] font-bold block truncate">413 PHI & 96 D5</span>
-                          <span className="text-[10.5px] text-[#7a5843] block truncate">SĐT & Menu KiotViet</span>
+                          <span className="text-xs sm:text-[13px] font-bold block truncate">Menu KiotViet & Địa Chỉ</span>
+                          <span className="text-[10.5px] text-[#7a5843] block truncate">Hotline từng quán & bản đồ</span>
                         </div>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:translate-x-0.5 transition-transform" />
@@ -4437,59 +4482,100 @@ export default function AdminPage({ navigate }) {
           </div>
         )}
 
-        {/* TAB 4: 2 CHI NHÁNH & HOTLINE */}
+        {/* TAB 4: CẤU HÌNH CHI NHÁNH & HOTLINE */}
         {activeTab === 'branches' && (
-          <div className="space-y-6 max-w-4xl">
-            <div>
-              <h2 className="text-xl font-black text-white flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-amber-500" />
-                <span>Quản Lý 2 Chi Nhánh & Hotline Tổng</span>
-              </h2>
-              <p className="text-xs text-neutral-400 mt-1">
-                Cập nhật chính xác số điện thoại và đường dẫn đặt hàng trực tuyến KiotViet cho từng chi nhánh.
-              </p>
+          <div className="space-y-8 max-w-5xl">
+            {/* Header Box & Quick Actions */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-white flex items-center gap-2">
+                    Cấu Hình Chi Nhánh & Hotline Tổng
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                      {branchesList.length} Chi Nhánh Hoạt Động
+                    </span>
+                  </h2>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    Thay ảnh hiển thị không gian quán (Hình 5), mô tả cơ sở, hotline và đường dẫn đặt hàng KiotViet.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => window.open('/gioithieu', '_blank')}
+                  className="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all"
+                  title="Xem giao diện hiển thị hình 5 trên trang Giới Thiệu"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Xem Trang Giới Thiệu</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveBranches}
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black inline-flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-all"
+                >
+                  <Save className="w-4 h-4 stroke-[2.5]" />
+                  <span>LƯU TẤT CẢ THAY ĐỔI</span>
+                </button>
+              </div>
             </div>
 
-            {/* Hotline tổng */}
-            <div id="branches-hotline" className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800 space-y-4">
-              <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">
-                1. Hotline Tổng & Email CSKH
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* PHẦN 1: HOTLINE TỔNG & CSKH TOÀN HỆ THỐNG */}
+            <div id="branches-hotline" className="bg-neutral-950 p-6 sm:p-7 rounded-3xl border border-neutral-800 space-y-5">
+              <div className="flex items-center gap-2 pb-2 border-b border-neutral-800">
+                <PhoneCall className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">
+                  1. Hotline Tổng & Kênh Tiếp Nhận CSKH 24/7
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-xs text-neutral-400 block mb-1 font-bold">
+                  <label className="text-xs text-neutral-300 block mb-1.5 font-bold">
                     Hotline Tổng Phục Vụ 24/7 *
                   </label>
                   <input
                     type="text"
                     value={config.hotlineGeneral || '0906 916 816'}
                     onChange={(e) => setConfig({ ...config, hotlineGeneral: e.target.value })}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-bold"
+                    className="w-full bg-neutral-900 border border-neutral-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono font-bold transition-colors"
                   />
-                  <span className="text-[11px] text-neutral-500 mt-1 block">Mặc định: 0906 916 816</span>
+                  <span className="text-[11px] text-neutral-500 mt-1 block">Hotline chính tiếp nhận phản ánh, đặt chỗ và giải đáp thắc mắc</span>
                 </div>
 
                 <div>
-                  <label className="text-xs text-neutral-400 block mb-1 font-bold">
-                    Email Liên Hệ
+                  <label className="text-xs text-neutral-300 block mb-1.5 font-bold">
+                    Email Hỗ Trợ & Đối Tác
                   </label>
                   <input
                     type="text"
                     value={config.email || 'contact@coffee2424.com'}
                     onChange={(e) => setConfig({ ...config, email: e.target.value })}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white"
+                    className="w-full bg-neutral-900 border border-neutral-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-white transition-colors"
                   />
-                  <span className="text-[11px] text-neutral-500 mt-1 block">Email hỗ trợ khách hàng</span>
+                  <span className="text-[11px] text-neutral-500 mt-1 block">Email tiếp nhận liên hệ hợp tác và CSKH</span>
                 </div>
               </div>
             </div>
 
-            {/* Chi Nhánh Thực Tế */}
-            <div id="branches-locations" className="space-y-4">
-              <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
-                <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">
-                  2. Thông Tin Chi Tiết Các Chi Nhánh ({branchesList.length})
-                </h3>
+            {/* PHẦN 2: THÔNG TIN CHI TIẾT & THAY ẢNH TỪNG CHI NHÁNH (HÌNH 5) */}
+            <div id="branches-locations" className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-neutral-800">
+                <div>
+                  <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-amber-400" />
+                    <span>2. Quản Lý Ảnh & Thông Tin Từng Chi Nhánh ({branchesList.length})</span>
+                  </h3>
+                  <p className="text-xs text-neutral-400 mt-0.5">
+                    Ảnh hiển thị và nội dung dưới đây xuất hiện trực tiếp tại mục Hệ Thống Chi Nhánh (Hình 5).
+                  </p>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -4512,114 +4598,311 @@ export default function AdminPage({ navigate }) {
                       description: 'Không gian cà phê mở cửa 24/7 chào đón bạn.'
                     };
                     setBranchesList(prev => [...prev, newBranch]);
-                    triggerAlert('Đã thêm 1 chi nhánh mới vào danh sách. Vui lòng nhập thông tin & link KiotViet rồi bấm LƯU!');
+                    triggerAlert('Đã thêm 1 chi nhánh mới vào danh sách. Vui lòng chỉnh ảnh, thông tin rồi bấm LƯU!');
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 cursor-pointer transition-all"
+                  className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 cursor-pointer transition-all self-start sm:self-auto"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Thêm Chi Nhánh Mới</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {branchesList.map((branch, idx) => (
-                  <div key={branch.id || idx} className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800 space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
-                      <span className="text-xs font-mono font-black px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        MÃ: {branch.code || `CN${idx + 1}`}
-                      </span>
+                  <div key={branch.id || idx} className="bg-neutral-950 p-6 sm:p-7 rounded-[32px] border border-neutral-800 space-y-5 shadow-xl relative flex flex-col justify-between">
+                    
+                    {/* Top Bar: Code & Actions */}
+                    <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-emerald-400 font-bold">24/7 OPEN</span>
-                        {idx >= 2 && (
+                        <span className="text-xs font-mono font-black px-3 py-1 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          MÃ: {branch.code || `CN${idx + 1}`}
+                        </span>
+                        <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-lg border border-emerald-500/20">
+                          {branch.hours || 'Mở cửa 24/7'}
+                        </span>
+                      </div>
+
+                      {idx >= 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Bạn có chắc muốn xóa chi nhánh "${branch.name}"?`)) {
+                              setBranchesList(prev => prev.filter((_, i) => i !== idx));
+                              triggerAlert('Đã xóa chi nhánh. Hãy bấm LƯU để lưu thay đổi!');
+                            }
+                          }}
+                          className="p-1.5 rounded-lg bg-neutral-900 hover:bg-rose-950 text-neutral-400 hover:text-rose-400 transition-colors cursor-pointer"
+                          title="Xóa chi nhánh này"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* VỊ TRÍ THAY ẢNH HIỂN THỊ CỦA CHI NHÁNH Ở HÌNH 5 */}
+                    <div className="space-y-3 p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800/90">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-amber-300 font-black flex items-center gap-1.5 uppercase tracking-wide">
+                          <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Ảnh Không Gian Chi Nhánh (Hình 5) *</span>
+                        </label>
+                        <span className="text-[11px] text-neutral-400">Tỉ lệ đẹp: 16:9 hoặc 4:3</span>
+                      </div>
+
+                      {/* Image Live Preview */}
+                      <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 group shadow-inner">
+                        <img 
+                          src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
+                          alt={branch.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white text-[11px] font-bold">
+                          <span className="truncate">{branch.shortName || branch.name}</span>
+                          <span className="text-amber-300 shrink-0">Live Preview</span>
+                        </div>
+                      </div>
+
+                      {/* Upload / Change Controls */}
+                      <div className="space-y-2 pt-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input 
+                            type="file" 
+                            id={`branch-img-upload-${idx}`} 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleUploadBranchImage(e, idx)} 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById(`branch-img-upload-${idx}`)?.click()}
+                            disabled={uploadingBranchIdx === idx}
+                            className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition-all disabled:opacity-50"
+                          >
+                            {uploadingBranchIdx === idx ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Đang Tải Ảnh...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>Tải Ảnh Mới Lên</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Quick Preset Buttons */}
                           <button
                             type="button"
                             onClick={() => {
-                              if (confirm(`Bạn có chắc muốn xóa chi nhánh "${branch.name}"?`)) {
-                                setBranchesList(prev => prev.filter((_, i) => i !== idx));
-                                triggerAlert('Đã xóa chi nhánh. Hãy bấm LƯU để lưu thay đổi!');
-                              }
+                              const copy = [...branchesList];
+                              copy[idx].image = '/images/branch_downtown.jpg';
+                              setBranchesList(copy);
+                              triggerAlert('Đã áp dụng ảnh mặc định Downtown (Phan Huy Ích)!');
                             }}
-                            className="p-1 text-neutral-500 hover:text-rose-400 cursor-pointer"
-                            title="Xóa chi nhánh này"
+                            className="px-2.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700 cursor-pointer transition-colors"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            Ảnh Downtown
                           </button>
-                        )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const copy = [...branchesList];
+                              copy[idx].image = '/images/branch_rooftop.jpg';
+                              setBranchesList(copy);
+                              triggerAlert('Đã áp dụng ảnh mặc định Rooftop (Đường D5)!');
+                            }}
+                            className="px-2.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700 cursor-pointer transition-colors"
+                          >
+                            Ảnh Rooftop
+                          </button>
+                        </div>
+
+                        {/* Direct URL input */}
+                        <div>
+                          <input
+                            type="text"
+                            value={branch.image || ''}
+                            onChange={(e) => {
+                              const copy = [...branchesList];
+                              copy[idx].image = e.target.value;
+                              setBranchesList(copy);
+                            }}
+                            placeholder="Hoặc dán URL ảnh trực tiếp (https://...)"
+                            className="w-full bg-neutral-950 border border-neutral-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-neutral-300 font-mono transition-colors"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    {/* MÔ TẢ KHÔNG GIAN CHI NHÁNH (HIỂN THỊ DƯỚI ẢNH Ở HÌNH 5) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-neutral-300 block font-bold">
+                          Mô Tả Không Gian Chi Nhánh (Hiển thị dưới ảnh ở Hình 5) *
+                        </label>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={branch.description || ''}
+                        onChange={(e) => {
+                          const copy = [...branchesList];
+                          copy[idx].description = e.target.value;
+                          setBranchesList(copy);
+                        }}
+                        placeholder="VD: Không gian 2 tầng rộng thoáng, máy lạnh mát rượi 24/24, ổ cắm 3 chấu từng bàn, phục vụ mì xào & bánh nướng thâu đêm."
+                        className="w-full bg-neutral-900 border border-neutral-800 focus:border-amber-500 rounded-xl p-3 text-xs text-white leading-relaxed transition-colors"
+                      />
+                      <span className="text-[11px] text-neutral-500 block">
+                        Đoạn văn này xuất hiện trực tiếp ngay dưới ảnh chi nhánh trên trang Giới Thiệu.
+                      </span>
+                    </div>
+
+                    {/* Tên & Tên ngắn gọn */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
-                        <label className="text-xs text-neutral-400 block mb-1">Tên Chi Nhánh</label>
+                        <label className="text-xs text-neutral-400 block mb-1 font-bold">Tên Đầy Đủ Chi Nhánh</label>
                         <input
                           type="text"
-                          value={branch.name}
+                          value={branch.name || ''}
                           onChange={(e) => {
                             const copy = [...branchesList];
                             copy[idx].name = e.target.value;
                             setBranchesList(copy);
                           }}
                           className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-bold"
+                          placeholder="Coffee 24/24 413PHI"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs text-neutral-400 block mb-1">Hotline Chi Nhánh (Chính xác)</label>
+                        <label className="text-xs text-neutral-400 block mb-1 font-bold">Tên Ngắn Gọn (Tiêu Đề Thẻ)</label>
                         <input
                           type="text"
-                          value={branch.hotline}
+                          value={branch.shortName || ''}
+                          onChange={(e) => {
+                            const copy = [...branchesList];
+                            copy[idx].shortName = e.target.value;
+                            setBranchesList(copy);
+                          }}
+                          className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-bold"
+                          placeholder="413 Phan Huy Ích"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hotline & Giờ mở cửa */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="text-xs text-neutral-400 block mb-1 font-bold">
+                          Hotline Chi Nhánh (Chính xác) *
+                        </label>
+                        <input
+                          type="text"
+                          value={branch.hotline || ''}
                           onChange={(e) => {
                             const copy = [...branchesList];
                             copy[idx].hotline = e.target.value;
                             setBranchesList(copy);
                           }}
-                          className="w-full bg-neutral-900 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white font-black"
+                          className="w-full bg-neutral-900 border border-amber-500/50 rounded-xl px-3 py-2 text-xs text-amber-300 font-mono font-bold"
+                          placeholder="0986511897"
                         />
                         <span className="text-[11px] text-amber-400/80 mt-0.5 block">
-                          {branch.code === '413PHI' ? 'Hotline PHI: 0986511897' : 'Hotline D5: 0347374858'}
+                          {branch.code === '413PHI' ? 'Hotline chuẩn PHI: 0986511897' : 'Hotline chuẩn D5: 0347374858'}
                         </span>
                       </div>
 
                       <div>
-                        <label className="text-xs text-neutral-400 block mb-1">Địa chỉ thực tế</label>
+                        <label className="text-xs text-neutral-400 block mb-1 font-bold">Giờ Hoạt Động</label>
                         <input
                           type="text"
-                          value={branch.address}
+                          value={branch.hours || 'Mở cửa 24/7'}
                           onChange={(e) => {
                             const copy = [...branchesList];
-                            copy[idx].address = e.target.value;
+                            copy[idx].hours = e.target.value;
                             setBranchesList(copy);
                           }}
                           className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-neutral-400 block mb-1">Link Web Menu KiotViet</label>
-                        <input
-                          type="text"
-                          value={branch.menuUrl}
-                          onChange={(e) => {
-                            const copy = [...branchesList];
-                            copy[idx].menuUrl = e.target.value;
-                            setBranchesList(copy);
-                          }}
-                          className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-amber-400 font-mono"
+                          placeholder="Mở cửa 24/7"
                         />
                       </div>
                     </div>
+
+                    {/* Địa chỉ thực tế */}
+                    <div>
+                      <label className="text-xs text-neutral-400 block mb-1 font-bold">Địa Chỉ Thực Tế</label>
+                      <input
+                        type="text"
+                        value={branch.address || ''}
+                        onChange={(e) => {
+                          const copy = [...branchesList];
+                          copy[idx].address = e.target.value;
+                          setBranchesList(copy);
+                        }}
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white"
+                        placeholder="VD: 413 Phan huy Ích, Phường An Hội Tây - TP. Hồ Chí Minh"
+                      />
+                    </div>
+
+                    {/* Link Web Menu KiotViet */}
+                    <div>
+                      <label className="text-xs text-neutral-400 block mb-1 font-bold">
+                        Đường Dẫn Menu Web KiotViet
+                      </label>
+                      <input
+                        type="text"
+                        value={branch.menuUrl || ''}
+                        onChange={(e) => {
+                          const copy = [...branchesList];
+                          copy[idx].menuUrl = e.target.value;
+                          setBranchesList(copy);
+                        }}
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-amber-400 font-mono"
+                        placeholder="https://coffee2424.web-store.online/menu/..."
+                      />
+                    </div>
+
+                    {/* Tiện ích nổi bật (features) */}
+                    <div>
+                      <label className="text-xs text-neutral-400 block mb-1 font-bold">
+                        Tiện Ích Nổi Bật (Cách nhau bởi dấu phẩy)
+                      </label>
+                      <input
+                        type="text"
+                        value={Array.isArray(branch.features) ? branch.features.join(', ') : (branch.features || '')}
+                        onChange={(e) => {
+                          const copy = [...branchesList];
+                          copy[idx].features = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                          setBranchesList(copy);
+                        }}
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white"
+                        placeholder="Máy lạnh 2 tầng, Ổ cắm điện, Wifi Gigabit, Giữ xe miễn phí"
+                      />
+                    </div>
+
                   </div>
                 ))}
               </div>
             </div>
 
-            <button
-              onClick={handleSaveBranches}
-              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-2 shadow-lg cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>LƯU THAY ĐỔI CHI NHÁNH & HOTLINE</span>
-            </button>
+            {/* Bottom Save Bar */}
+            <div className="pt-4 flex items-center justify-between border-t border-neutral-800">
+              <span className="text-xs text-neutral-400">
+                Hãy bấm Lưu để áp dụng toàn bộ ảnh và thông tin chi nhánh lên website.
+              </span>
+              <button
+                type="button"
+                onClick={handleSaveBranches}
+                className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer active:scale-95 transition-all"
+              >
+                <Save className="w-4 h-4 stroke-[2.5]" />
+                <span>LƯU THAY ĐỔI CHI NHÁNH & HOTLINE</span>
+              </button>
+            </div>
           </div>
         )}
 

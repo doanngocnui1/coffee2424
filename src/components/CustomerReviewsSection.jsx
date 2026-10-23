@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
-  ExternalLink
+  ExternalLink,
+  PhoneCall
 } from 'lucide-react';
 import { getReviews, saveReviews } from '../data/reviews';
 import { getSiteConfig } from '../data/siteConfig';
@@ -132,9 +133,19 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
     }, 1800);
   };
 
-  const handleOpenReviewZalo = () => {
-    const zaloUrl = currentReviewsConfig?.reviewLink || 'https://zalo.me/0906916816';
-    window.open(zaloUrl, '_blank', 'noopener,noreferrer');
+  const handleOpenReviewClick = () => {
+    const isMobileDevice = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const phone = currentReviewsConfig?.reviewPhone || '0906 916 816';
+    const cleanPhone = phone.replace(/\s+/g, '');
+    const zaloUrl = currentReviewsConfig?.reviewLink || `https://zalo.me/${cleanPhone}`;
+
+    // Mở Zalo (trên điện thoại tự động mở app Zalo, trên máy tính mở tab zalo.me / web zalo)
+    try {
+      window.open(zaloUrl, '_blank', 'noopener,noreferrer');
+    } catch (_) {}
+
+    // Đồng thời mở màn hình tiếp nhận đánh giá gửi tới hotline chủ quán
+    setIsModalOpen(true);
   };
 
   return (
@@ -335,34 +346,65 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
 
         <button
           type="button"
-          onClick={handleOpenReviewZalo}
-          className="ios-btn-primary text-xs sm:text-sm font-black px-7 py-3 rounded-full cursor-pointer flex items-center gap-2.5 shadow-md hover:shadow-xl active:scale-95 transition-all"
-          title="Mở chat Zalo 0906 916 816 để gửi đánh giá & cảm nhận"
+          onClick={handleOpenReviewClick}
+          className="ios-btn-primary text-xs sm:text-sm font-black px-7 py-3 rounded-full cursor-pointer flex items-center gap-2 shadow-md hover:shadow-xl active:scale-95 transition-all"
+          title="Gửi đánh giá và cảm nhận của bạn"
         >
           <MessageCircle className="w-4 h-4 text-white stroke-[2.5]" />
-          <span>Gửi Đánh Giá Qua Zalo (0906 916 816)</span>
+          <span>Gửi Đánh Giá Của Bạn</span>
           <ExternalLink className="w-3.5 h-3.5 opacity-80" />
         </button>
       </div>
 
-      {/* Writing Modal (Frosted Glass) */}
+      {/* Writing & Hotline Modal (Frosted Glass) */}
       {isModalOpen && (
         <div 
           onClick={() => setIsModalOpen(false)}
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
             className="bg-white/95 backdrop-blur-2xl border border-white rounded-[32px] max-w-lg w-full p-6 sm:p-8 space-y-5 text-[#2b170e] shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
           >
             <div className="flex items-center justify-between border-b border-[#2b170e]/10 pb-3">
-              <h3 className="font-black text-lg uppercase text-[#2b170e]">Chia Sẻ Trải Nghiệm</h3>
+              <h3 className="font-black text-base sm:text-lg uppercase text-[#2b170e] flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-[#8c5932]" />
+                <span>Gửi Đánh Giá Của Bạn</span>
+              </h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-stone-500 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Đóng"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Banner hướng dẫn theo đúng yêu cầu người dùng */}
+            <div className="p-4 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7] space-y-3">
+              <p className="text-xs sm:text-sm text-[#4a3528] leading-relaxed font-medium">
+                Gửi đánh giá của bạn tới hotline chủ quán để chúng tôi kịp thời tiếp nhận thông tin quý giá từ bạn.
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <a
+                  href={`tel:${(currentReviewsConfig?.reviewPhone || '0906 916 816').replace(/\s+/g, '')}`}
+                  className="px-4 py-2.5 rounded-xl bg-[#2b170e] hover:bg-[#3d2215] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all"
+                >
+                  <PhoneCall className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Hotline: {currentReviewsConfig?.reviewPhone || '0906 916 816'}</span>
+                </a>
+
+                <a
+                  href={currentReviewsConfig?.reviewLink || 'https://zalo.me/0906916816'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-white" />
+                  <span>Mở Chat Zalo Ngay</span>
+                </a>
+              </div>
             </div>
 
             {submittedSuccess ? (
@@ -373,46 +415,50 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
               </div>
             ) : (
               <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div className="text-xs font-bold text-[#8c5932] uppercase tracking-wider">
+                  Hoặc gửi đánh giá trực tiếp tại đây:
+                </div>
+
                 <div>
-                  <label className="text-sm text-[#4a3427] font-bold block mb-1">Tên của bạn *</label>
+                  <label className="text-xs text-[#4a3427] font-bold block mb-1">Tên của bạn *</label>
                   <input
                     type="text"
                     required
                     value={formData.author}
                     onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                     placeholder="VD: Hoàng Nam"
-                    className="w-full bg-white/80 border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-[#2b170e] focus:outline-none focus:border-[#2b170e]"
+                    className="w-full bg-white/80 border border-stone-200 rounded-xl px-4 py-2 text-xs sm:text-sm text-[#2b170e] focus:outline-none focus:border-[#2b170e]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm text-[#4a3427] font-bold block mb-1">Món yêu thích nhất</label>
+                  <label className="text-xs text-[#4a3427] font-bold block mb-1">Món yêu thích nhất</label>
                   <input
                     type="text"
                     value={formData.favoriteItem}
                     onChange={(e) => setFormData({ ...formData, favoriteItem: e.target.value })}
                     placeholder="VD: Cold Brew Cam Vàng"
-                    className="w-full bg-white/80 border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-[#2b170e] focus:outline-none focus:border-[#2b170e]"
+                    className="w-full bg-white/80 border border-stone-200 rounded-xl px-4 py-2 text-xs sm:text-sm text-[#2b170e] focus:outline-none focus:border-[#2b170e]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm text-[#4a3427] font-bold block mb-1">Nhận xét của bạn *</label>
+                  <label className="text-xs text-[#4a3427] font-bold block mb-1">Nhận xét của bạn *</label>
                   <textarea
                     rows={3}
                     required
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                     placeholder="Chia sẻ cảm nhận của bạn về đồ uống hoặc không gian quán..."
-                    className="w-full bg-white/80 border border-stone-200 rounded-xl p-3 text-sm text-[#2b170e] focus:outline-none focus:border-[#2b170e] resize-none"
+                    className="w-full bg-white/80 border border-stone-200 rounded-xl p-3 text-xs sm:text-sm text-[#2b170e] focus:outline-none focus:border-[#2b170e] resize-none leading-relaxed"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-sm transition-all cursor-pointer shadow-md"
+                  className="w-full py-3 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md"
                 >
-                  GỬI ĐÁNH GIÁ
+                  GỬI ĐÁNH GIÁ TRỰC TIẾP
                 </button>
               </form>
             )}

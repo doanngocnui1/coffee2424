@@ -121,25 +121,21 @@ export function useInfiniteAutoSlide({
       }, 560);
     } else {
       // Desktop multi-item track
-      const vCount = visibleCountRef.current || 3;
       const maxIndex = itemsCountRef.current;
       setDesktopTransitioning(true);
-      setDesktopIndex(prev => {
-        const next = prev + 1;
-        return next;
-      });
+      setDesktopIndex(prev => prev + 1);
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
-        setDesktopIndex(prev => {
-          if (prev >= maxIndex) {
-            setDesktopTransitioning(false);
+        setDesktopIndex(current => {
+          if (current >= maxIndex) {
             return 0;
           }
-          return prev;
+          return current;
         });
+        setDesktopTransitioning(false);
         isSlidingRef.current = false;
-      }, 620);
+      }, 580);
     }
   }, []);
 
@@ -173,18 +169,26 @@ export function useInfiniteAutoSlide({
     } else {
       // Desktop multi-item track
       const maxIndex = itemsCountRef.current;
-      setDesktopTransitioning(true);
       setDesktopIndex(prev => {
         if (prev <= 0) {
-          return maxIndex - 1;
+          // Khi ở đầu, snap về clone cuối rồi lùi về trước
+          setDesktopTransitioning(false);
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setDesktopTransitioning(true);
+              setDesktopIndex(maxIndex - 1);
+            });
+          });
+          return maxIndex;
         }
+        setDesktopTransitioning(true);
         return prev - 1;
       });
 
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       animTimeoutRef.current = setTimeout(() => {
         isSlidingRef.current = false;
-      }, 620);
+      }, 580);
     }
   }, []);
 
