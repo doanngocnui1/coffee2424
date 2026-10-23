@@ -15,7 +15,13 @@ import {
   Monitor, 
   ChevronLeft, 
   ChevronRight, 
-  ArrowRight
+  ArrowRight,
+  Sliders,
+  Layout,
+  Globe,
+  Tag,
+  Navigation,
+  Ticket
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
 import { uploadImageToSupabase } from '../../lib/supabase';
@@ -50,6 +56,16 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     };
   });
 
+  // State điều khiển hiển thị Tab "Khuyến Mãi" trên Header Navigation Bar
+  const [headerMenuVisible, setHeaderMenuVisible] = useState(() => {
+    const promoItem = (config?.navMenu || DEFAULT_SITE_CONFIG.navMenu || []).find(item => item.id === 'promo');
+    return promoItem ? promoItem.visible !== false : true;
+  });
+  const [headerMenuLabel, setHeaderMenuLabel] = useState(() => {
+    const promoItem = (config?.navMenu || DEFAULT_SITE_CONFIG.navMenu || []).find(item => item.id === 'promo');
+    return promoItem?.label || 'Khuyến Mãi';
+  });
+
   const [previewMode, setPreviewMode] = useState('desktop'); // 'desktop' (3) | 'mobile' (1)
   const [previewIndex, setPreviewIndex] = useState(0);
 
@@ -67,6 +83,13 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
         subtitle: config.promotionsSection.subtitle || defaultSectionConfig.subtitle
       });
     }
+    if (config?.navMenu) {
+      const promoItem = config.navMenu.find(item => item.id === 'promo');
+      if (promoItem) {
+        setHeaderMenuVisible(promoItem.visible !== false);
+        setHeaderMenuLabel(promoItem.label || 'Khuyến Mãi');
+      }
+    }
   }, [config]);
 
   const previewVisibleCount = previewMode === 'desktop' ? 3 : 1;
@@ -77,10 +100,20 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     const newId = `promo-${Date.now()}`;
     const newPromo = {
       id: newId,
-      tag: 'ƯU ĐÃI HOT',
+      tag: 'ƯU ĐÃI MỚI',
+      badge: 'HOT DEAL 🔥',
       title: 'Chương Trình Ưu Đãi Mới COFFEE 24/24',
+      subtitle: 'Khung giờ vàng & combo tiết kiệm',
       discount: 'GIẢM 25%',
+      discountValue: 'Tiết kiệm 25%',
+      code: 'PROMO24',
+      validUntil: 'Cả ngày & đêm 24/24',
+      category: 'drinks',
+      usedPercent: 80,
+      remainingCount: 30,
       image: DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
+      description: 'Nạp năng lượng và thưởng thức trọn vẹn menu cà phê rang mộc nguyên chất, thức uống pha tươi và món nóng cứu đói 24/7.',
+      condition: 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.',
       cta: 'Nhận Ưu Đãi',
       link: '/khuyenmai'
     };
@@ -186,13 +219,43 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
   };
 
   const handleSaveAll = () => {
+    const currentNavMenu = Array.isArray(config?.navMenu) && config.navMenu.length > 0 
+      ? config.navMenu 
+      : DEFAULT_SITE_CONFIG.navMenu;
+    const updatedNavMenu = currentNavMenu.map(item => {
+      if (item.id === 'promo') {
+        return {
+          ...item,
+          visible: headerMenuVisible,
+          label: headerMenuLabel.trim() || 'Khuyến Mãi'
+        };
+      }
+      return item;
+    });
+
+    const currentHomeSections = Array.isArray(config?.homeSections) && config.homeSections.length > 0 
+      ? config.homeSections 
+      : (DEFAULT_SITE_CONFIG.homeSections || []);
+    const updatedHomeSections = currentHomeSections.map(sec => {
+      if (sec.type === 'promotions' || sec.id === 'sec-promotions') {
+        return {
+          ...sec,
+          enabled: sectionConfig.enabled
+        };
+      }
+      return sec;
+    });
+
     const updatedConfig = {
       ...config,
+      navMenu: updatedNavMenu,
+      homeSections: updatedHomeSections,
       promotionsSection: sectionConfig,
       promotionsList: promotions
     };
     onSaveConfig?.(updatedConfig);
-    triggerAlert?.('✓ Đã lưu toàn bộ Cấu Hình & Danh Sách Chương Trình Ưu Đãi thành công! Trang chủ đã tự động cập nhật.');
+    window.dispatchEvent(new Event('site-config-updated'));
+    triggerAlert?.('✓ Đã lưu cấu hình Khuyến Mãi (Header, Trang Chủ & Trang Khuyến Mãi) thành công!');
   };
 
   const handleResetDefaults = () => {
@@ -261,83 +324,129 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
         </div>
       </div>
 
-      {/* 2. Cấu hình tiêu đề khối Ưu Đãi */}
-      <div className="bg-neutral-950 rounded-3xl border border-neutral-800 p-6 space-y-5 shadow-lg">
-        <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4">
-          <div className="flex items-center gap-2.5">
-            <Flame className="w-4 h-4 text-orange-400" />
-            <h3 className="text-sm sm:text-base font-black text-white uppercase tracking-wider">
-              Tiêu Đề & Giới Thiệu Khối Ưu Đãi (Trang Chủ)
-            </h3>
+      {/* 2. Cấu hình Tab Header & Hiển thị ngoài Trang Chủ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* 2A. Điều khiển Tab Khuyến Mãi trên Header Navigation */}
+        <div className="bg-neutral-950 rounded-3xl border border-neutral-800 p-5 sm:p-6 space-y-4 shadow-lg flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-neutral-800/80 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                  <Navigation className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">
+                    Tab Khuyến Mãi Trên Header
+                  </h3>
+                  <span className="text-[11px] text-neutral-400">Thanh điều hướng đầu trang (Navigation Bar)</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHeaderMenuVisible(prev => !prev)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  headerMenuVisible
+                    ? 'bg-emerald-500 text-stone-950 shadow-xs'
+                    : 'bg-neutral-800 text-neutral-400'
+                }`}
+              >
+                <span>{headerMenuVisible ? '✓ ĐANG HIỆN' : '✕ ĐÃ ẨN'}</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Bật hoặc tắt tab Khuyến Mãi xuất hiện trên thanh điều hướng đầu trang (Header) của website. Khi tắt, người dùng sẽ không thấy tab này trên menu.
+            </p>
+
+            <div className="space-y-1.5 pt-1">
+              <label className="text-xs font-bold text-neutral-300">
+                Tên Hiển Thị Của Tab Trên Header
+              </label>
+              <input
+                type="text"
+                value={headerMenuLabel}
+                onChange={(e) => setHeaderMenuLabel(e.target.value)}
+                placeholder="VD: Khuyến Mãi"
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 font-bold"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-400 font-bold">Hiển Thị Trên Trang Chủ:</span>
-            <button
-              type="button"
-              onClick={() => setSectionConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
-              className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                sectionConfig.enabled
-                  ? 'bg-emerald-500 text-stone-950 shadow-xs'
-                  : 'bg-neutral-800 text-neutral-400'
-              }`}
-            >
-              {sectionConfig.enabled ? '✓ ĐANG BẬT' : '✕ ĐÃ ẨN'}
-            </button>
+
+          <div className="pt-3 border-t border-neutral-800/80 text-[11px] text-amber-400/90 flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            <span>Liên kết tự động tới trang <strong className="text-white">/khuyenmai</strong> khi khách click vào.</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-neutral-300">Huy Hiệu (Badge)</label>
+        {/* 2B. Cấu hình hiển thị Khối Ưu Đãi ngoài Trang Chủ */}
+        <div className="bg-neutral-950 rounded-3xl border border-neutral-800 p-5 sm:p-6 space-y-4 shadow-lg flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-neutral-800/80 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                  <Layout className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">
+                    Khối Ưu Đãi Ngoài Trang Chủ
+                  </h3>
+                  <span className="text-[11px] text-neutral-400">Bố cục trượt ngang 3:4 trên Trang Chủ</span>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setSectionConfig(prev => ({ ...prev, showBadge: !prev.showBadge }))}
-                className="text-[10px] text-orange-400 hover:underline font-bold"
+                onClick={() => setSectionConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  sectionConfig.enabled
+                    ? 'bg-emerald-500 text-stone-950 shadow-xs'
+                    : 'bg-neutral-800 text-neutral-400'
+                }`}
               >
-                {sectionConfig.showBadge ? 'Ẩn badge' : 'Hiện badge'}
+                <span>{sectionConfig.enabled ? '✓ ĐANG BẬT' : '✕ ĐÃ ẨN'}</span>
               </button>
             </div>
-            <input
-              type="text"
-              value={sectionConfig.badge}
-              onChange={(e) => setSectionConfig(prev => ({ ...prev, badge: e.target.value }))}
-              placeholder="VD: ƯU ĐÃI ĐẶC QUYỀN"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
-            />
+
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Hiển thị carousel trượt các chương trình ưu đãi (tỉ lệ 3:4) ngoài Trang Chủ. Tùy chọn này được đồng bộ hai chiều với mục <strong>"Bố Cục & Thêm Thành Phần"</strong> trong sidebar.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-neutral-300">Huy Hiệu (Badge)</label>
+                  <button
+                    type="button"
+                    onClick={() => setSectionConfig(prev => ({ ...prev, showBadge: !prev.showBadge }))}
+                    className="text-[10px] text-orange-400 hover:underline font-bold cursor-pointer"
+                  >
+                    {sectionConfig.showBadge ? 'Ẩn' : 'Hiện'}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={sectionConfig.badge}
+                  onChange={(e) => setSectionConfig(prev => ({ ...prev, badge: e.target.value }))}
+                  placeholder="VD: ƯU ĐÃI ĐẶC QUYỀN"
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-orange-400">Chữ Nhấn Màu Đồng</label>
+                <input
+                  type="text"
+                  value={sectionConfig.highlightTitle}
+                  onChange={(e) => setSectionConfig(prev => ({ ...prev, highlightTitle: e.target.value }))}
+                  placeholder="VD: Dành Riêng Cho Bạn"
+                  className="w-full bg-neutral-900 border border-orange-500/40 rounded-xl px-3 py-2 text-xs text-orange-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500 font-bold"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-neutral-300">Tiêu Đề Dòng 1</label>
-            <input
-              type="text"
-              value={sectionConfig.title}
-              onChange={(e) => setSectionConfig(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="VD: Chương Trình Ưu Đãi"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-orange-400">Chữ Nhấn Màu Đồng Dòng 2</label>
-            <input
-              type="text"
-              value={sectionConfig.highlightTitle}
-              onChange={(e) => setSectionConfig(prev => ({ ...prev, highlightTitle: e.target.value }))}
-              placeholder="VD: Dành Riêng Cho Bạn"
-              className="w-full bg-neutral-900 border border-orange-500/40 rounded-xl px-3.5 py-2 text-xs text-orange-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500"
-            />
-          </div>
-
-          <div className="md:col-span-3 space-y-1.5">
-            <label className="text-xs font-bold text-neutral-300">Mô Tả Ngắn Phụ Đề</label>
-            <input
-              type="text"
-              value={sectionConfig.subtitle}
-              onChange={(e) => setSectionConfig(prev => ({ ...prev, subtitle: e.target.value }))}
-              placeholder="VD: Tổng hợp các voucher giảm giá, combo tiết kiệm và giờ vàng ưu đãi..."
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
-            />
+          <div className="pt-3 border-t border-neutral-800/80 text-[11px] text-neutral-400 flex items-center justify-between">
+            <span>Tiêu đề chính: <strong className="text-white">{sectionConfig.title}</strong></span>
+            <span className="text-emerald-400 font-bold">Đồng bộ tự động 2 chiều</span>
           </div>
         </div>
       </div>
@@ -554,18 +663,23 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                   </div>
                 </div>
 
-                {/* Image Preview & Upload */}
-                <div className="relative rounded-2xl overflow-hidden aspect-4/3 bg-neutral-900 border border-neutral-800 group/img">
+                {/* Image Preview & Upload (Portrait 3:4) */}
+                <div className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-neutral-900 border border-neutral-800 group/img">
                   <img 
                     src={promo.image} 
                     alt={promo.title}
                     className="w-full h-full object-cover"
                     onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
                   />
-                  <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center gap-1.5 text-white text-xs font-bold cursor-pointer transition-opacity backdrop-blur-xs">
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white shadow-xs">
+                      {promo.tag || 'ƯU ĐÃI'}
+                    </span>
+                  </div>
+                  <label className="absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center gap-1.5 text-white text-xs font-bold cursor-pointer transition-opacity backdrop-blur-xs">
                     <Upload className="w-5 h-5 text-orange-400" />
                     <span>Đổi Ảnh Từ Máy Tính</span>
-                    <span className="text-[10px] text-neutral-400">Tỉ lệ chuẩn 3:4</span>
+                    <span className="text-[10px] text-amber-300 font-mono">Tỉ lệ dọc chuẩn 3:4</span>
                     <input 
                       type="file" 
                       accept="image/*" 
@@ -577,17 +691,31 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
 
                 {/* Form Fields */}
                 <div className="space-y-2.5">
-                  <div>
-                    <label className="text-[11px] font-bold text-neutral-400 block mb-1">
-                      Huy Hiệu Góc (Tag)
-                    </label>
-                    <input
-                      type="text"
-                      value={promo.tag || ''}
-                      onChange={(e) => handleUpdatePromotionField(idx, 'tag', e.target.value)}
-                      placeholder="VD: COMBO HOT / GIỜ VÀNG"
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                        Huy Hiệu Góc (Tag)
+                      </label>
+                      <input
+                        type="text"
+                        value={promo.tag || ''}
+                        onChange={(e) => handleUpdatePromotionField(idx, 'tag', e.target.value)}
+                        placeholder="VD: GIỜ VÀNG"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                        Nhãn Badge (Nổi bật)
+                      </label>
+                      <input
+                        type="text"
+                        value={promo.badge || ''}
+                        onChange={(e) => handleUpdatePromotionField(idx, 'badge', e.target.value)}
+                        placeholder="VD: HOT DEAL 🔥"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -598,25 +726,111 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                       type="text"
                       value={promo.title || ''}
                       onChange={(e) => handleUpdatePromotionField(idx, 'title', e.target.value)}
-                      placeholder="VD: Combo Sáng & Đêm Khuya 69K"
+                      placeholder="VD: GIẢM 40% TẤT CẢ ĐỒ UỐNG"
                       className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 font-bold"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
+                      <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                        Danh Mục (Filter Tab)
+                      </label>
+                      <select
+                        value={promo.category || 'all'}
+                        onChange={(e) => handleUpdatePromotionField(idx, 'category', e.target.value)}
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer"
+                      >
+                        <option value="all">Tất Cả Ưu Đãi</option>
+                        <option value="drinks">Giảm Giá Đồ Uống</option>
+                        <option value="combo">Combo No Bụng</option>
+                        <option value="night">Cú Đêm 22h - 6h</option>
+                        <option value="student">Học Nhóm & Sinh Viên</option>
+                      </select>
+                    </div>
+
+                    <div>
                       <label className="text-[11px] font-bold text-amber-400 block mb-1">
-                        Mức Giảm / Giá Ưu Đãi
+                        Mã Voucher (Code)
+                      </label>
+                      <input
+                        type="text"
+                        value={promo.code || ''}
+                        onChange={(e) => handleUpdatePromotionField(idx, 'code', e.target.value.toUpperCase())}
+                        placeholder="VD: HAPPY40"
+                        className="w-full bg-neutral-900 border border-amber-500/40 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-amber-300 placeholder-neutral-600 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-rose-400 block mb-1">
+                        Mức Giảm (Hiển thị)
                       </label>
                       <input
                         type="text"
                         value={promo.discount || ''}
                         onChange={(e) => handleUpdatePromotionField(idx, 'discount', e.target.value)}
-                        placeholder="VD: GIẢM 40% / CHỈ 69K"
-                        className="w-full bg-neutral-900 border border-orange-500/40 rounded-xl px-3 py-2 text-xs text-orange-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500 font-bold"
+                        placeholder="VD: GIẢM 40%"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-rose-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500 font-bold"
                       />
                     </div>
 
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                        Giá Trị Chiết Khấu
+                      </label>
+                      <input
+                        type="text"
+                        value={promo.discountValue || ''}
+                        onChange={(e) => handleUpdatePromotionField(idx, 'discountValue', e.target.value)}
+                        placeholder="VD: 40% hoặc Tiết kiệm 35K"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                      Khung Giờ / Thời Hạn Áp Dụng
+                    </label>
+                    <input
+                      type="text"
+                      value={promo.validUntil || ''}
+                      onChange={(e) => handleUpdatePromotionField(idx, 'validUntil', e.target.value)}
+                      placeholder="VD: 16:00 - 19:00 Mỗi Ngày hoặc 24/24"
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                      Mô Tả Chi Tiết Ưu Đãi
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={promo.description || ''}
+                      onChange={(e) => handleUpdatePromotionField(idx, 'description', e.target.value)}
+                      placeholder="Mô tả các món áp dụng hoặc đối tượng khách hàng..."
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500 resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                      Điều Kiện Áp Dụng (Hiển thị khi bấm Xem Điều Kiện)
+                    </label>
+                    <input
+                      type="text"
+                      value={promo.condition || ''}
+                      onChange={(e) => handleUpdatePromotionField(idx, 'condition', e.target.value)}
+                      placeholder="VD: Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5..."
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[11px] font-bold text-neutral-400 block mb-1">
                         Nút Bấm (CTA)
@@ -625,23 +839,22 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                         type="text"
                         value={promo.cta || ''}
                         onChange={(e) => handleUpdatePromotionField(idx, 'cta', e.target.value)}
-                        placeholder="VD: Lấy Mã Giảm / Đặt Combo"
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                        placeholder="VD: Dùng ngay / Lấy Mã"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-orange-500"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-neutral-400 block mb-1">
-                      Liên Kết Khi Bấm (URL)
-                    </label>
-                    <input
-                      type="text"
-                      value={promo.link || ''}
-                      onChange={(e) => handleUpdatePromotionField(idx, 'link', e.target.value)}
-                      placeholder="VD: /khuyenmai hoặc /dathang"
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500"
-                    />
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-400 block mb-1">
+                        Liên Kết (URL)
+                      </label>
+                      <input
+                        type="text"
+                        value={promo.link || ''}
+                        onChange={(e) => handleUpdatePromotionField(idx, 'link', e.target.value)}
+                        placeholder="VD: /khuyenmai hoặc /dathang"
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

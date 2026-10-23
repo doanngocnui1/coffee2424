@@ -187,12 +187,17 @@ export default function AdminHomeSectionsManager({ config, onSaveConfig, trigger
   const handleSaveSections = () => {
     const newDishesSec = sections.find(s => s.type === 'newDishes' || s.id === 'sec-newDishes');
     const isNewDishesEnabled = newDishesSec ? newDishesSec.enabled !== false : true;
+    const isPromotionsEnabled = sections.find(s => s.type === 'promotions')?.enabled !== false;
     const updatedConfig = {
       ...config,
       homeSections: sections,
       newDishesSection: {
         ...(config?.newDishesSection || DEFAULT_SITE_CONFIG.newDishesSection),
         enabled: isNewDishesEnabled
+      },
+      promotionsSection: {
+        ...(config?.promotionsSection || DEFAULT_SITE_CONFIG.promotionsSection),
+        enabled: isPromotionsEnabled
       }
     };
     onSaveConfig?.(updatedConfig);

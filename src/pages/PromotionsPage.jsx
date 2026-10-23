@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Tag, 
   Sparkles, 
@@ -24,30 +24,51 @@ import {
   PhoneCall
 } from 'lucide-react';
 import { PROMOTIONS, PROMOTION_CATEGORIES } from '../data/promotions';
-import { getSiteConfig } from '../data/siteConfig';
+import { getSiteConfig, DEFAULT_SITE_CONFIG } from '../data/siteConfig';
 
 export default function PromotionsPage({ navigate }) {
-  const [siteConfig] = useState(() => getSiteConfig());
-  const activePromo = (siteConfig?.promotionsList && siteConfig.promotionsList.length > 0)
-    ? siteConfig.promotionsList[0]
-    : null;
-  const heroImage = activePromo?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
+  const [siteConfig, setSiteConfig] = useState(() => getSiteConfig());
+
+  // Lắng nghe sự kiện cập nhật cấu hình từ Admin CMS
+  useEffect(() => {
+    const handleConfigUpdate = () => {
+      setSiteConfig(getSiteConfig());
+    };
+    window.addEventListener('site-config-updated', handleConfigUpdate);
+    window.addEventListener('storage', handleConfigUpdate);
+    return () => {
+      window.removeEventListener('site-config-updated', handleConfigUpdate);
+      window.removeEventListener('storage', handleConfigUpdate);
+    };
+  }, []);
+
+  const livePromotions = (siteConfig?.promotionsList && Array.isArray(siteConfig.promotionsList) && siteConfig.promotionsList.length > 0)
+    ? siteConfig.promotionsList
+    : PROMOTIONS;
+
+  const activePromo = livePromotions[0] || null;
+  const heroImage = activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
   const heroTitle = activePromo?.title || 'Giờ Vàng Giảm 40% Tất Cả Đồ Uống';
-  const heroTag = activePromo?.tag || 'ƯU ĐÃI NỔI BẬT NHẤT';
+  const heroTag = activePromo?.tag || activePromo?.highlightTag || 'ƯU ĐÃI NỔI BẬT NHẤT';
   const heroDiscount = activePromo?.discount || 'GIẢM 40%';
+  const heroCode = activePromo?.code || 'HAPPY40';
+  const heroValidUntil = activePromo?.validUntil || '16:00 - 19:00 Mỗi ngày';
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [copiedCode, setCopiedCode] = useState(null);
   const [expandedConditions, setExpandedConditions] = useState({});
 
   const handleCopy = (code) => {
+    if (!code) return;
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 3000);
   };
 
   const handleUseNow = (code) => {
-    handleCopy(code);
+    if (code) {
+      handleCopy(code);
+    }
     navigate('/dathang');
   };
 
@@ -58,10 +79,10 @@ export default function PromotionsPage({ navigate }) {
     }));
   };
 
-  // Filter promotions by category
+  // Lọc danh sách ưu đãi theo danh mục được chọn
   const filteredPromotions = selectedCategory === 'all'
-    ? PROMOTIONS
-    : PROMOTIONS.filter(p => p.category === selectedCategory);
+    ? livePromotions
+    : livePromotions.filter(p => (p.category || 'all') === selectedCategory || (selectedCategory === 'drinks' && p.category === 'drinks'));
 
   // Category Icon helper
   const renderCategoryIcon = (iconName) => {
@@ -154,34 +175,34 @@ export default function PromotionsPage({ navigate }) {
               </div>
             </div>
 
-            {/* Right Hero Image Card */}
+            {/* Right Hero Image Card (Portrait 3:4) */}
             <div className="lg:col-span-5">
               <div className="relative group">
                 <div className="relative rounded-[32px] overflow-hidden border border-white/80 shadow-2xl bg-white/70">
-                  <div className="relative h-72 sm:h-96 overflow-hidden">
+                  <div className="relative w-full aspect-[3/4] max-h-[520px] overflow-hidden bg-stone-900">
                     <img 
                       src={heroImage} 
                       alt={heroTitle} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={(e) => { e.currentTarget.src = 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                      onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/90 via-[#2b170e]/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/95 via-[#2b170e]/30 to-transparent" />
                     
                     {/* Floating Ticket Feature Overlay */}
-                    <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-white text-[#2b170e] space-y-2 shadow-lg">
+                    <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-2 shadow-lg">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider flex items-center gap-1.5">
                           <Flame className="w-4 h-4 fill-orange-600 text-orange-600" />
                           {heroTag}
                         </span>
-                        <span className="text-xs font-black bg-red-600 text-white px-2.5 py-0.5 rounded-full">
+                        <span className="text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
                           {heroDiscount}
                         </span>
                       </div>
                       <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
                       <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
-                        <span>Mã: <strong className="font-mono text-[#8c5932] font-black">HAPPY40</strong></span>
-                        <span className="text-[#8c5932] font-bold">16:00 - 19:00 Mỗi ngày</span>
+                        <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
+                        <span className="text-[#8c5932] font-bold">{heroValidUntil}</span>
                       </div>
                     </div>
                   </div>
@@ -219,8 +240,8 @@ export default function PromotionsPage({ navigate }) {
           <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none">
             {PROMOTION_CATEGORIES.map((cat) => {
               const count = cat.id === 'all' 
-                ? PROMOTIONS.length 
-                : PROMOTIONS.filter(p => p.category === cat.id).length;
+                ? livePromotions.length 
+                : livePromotions.filter(p => p.category === cat.id).length;
               const isActive = selectedCategory === cat.id;
 
               return (
@@ -245,42 +266,43 @@ export default function PromotionsPage({ navigate }) {
             })}
           </div>
 
-          {/* Voucher Ticket Stubs Grid */}
+          {/* Voucher Ticket Stubs Grid (Portrait 3:4 Cards) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPromotions.map((promo) => (
+            {filteredPromotions.map((promo, idx) => (
               <div 
-                key={promo.id}
-                className="ios-glass-card rounded-[32px] overflow-hidden flex flex-col justify-between group relative"
+                key={promo.id || idx}
+                className="ios-glass-card rounded-[32px] overflow-hidden flex flex-col justify-between group relative border border-white/80 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/70 backdrop-blur-xl"
               >
-                {/* TOP: Image, Badges & Overlays */}
+                {/* TOP: Image (3:4 Ratio), Badges & Overlays */}
                 <div>
-                  <div className="relative h-48 bg-stone-100 overflow-hidden">
+                  <div className="relative w-full aspect-[3/4] bg-stone-900 overflow-hidden rounded-t-[32px]">
                     <img 
                       src={promo.image} 
                       alt={promo.title} 
-                      className="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-1 transition-transform duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
                     
                     {/* Floating badges */}
                     <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                      <span className="px-3.5 py-1 rounded-full bg-[#2b170e] text-white text-xs font-black uppercase shadow-md flex items-center gap-1.5">
+                      <span className="px-3.5 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-xs font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
                         <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
-                        {promo.badge}
+                        {promo.badge || promo.tag || 'HOT DEAL 🔥'}
                       </span>
                     </div>
 
                     <div className="absolute top-3.5 right-3.5">
                       <span className="px-3.5 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
-                        {promo.discount}
+                        {promo.discount || 'ƯU ĐÃI'}
                       </span>
                     </div>
 
                     {/* Time validity tag */}
                     <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
-                      <span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-xl">
+                      <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
                         <Clock className="w-3.5 h-3.5 text-amber-300" />
-                        {promo.validUntil}
+                        {promo.validUntil || 'Cả ngày & đêm 24/24'}
                       </span>
                     </div>
                   </div>
@@ -289,10 +311,10 @@ export default function PromotionsPage({ navigate }) {
                   <div className="p-6 space-y-3.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
-                        {promo.subtitle}
+                        {promo.subtitle || 'Ưu Đãi Đặc Quyền'}
                       </span>
                       <span className="text-sm font-black text-[#8c5932]">
-                        {promo.discountValue}
+                        {promo.discountValue || promo.discount}
                       </span>
                     </div>
 
@@ -300,25 +322,27 @@ export default function PromotionsPage({ navigate }) {
                       {promo.title}
                     </h3>
 
-                    <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
-                      {promo.description}
-                    </p>
+                    {promo.description && (
+                      <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
+                        {promo.description}
+                      </p>
+                    )}
 
                     {/* Scarcity Urgency Progress Bar */}
                     <div className="pt-2 space-y-1.5">
                       <div className="flex items-center justify-between text-xs sm:text-sm font-bold">
                         <span className="text-orange-600 flex items-center gap-1">
                           <Flame className="w-3.5 h-3.5 fill-orange-600 animate-pulse" />
-                          Đã nhận {promo.usedPercent}%
+                          Đã nhận {promo.usedPercent ?? 85}%
                         </span>
                         <span className="text-[#7a5843]">
-                          Còn {promo.remainingCount} suất
+                          Còn {promo.remainingCount ?? 20} suất
                         </span>
                       </div>
                       <div className="w-full h-2.5 bg-stone-200/80 rounded-full overflow-hidden">
                         <div 
                           className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-700"
-                          style={{ width: `${promo.usedPercent}%` }}
+                          style={{ width: `${promo.usedPercent ?? 85}%` }}
                         />
                       </div>
                     </div>
@@ -326,15 +350,15 @@ export default function PromotionsPage({ navigate }) {
                     {/* Condition Note or Accordion */}
                     <div className="pt-1">
                       <button
-                        onClick={() => toggleCondition(promo.id)}
+                        onClick={() => toggleCondition(promo.id || idx)}
                         className="text-xs sm:text-sm text-[#7a5843] hover:text-[#2b170e] font-bold flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         <Info className="w-4 h-4 text-[#8c5932]" />
-                        <span>{expandedConditions[promo.id] ? 'Thu gọn điều kiện' : 'Xem điều kiện áp dụng'}</span>
+                        <span>{expandedConditions[promo.id || idx] ? 'Thu gọn điều kiện' : 'Xem điều kiện áp dụng'}</span>
                       </button>
-                      {expandedConditions[promo.id] && (
+                      {expandedConditions[promo.id || idx] && (
                         <p className="mt-2 p-3 rounded-2xl bg-white/80 text-xs sm:text-sm text-[#5c3d2e] border border-white/90 leading-relaxed shadow-xs animate-in fade-in duration-200">
-                          {promo.condition}
+                          {promo.condition || 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.'}
                         </p>
                       )}
                     </div>
@@ -353,17 +377,17 @@ export default function PromotionsPage({ navigate }) {
                   <div>
                     <span className="text-xs text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
                     <span className="text-base font-mono font-black text-[#2b170e] bg-white/80 border border-white/90 px-3 py-1 rounded-xl inline-block shadow-xs mt-0.5">
-                      {promo.code}
+                      {promo.code || 'PROMO24'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleCopy(promo.code)}
+                      onClick={() => handleCopy(promo.code || 'PROMO24')}
                       className="px-4 py-2.5 rounded-full bg-white/80 hover:bg-white text-[#2b170e] text-xs sm:text-sm font-bold border border-white/90 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
                       title="Sao chép mã"
                     >
-                      {copiedCode === promo.code ? (
+                      {copiedCode === (promo.code || 'PROMO24') ? (
                         <>
                           <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
                           <span className="text-emerald-700">Đã chép</span>
@@ -377,10 +401,10 @@ export default function PromotionsPage({ navigate }) {
                     </button>
 
                     <button
-                      onClick={() => handleUseNow(promo.code)}
+                      onClick={() => handleUseNow(promo.code || 'PROMO24')}
                       className="ios-btn-primary px-5 py-2.5 rounded-full font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Dùng ngay</span>
+                      <span>{promo.cta || 'Dùng ngay'}</span>
                       <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
                     </button>
                   </div>

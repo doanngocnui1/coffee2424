@@ -289,28 +289,115 @@ export const DEFAULT_SITE_CONFIG = {
     {
       id: 'promo-1',
       tag: 'GIỜ VÀNG',
-      title: 'Golden Hour - Cà Phê Đồng Giá 25K (16h - 19h)',
-      discount: '25.000đ',
+      badge: 'HOT DEAL 🔥',
+      title: 'GIẢM 40% TẤT CẢ ĐỒ UỐNG',
+      subtitle: 'Khung giờ vàng từ 16:00 - 19:00 hàng ngày',
+      discount: 'GIẢM 40%',
+      discountValue: 'Đồng giá 25K',
+      code: 'HAPPY40',
+      validUntil: '16:00 - 19:00 Mỗi Ngày',
+      category: 'drinks',
+      usedPercent: 86,
+      remainingCount: 28,
       image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
+      description: 'Nạp năng lượng chiều muộn cùng ưu đãi giảm giá 40% cho toàn bộ Cà Phê Mộc, Cold Brew Cam Vàng, Trà Đào Cam Sả và Trà Sữa Ô Long.',
+      condition: 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.',
       cta: 'Nhận Ưu Đãi',
       link: '/khuyenmai'
     },
     {
       id: 'promo-2',
-      tag: 'COMBO ĐÊM',
-      title: 'Combo Cú Đêm 22h - 6h (Mì Hảo Hảo + Nước)',
-      discount: 'CHỈ TỪ 42K',
+      tag: 'CÚ ĐÊM',
+      badge: 'CÚ ĐÊM TIẾT KIỆM 🌙',
+      title: 'COMBO CÀ PHÊ & CROISSANT 69K',
+      subtitle: 'Tiếp sức chạy deadline & học nhóm xuyên đêm',
+      discount: 'CHỈ 69K',
+      discountValue: 'Tiết kiệm 35K',
+      code: 'COMBO69K',
+      validUntil: '22:00 - 06:00 Sáng Hôm Sau',
+      category: 'night',
+      usedPercent: 92,
+      remainingCount: 15,
       image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406324015_rce3jj8.png',
+      description: '1 Ly Cà Phê Sữa Đá / Đen Phin truyền thống + 1 Bánh Croissant nướng bơ Pháp ngàn lớp nóng giòn rụm với mức giá trợ giá chỉ 69K (giá gốc 104K).',
+      condition: 'Dành riêng cho khách ngồi học bài, làm việc xuyên đêm hoặc giao hàng đêm.',
       cta: 'Đặt Combo Cú Đêm',
       link: '/khuyenmai'
     },
     {
       id: 'promo-3',
-      tag: 'COMBO SÁNG',
-      title: 'Khởi Động Ngày Mới 4h - 10h (Bánh Mì / Croissant + Nước)',
-      discount: 'CHỈ TỪ 43K',
+      tag: 'BẾP ĐÊM',
+      badge: 'BEST COMBO ĐÊM 🍳',
+      title: 'COMBO CỨU ĐÓI ĐÊM: MÌ XÀO BÒ + CÀ PHÊ 79K',
+      subtitle: 'Nóng hổi, no bụng, bừng tỉnh năng lượng 2h sáng',
+      discount: 'CHỈ 79K',
+      discountValue: 'Tiết kiệm 40K',
+      code: 'CUUDOI79',
+      validUntil: 'Cả ngày & đêm 24/24',
+      category: 'combo',
+      usedPercent: 78,
+      remainingCount: 35,
       image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406330432_gtr3gbp.png',
-      cta: 'Đặt Combo Sáng',
+      description: 'Dĩa Mì xào thịt bò mềm ngọt, rau cải giòn mướt kèm trứng ốp la lòng đào vàng ươm bốc khói + 1 Ly Cà phê sữa phin đậm đà. Đủ năng lượng cày đồ án đến sáng.',
+      condition: 'Phục vụ nóng hổi tại chỗ 24/24 tại 413 Phan Huy Ích và 96 D5.',
+      cta: 'Đặt Combo Đêm',
+      link: '/khuyenmai'
+    },
+    {
+      id: 'promo-4',
+      tag: 'BẠN MỚI',
+      badge: 'QUÀ TẶNG BẠN MỚI 🎁',
+      title: 'VOUCHER 40K CHO THÀNH VIÊN MỚI',
+      subtitle: 'Áp dụng cho đơn hàng trực tuyến đầu tiên',
+      discount: 'TẶNG 40K',
+      discountValue: 'Giảm 40.000đ',
+      code: 'WELCOME24',
+      validUntil: 'Áp dụng đơn từ 80.000đ',
+      category: 'all',
+      usedPercent: 65,
+      remainingCount: 120,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406180633_2w5792e.png',
+      description: 'Chào mừng bạn đến với cộng đồng làm việc & thưởng thức cà phê COFFEE 24/24. Nhập mã nhận ngay ưu đãi 40.000đ giảm trực tiếp vào hóa đơn.',
+      condition: 'Áp dụng 01 lần cho mỗi số điện thoại khách hàng mới đặt qua web.',
+      cta: 'Nhận Voucher 40K',
+      link: '/khuyenmai'
+    },
+    {
+      id: 'promo-5',
+      tag: 'TEAM UP',
+      badge: 'HỌP NHÓM TIẾT KIỆM 🎮',
+      title: 'HỌP NHÓM & GAME THỦ: MUA 3 TẶNG 1',
+      subtitle: 'Thứ Tư & Cuối Tuần - Càng đông càng vui',
+      discount: 'TẶNG 1 LY',
+      discountValue: 'Miễn phí 100%',
+      code: 'TEAMWORK3',
+      validUntil: 'Thứ Tư, Thứ Bảy & Chủ Nhật',
+      category: 'student',
+      usedPercent: 88,
+      remainingCount: 22,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406186411_878l6eb.png',
+      description: 'Đi học nhóm, bàn đồ án hoặc quẩy game cùng đồng đội: Khi order từ 3 ly đồ uống bất kỳ, COFFEE 24/24 tặng ngay 1 ly cùng loại. Bao wifi 500Mbps và ổ điện cắm sạc tẹt ga.',
+      condition: 'Áp dụng cho đồ uống cùng nhóm hoặc có giá trị tương đương.',
+      cta: 'Rủ Bạn Đến Quán',
+      link: '/khuyenmai'
+    },
+    {
+      id: 'promo-6',
+      tag: 'GIAO ĐÊM',
+      badge: 'SHIP TẬN CỬA 🚀',
+      title: 'FREESHIP ĐÊM KHUYA BÁN KÍNH 3KM',
+      subtitle: 'Giao hàng hỏa tốc trong 25 phút từ 20:00 - 04:00',
+      discount: 'FREESHIP 0Đ',
+      discountValue: 'Tiết kiệm 25K',
+      code: 'SHIP0D',
+      validUntil: '20:00 - 04:00 Sáng',
+      category: 'night',
+      usedPercent: 74,
+      remainingCount: 45,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/dishes/1792406191771_39a2gfe.png',
+      description: 'Ngại ra đường đêm lạnh? Đặt ngay trên website, shipper quán giao tận bàn làm việc / phòng trọ / căn hộ quanh Phú Nhuận & D5 Bình Thạnh nóng giòn nguyên vị.',
+      condition: 'Áp dụng cho đơn hàng từ 100.000đ trong bán kính 3km từ 2 chi nhánh.',
+      cta: 'Đặt Giao Đêm',
       link: '/khuyenmai'
     }
   ],
@@ -885,6 +972,10 @@ export function getSiteConfig() {
       if (sec.type === 'newDishes' || sec.id === 'sec-newDishes') {
         return { ...sec, enabled: isNewDishesExplicitlyEnabled };
       }
+      if (sec.type === 'promotions' || sec.id === 'sec-promotions') {
+        const isPromotionsExplicitlyEnabled = parsed.promotionsSection?.enabled !== false;
+        return { ...sec, enabled: isPromotionsExplicitlyEnabled && sec.enabled !== false };
+      }
       if (orderOnlineConfig.disableLocalMenus !== false && (sec.type === 'offerings' || sec.id === 'sec-offerings')) {
         return { ...sec, enabled: false };
       }
@@ -896,7 +987,13 @@ export function getSiteConfig() {
       : (DEFAULT_SITE_CONFIG.newDishesList || []);
 
     const resolvedPromotions = (Array.isArray(parsed.promotionsList) && parsed.promotionsList.length > 0)
-      ? parsed.promotionsList
+      ? parsed.promotionsList.map(item => {
+          const matchDefault = DEFAULT_SITE_CONFIG.promotionsList.find(d => d.id === item.id) || {};
+          return {
+            ...matchDefault,
+            ...item
+          };
+        })
       : (DEFAULT_SITE_CONFIG.promotionsList || []);
 
     return {
