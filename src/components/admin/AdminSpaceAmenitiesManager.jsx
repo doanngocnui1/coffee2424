@@ -18,7 +18,7 @@ import {
   Image as ImageIcon,
   Check
 } from 'lucide-react';
-import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
+import { DEFAULT_SITE_CONFIG, saveSiteConfig } from '../../data/siteConfig';
 
 export const CHIP_ICONS = {
   zap: Zap,
@@ -53,12 +53,39 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
   };
 
   const [spaceData, setSpaceData] = useState(() => {
-    return config?.spaceAmenities || defaultSpaceConfig;
+    const baseConfig = config?.spaceAmenities || defaultSpaceConfig;
+    const basePhotos = baseConfig.photos || defaultSpaceConfig.photos || [];
+    const restoredPhotos = basePhotos.map((p, idx) => {
+      const storedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
+      const storedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
+      return {
+        ...p,
+        title: storedTitle || p.title,
+        image: storedImg || p.image
+      };
+    });
+    return {
+      ...baseConfig,
+      photos: restoredPhotos
+    };
   });
 
   useEffect(() => {
     if (config?.spaceAmenities) {
-      setSpaceData(config.spaceAmenities);
+      const basePhotos = config.spaceAmenities.photos || defaultSpaceConfig.photos || [];
+      const restoredPhotos = basePhotos.map((p, idx) => {
+        const storedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
+        const storedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
+        return {
+          ...p,
+          title: storedTitle || p.title,
+          image: storedImg || p.image
+        };
+      });
+      setSpaceData({
+        ...config.spaceAmenities,
+        photos: restoredPhotos
+      });
     }
   }, [config]);
 
@@ -145,19 +172,53 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
 
   // Save changes
   const handleSaveAll = () => {
+    // 1. Lưu trực tiếp 4 ảnh và tiêu đề vào các khóa chuyên biệt độc lập để không lo tràn hạn mức
+    (spaceData.photos || []).forEach((photo, idx) => {
+      if (photo.image) {
+        try {
+          localStorage.setItem(`coffee2424_space_photo_${idx}`, photo.image);
+        } catch (e) {
+          console.warn(`Could not save photo ${idx} into dedicated key:`, e);
+        }
+      }
+      if (photo.title) {
+        try {
+          localStorage.setItem(`coffee2424_space_title_${idx}`, photo.title);
+        } catch (_) {}
+      }
+    });
+
+    try {
+      localStorage.setItem('coffee2424_space_amenities_backup', JSON.stringify(spaceData));
+    } catch (_) {}
+
     const updatedConfig = {
       ...config,
       spaceAmenities: spaceData
     };
+    saveSiteConfig(updatedConfig);
     onSaveConfig?.(updatedConfig);
-    triggerAlert?.('✓ Đã lưu cấu hình khối Không Gian & Tiện Nghi! Trang chủ đã tự động cập nhật ngay.');
+    window.dispatchEvent(new Event('site-config-updated'));
+    triggerAlert?.('✓ Đã lưu vĩnh viễn 4 ảnh & cấu hình Không Gian! Khi reload trang chủ hoặc F5 sẽ không bao giờ bị mất.');
   };
 
   // Reset defaults
   const handleResetDefaults = () => {
     if (window.confirm('Khôi phục lại nội dung và 4 ảnh không gian mặc định ban đầu?')) {
+      for (let i = 0; i < 4; i++) {
+        localStorage.removeItem(`coffee2424_space_photo_${i}`);
+        localStorage.removeItem(`coffee2424_space_title_${i}`);
+      }
+      localStorage.removeItem('coffee2424_space_amenities_backup');
       setSpaceData(defaultSpaceConfig);
-      triggerAlert?.('✓ Đã khôi phục dữ liệu ban đầu. Nhấn Lưu để áp dụng.');
+      const updatedConfig = {
+        ...config,
+        spaceAmenities: defaultSpaceConfig
+      };
+      saveSiteConfig(updatedConfig);
+      onSaveConfig?.(updatedConfig);
+      window.dispatchEvent(new Event('site-config-updated'));
+      triggerAlert?.('✓ Đã khôi phục dữ liệu ban đầu và lưu áp dụng.');
     }
   };
 

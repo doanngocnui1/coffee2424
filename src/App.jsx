@@ -11,7 +11,7 @@ import AdminPage from './pages/AdminPage';
 
 import SideBanners from './components/SideBanners';
 import BranchOrderModal from './components/BranchOrderModal';
-import { getSiteConfig, syncSiteConfigWithCloud, updateDocumentFavicon } from './data/siteConfig';
+import { getSiteConfig, syncSiteConfigWithCloud, updateDocumentFavicon, DEFAULT_SITE_CONFIG } from './data/siteConfig';
 import { subscribeToCloudSiteConfig } from './lib/supabase';
 
 export default function App() {
@@ -65,10 +65,30 @@ export default function App() {
           } : localP;
         });
 
+        const localSpace = prev?.spaceAmenities;
+        const cloudSpace = newCloudData?.spaceAmenities;
+        let safeSpace = localSpace || cloudSpace;
+        if (localSpace && cloudSpace) {
+          const mergedPhotos = (localSpace.photos || []).map((p, idx) => {
+            const dedicatedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
+            const dedicatedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
+            if (dedicatedImg) return { ...p, image: dedicatedImg, title: dedicatedTitle || p.title };
+            const defaultPhoto = DEFAULT_SITE_CONFIG.spaceAmenities?.photos?.[idx];
+            if (p.image && p.image !== defaultPhoto?.image) return p;
+            return cloudSpace.photos?.[idx] || p;
+          });
+          safeSpace = {
+            ...cloudSpace,
+            ...localSpace,
+            photos: mergedPhotos
+          };
+        }
+
         const merged = { 
           ...prev, 
           ...newCloudData,
-          promotionsList: safePromos.length > 0 ? safePromos : (newCloudData?.promotionsList || prev?.promotionsList)
+          promotionsList: safePromos.length > 0 ? safePromos : (newCloudData?.promotionsList || prev?.promotionsList),
+          spaceAmenities: safeSpace
         };
         if (merged.logo) updateDocumentFavicon(merged.logo);
         return merged;

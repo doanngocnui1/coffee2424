@@ -1089,9 +1089,53 @@ export function getSiteConfig() {
         })
       : (DEFAULT_SITE_CONFIG.promotionsList || []);
 
+    // Restore custom space amenities photos and titles from dedicated keys if stored
+    let rawSpaceConfig = parsed.spaceAmenities || DEFAULT_SITE_CONFIG.spaceAmenities;
+    const spaceBackupStr = localStorage.getItem('coffee2424_space_amenities_backup');
+    if (spaceBackupStr) {
+      try {
+        const parsedBackup = JSON.parse(spaceBackupStr);
+        if (parsedBackup && typeof parsedBackup === 'object') {
+          rawSpaceConfig = { ...rawSpaceConfig, ...parsedBackup };
+        }
+      } catch (_) {}
+    }
+
+    const defaultSpacePhotos = DEFAULT_SITE_CONFIG.spaceAmenities?.photos || [];
+    const baseSpacePhotos = (Array.isArray(rawSpaceConfig.photos) && rawSpaceConfig.photos.length > 0)
+      ? rawSpaceConfig.photos
+      : defaultSpacePhotos;
+
+    const resolvedSpacePhotos = baseSpacePhotos.map((photo, idx) => {
+      const storedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
+      const storedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
+      let finalImg = photo.image;
+      if (storedImg) {
+        finalImg = storedImg;
+      } else if (finalImg === `__STORED_SPACE_PHOTO_${idx}__` || !finalImg) {
+        finalImg = storedImg || defaultSpacePhotos[idx]?.image || '/images/branch_downtown.jpg';
+      }
+      return {
+        ...photo,
+        id: photo.id || `photo-${idx + 1}`,
+        title: storedTitle || photo.title || defaultSpacePhotos[idx]?.title || `Góc Không Gian #${idx + 1}`,
+        image: finalImg
+      };
+    });
+
+    const resolvedSpaceAmenities = {
+      ...DEFAULT_SITE_CONFIG.spaceAmenities,
+      ...(rawSpaceConfig || {}),
+      chips: (Array.isArray(rawSpaceConfig.chips) && rawSpaceConfig.chips.length > 0)
+        ? rawSpaceConfig.chips
+        : DEFAULT_SITE_CONFIG.spaceAmenities.chips,
+      photos: resolvedSpacePhotos
+    };
+
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
+      spaceAmenities: resolvedSpaceAmenities,
       logo: resolvedLogo,
       favicon: resolvedLogo,
       orderOnline: orderOnlineConfig,
@@ -1243,6 +1287,31 @@ export function saveSiteConfig(newConfig) {
       } catch (_) {}
     }
 
+    // Save space amenities photos and titles to dedicated keys for maximum quota safety and permanence
+    if (Array.isArray(newConfig.spaceAmenities?.photos)) {
+      newConfig.spaceAmenities.photos.forEach((photo, idx) => {
+        if (photo.image && photo.image.startsWith('data:image')) {
+          try {
+            localStorage.setItem(`coffee2424_space_photo_${idx}`, photo.image);
+          } catch (err) {
+            console.warn(`Could not save space photo ${idx} into dedicated key:`, err);
+          }
+        } else if (photo.image && !photo.image.startsWith('__STORED_SPACE_PHOTO_')) {
+          try {
+            localStorage.setItem(`coffee2424_space_photo_${idx}`, photo.image);
+          } catch (_) {}
+        }
+        if (photo.title) {
+          try {
+            localStorage.setItem(`coffee2424_space_title_${idx}`, photo.title);
+          } catch (_) {}
+        }
+      });
+      try {
+        localStorage.setItem('coffee2424_space_amenities_backup', JSON.stringify(newConfig.spaceAmenities));
+      } catch (_) {}
+    }
+
     // 2. Try saving full configuration into active STORAGE_KEY
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
@@ -1275,7 +1344,14 @@ export function saveSiteConfig(newConfig) {
         heroBanner16x9: {
           ...newConfig.heroBanner16x9,
           mediaUrl: heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video')) ? '__STORED_HERO_MEDIA__' : heroMedia
-        }
+        },
+        spaceAmenities: newConfig.spaceAmenities ? {
+          ...newConfig.spaceAmenities,
+          photos: (newConfig.spaceAmenities?.photos || []).map((p, idx) => ({
+            ...p,
+            image: (p.image && p.image.startsWith('data:image')) ? `__STORED_SPACE_PHOTO_${idx}__` : p.image
+          }))
+        } : undefined
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(safeConfig));
     }
@@ -1409,7 +1485,38 @@ export async function syncSiteConfigWithCloud(force = false) {
             ...(currentConfig.promotionsPageConfig?.hotline || {}),
             ...(cloudConfig.promotionsPageConfig?.hotline || {})
           }
-        }
+        },
+        spaceAmenities: (() => {
+          const currentSpace = currentConfig.spaceAmenities || DEFAULT_SITE_CONFIG.spaceAmenities;
+          const cloudSpace = cloudConfig.spaceAmenities;
+          if (!cloudSpace) return currentSpace;
+
+          // Hợp nhất 4 bức ảnh: Nếu ảnh ở local đã được đổi hoặc lưu trong bộ nhớ chuyên biệt thì luôn giữ nguyên
+          const mergedPhotos = (currentSpace.photos || []).map((currPhoto, idx) => {
+            const dedicatedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
+            const dedicatedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
+            if (dedicatedImg) {
+              return {
+                ...currPhoto,
+                image: dedicatedImg,
+                title: dedicatedTitle || currPhoto.title
+              };
+            }
+            const defaultPhoto = DEFAULT_SITE_CONFIG.spaceAmenities?.photos?.[idx];
+            if (currPhoto.image && currPhoto.image !== defaultPhoto?.image) {
+              return currPhoto;
+            }
+            const cloudPhoto = cloudSpace.photos?.[idx];
+            return cloudPhoto || currPhoto;
+          });
+
+          return {
+            ...cloudSpace,
+            ...currentSpace,
+            chips: (currentSpace.chips && currentSpace.chips.length > 0) ? currentSpace.chips : (cloudSpace.chips || DEFAULT_SITE_CONFIG.spaceAmenities.chips),
+            photos: mergedPhotos
+          };
+        })()
       };
 
       // Bảo vệ hạn mức localStorage khi ảnh nền là chuỗi base64 lớn
@@ -1428,7 +1535,14 @@ export async function syncSiteConfigWithCloud(force = false) {
           heroBanner16x9: {
             ...mergedConfig.heroBanner16x9,
             mediaUrl: heroMedia && (heroMedia.startsWith('data:image') || heroMedia.startsWith('data:video')) ? '__STORED_HERO_MEDIA__' : heroMedia
-          }
+          },
+          spaceAmenities: mergedConfig.spaceAmenities ? {
+            ...mergedConfig.spaceAmenities,
+            photos: (mergedConfig.spaceAmenities?.photos || []).map((p, idx) => ({
+              ...p,
+              image: (p.image && p.image.startsWith('data:image')) ? `__STORED_SPACE_PHOTO_${idx}__` : p.image
+            }))
+          } : undefined
         };
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(safeConfig));
