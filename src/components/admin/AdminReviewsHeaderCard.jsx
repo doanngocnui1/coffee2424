@@ -260,6 +260,26 @@ export default function AdminReviewsHeaderCard({ config, onSaveConfig, triggerAl
             className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-amber-500 resize-none"
           />
         </div>
+
+        {/* Link Trang Đích Khi Bấm Nút Đánh Giá (Zalo OA / Chat Zalo) */}
+        <div className="p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-2 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-amber-400">
+              Trang Đích Khi Bấm Nút "Đánh Giá" (Mở Chat Zalo Tiếp Nhận Đánh Giá)
+            </label>
+            <span className="text-[11px] text-emerald-400 font-bold">Zalo: 0906 916 816</span>
+          </div>
+          <input
+            type="text"
+            value={headerData.reviewLink || 'https://zalo.me/0906916816'}
+            onChange={(e) => updateField('reviewLink', e.target.value)}
+            placeholder="https://zalo.me/0906916816"
+            className="w-full bg-neutral-950 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-xs text-amber-300 placeholder-neutral-600 focus:outline-none focus:border-amber-500 font-mono font-bold"
+          />
+          <p className="text-[11px] text-neutral-400">
+            Khi khách hàng bấm nút "Đánh giá" trên Trang Chủ, hệ thống sẽ tự động mở trang đích Zalo này để khách gửi phản hồi & góp ý trực tiếp.
+          </p>
+        </div>
       </div>
 
       {/* Action Buttons */}

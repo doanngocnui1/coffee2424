@@ -7,7 +7,9 @@ import {
   Send, 
   CheckCircle2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageCircle,
+  ExternalLink
 } from 'lucide-react';
 import { getReviews, saveReviews } from '../data/reviews';
 import { getSiteConfig } from '../data/siteConfig';
@@ -128,6 +130,11 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
       setSubmittedSuccess(false);
       setIsModalOpen(false);
     }, 1800);
+  };
+
+  const handleOpenReviewZalo = () => {
+    const zaloUrl = currentReviewsConfig?.reviewLink || 'https://zalo.me/0906916816';
+    window.open(zaloUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -327,11 +334,14 @@ export default function CustomerReviewsSection({ className = '', reviewsConfig }
         )}
 
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="ios-btn-primary text-sm font-bold px-7 py-3 rounded-full cursor-pointer flex items-center gap-2 shadow-md hover:shadow-lg"
+          type="button"
+          onClick={handleOpenReviewZalo}
+          className="ios-btn-primary text-xs sm:text-sm font-black px-7 py-3 rounded-full cursor-pointer flex items-center gap-2.5 shadow-md hover:shadow-xl active:scale-95 transition-all"
+          title="Mở chat Zalo 0906 916 816 để gửi đánh giá & cảm nhận"
         >
-          <Plus className="w-4 h-4 text-white stroke-[2.5]" />
-          <span>Gửi Đánh Giá Của Bạn</span>
+          <MessageCircle className="w-4 h-4 text-white stroke-[2.5]" />
+          <span>Gửi Đánh Giá Qua Zalo (0906 916 816)</span>
+          <ExternalLink className="w-3.5 h-3.5 opacity-80" />
         </button>
       </div>
 

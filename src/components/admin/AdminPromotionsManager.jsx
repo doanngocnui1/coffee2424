@@ -111,6 +111,9 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       category: 'drinks',
       usedPercent: 80,
       remainingCount: 30,
+      showVoucherCode: true,
+      showCopyBtn: true,
+      showCtaBtn: true,
       image: DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
       description: 'Nạp năng lượng và thưởng thức trọn vẹn menu cà phê rang mộc nguyên chất, thức uống pha tươi và món nóng cứu đói 24/7.',
       condition: 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.',
@@ -854,6 +857,60 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                         placeholder="VD: /khuyenmai hoặc /dathang"
                         className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1.5 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-orange-500"
                       />
+                    </div>
+                  </div>
+
+                  {/* Tùy chọn Ẩn / Hiện Mã Voucher, Nút Chép Mã, Nút Dùng Ngay */}
+                  <div className="p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800 space-y-2 mt-1">
+                    <span className="text-[10.5px] font-black text-amber-400 block uppercase tracking-wider">
+                      ⚙️ Bật / Ẩn Nút Trên Thẻ Khuyến Mãi
+                    </span>
+
+                    <div className="grid grid-cols-3 gap-1.5 text-center">
+                      {/* 1. Mã Voucher */}
+                      <button
+                        type="button"
+                        onClick={() => handleUpdatePromotionField(idx, 'showVoucherCode', promo.showVoucherCode === false ? true : false)}
+                        className={`px-2 py-1.5 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
+                          promo.showVoucherCode !== false
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-500'
+                        }`}
+                        title="Bật/Tắt hiển thị ô mã voucher"
+                      >
+                        <span>Mã Voucher</span>
+                        <span className="font-mono text-[9px] font-black">{promo.showVoucherCode !== false ? '✓ ĐANG HIỆN' : '✕ ĐÃ ẨN'}</span>
+                      </button>
+
+                      {/* 2. Nút Chép Mã */}
+                      <button
+                        type="button"
+                        onClick={() => handleUpdatePromotionField(idx, 'showCopyBtn', promo.showCopyBtn === false ? true : false)}
+                        className={`px-2 py-1.5 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
+                          promo.showCopyBtn !== false
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-500'
+                        }`}
+                        title="Bật/Tắt nút chép mã"
+                      >
+                        <span>Nút Chép Mã</span>
+                        <span className="font-mono text-[9px] font-black">{promo.showCopyBtn !== false ? '✓ ĐANG HIỆN' : '✕ ĐÃ ẨN'}</span>
+                      </button>
+
+                      {/* 3. Nút Dùng Ngay */}
+                      <button
+                        type="button"
+                        onClick={() => handleUpdatePromotionField(idx, 'showCtaBtn', promo.showCtaBtn === false ? true : false)}
+                        className={`px-2 py-1.5 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
+                          promo.showCtaBtn !== false
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-500'
+                        }`}
+                        title="Bật/Tắt nút dùng ngay"
+                      >
+                        <span>Nút Dùng Ngay</span>
+                        <span className="font-mono text-[9px] font-black">{promo.showCtaBtn !== false ? '✓ ĐANG HIỆN' : '✕ ĐÃ ẨN'}</span>
+                      </button>
                     </div>
                   </div>
                 </div>
