@@ -419,6 +419,79 @@ export const DEFAULT_SITE_CONFIG = {
       link: '/khuyenmai'
     }
   ],
+  // Cấu hình Toàn Diện Trang Khuyến Mãi (/khuyenmai)
+  promotionsPageConfig: {
+    // 1. Khối Hero Banner Đầu Trang
+    hero: {
+      enabled: true,
+      badge: 'Đặc Quyền Tiếp Sức 24/24',
+      title: 'Kho Voucher & Ưu Đãi',
+      highlightTitle: 'Dành Riêng Cho Bạn',
+      description: 'Giảm tới 40% Giờ Vàng, combo Cú Đêm 69K, món nóng cứu đói và mã freeship xuyên đêm. Thưởng thức trọn vẹn menu cà phê rang mộc nguyên chất 24/7 không lo về giá!',
+      ctaText: 'ĐẶT MÓN & ÁP MÃ NGAY',
+      ctaLink: '/dathang',
+      secondaryText: 'Xem Danh Sách Voucher',
+      stats: [
+        { id: 'stat-1', number: '6+ Deals', label: 'Cập nhật mỗi ngày' },
+        { id: 'stat-2', number: 'Tới 40%', label: 'Chiết khấu trực tiếp' },
+        { id: 'stat-3', number: '24/24 H', label: 'Phục vụ xuyên đêm' },
+        { id: 'stat-4', number: '25 Phút', label: 'Giao hỏa tốc đêm' }
+      ]
+    },
+    // 2. Khối Hướng Dẫn Cách Thức Sử Dụng Voucher (Ảnh Yêu Cầu Của Người Dùng)
+    guideSteps: {
+      enabled: true,
+      badge: 'CÁCH THỨC ÁP DỤNG',
+      title: '3 Bước Sử Dụng Voucher Cực Dễ Dàng',
+      description: 'Chỉ với vài thao tác đơn giản, bạn sẽ nhận ngay ưu đãi giảm giá tốt nhất khi đặt món trực tuyến hoặc thưởng thức tại quán.',
+      steps: [
+        {
+          id: 'step-1',
+          step: '01',
+          title: 'Lưu Mã Ưu Đãi',
+          desc: 'Chọn voucher phù hợp với nhu cầu và nhấn nút "Chép mã" hoặc "Dùng ngay" để hệ thống tự động lưu mã vào bộ nhớ.',
+          color: '#2b170e'
+        },
+        {
+          id: 'step-2',
+          step: '02',
+          title: 'Chọn Thức Uống & Món Ăn',
+          desc: 'Khám phá thực đơn Cà Phê Rang Mộc, Cold Brew Cam Vàng, Bánh Nướng Giòn hoặc Mì Xào Bếp Đêm rồi thêm vào giỏ hàng.',
+          color: '#8c5932'
+        },
+        {
+          id: 'step-3',
+          step: '03',
+          title: 'Áp Mã & Thưởng Thức',
+          desc: 'Tại bước xác nhận đơn, dán mã đã sao chép để được giảm giá trực tiếp vào hóa đơn và nhận đồ uống trong 15-25 phút!',
+          color: '#047857'
+        }
+      ]
+    },
+    // 3. Khối Cam Kết Dịch Vụ 24/24
+    commitments: {
+      enabled: true,
+      badge: 'Chuẩn Mực Phục Vụ 24/7',
+      title: 'Không Chỉ Là Cà Phê,',
+      highlightTitle: 'Đó Là Trạm Năng Lượng 24/24',
+      description: 'Cho dù bạn cần một không gian yên tĩnh cày deadline lúc 2 giờ sáng, tụ họp học nhóm hay một ly cà phê mộc đậm đà khởi đầu ngày mới — COFFEE 24/24 luôn sẵn sàng chào đón bạn.',
+      items: [
+        { id: 'com-1', title: 'Rang Mộc Nguyên Chất', desc: '100% hạt Robusta & Arabica chọn lọc từ nông trại Đắk Lắk & Cầu Đất, rang mộc chuẩn vị không phụ gia.' },
+        { id: 'com-2', title: 'Bếp Nóng 24/24', desc: 'Mì xào bò bốc khói, trứng ốp la, bánh nướng giòn rụm phục vụ cả ngày lẫn đêm không tính phụ thu giờ khuya.' },
+        { id: 'com-3', title: 'Wifi 500Mbps & Ổ Sạc', desc: 'Đường truyền internet cáp quang tốc độ cao, ổ cắm điện cắm sạc laptop và điện thoại tại từng vị trí ngồi.' },
+        { id: 'com-4', title: 'Giao Hỏa Tốc 25 Phút', desc: 'Đội ngũ giao nhận hỏa tốc chuyên nghiệp khắp khu vực Phú Nhuận, Gò Vấp và Bình Thạnh trong đêm.' }
+      ]
+    },
+    // 4. Khối Hotline Hỗ Trợ Đặt Bàn Nhóm Chân Trang
+    hotline: {
+      enabled: true,
+      title: 'Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?',
+      desc: 'Liên hệ hotline chăm sóc khách hàng 24/7: 0906 916 816 hoặc ghé trực tiếp chi nhánh gần nhất.',
+      phone: '0906 916 816',
+      phoneLink: 'tel:0906916816',
+      ctaText: 'Dùng Voucher Đặt Món'
+    }
+  },
   // Khối Món Mới Trình Làng & Ưu Đãi Đặc Quyền (Tương thích ngược)
   whatsNewSection: {
     enabled: true,
@@ -1059,7 +1132,31 @@ export function getSiteConfig() {
       },
       offeringsList: (Array.isArray(parsed.offeringsList) && parsed.offeringsList.length > 0)
         ? parsed.offeringsList
-        : DEFAULT_SITE_CONFIG.offeringsList
+        : DEFAULT_SITE_CONFIG.offeringsList,
+      promotionsPageConfig: {
+        hero: {
+          ...DEFAULT_SITE_CONFIG.promotionsPageConfig.hero,
+          ...(parsed.promotionsPageConfig?.hero || {})
+        },
+        guideSteps: {
+          ...DEFAULT_SITE_CONFIG.promotionsPageConfig.guideSteps,
+          ...(parsed.promotionsPageConfig?.guideSteps || {}),
+          steps: (Array.isArray(parsed.promotionsPageConfig?.guideSteps?.steps) && parsed.promotionsPageConfig.guideSteps.steps.length > 0)
+            ? parsed.promotionsPageConfig.guideSteps.steps
+            : DEFAULT_SITE_CONFIG.promotionsPageConfig.guideSteps.steps
+        },
+        commitments: {
+          ...DEFAULT_SITE_CONFIG.promotionsPageConfig.commitments,
+          ...(parsed.promotionsPageConfig?.commitments || {}),
+          items: (Array.isArray(parsed.promotionsPageConfig?.commitments?.items) && parsed.promotionsPageConfig.commitments.items.length > 0)
+            ? parsed.promotionsPageConfig.commitments.items
+            : DEFAULT_SITE_CONFIG.promotionsPageConfig.commitments.items
+        },
+        hotline: {
+          ...DEFAULT_SITE_CONFIG.promotionsPageConfig.hotline,
+          ...(parsed.promotionsPageConfig?.hotline || {})
+        }
+      }
     };
   } catch (e) {
     console.error('Error loading config:', e);
@@ -1254,6 +1351,34 @@ export async function syncSiteConfigWithCloud(force = false) {
           ...DEFAULT_SITE_CONFIG.careersPage,
           ...(currentConfig.careersPage || {}),
           ...(cloudConfig.careersPage || {})
+        },
+        promotionsPageConfig: {
+          hero: {
+            ...DEFAULT_SITE_CONFIG.promotionsPageConfig.hero,
+            ...(currentConfig.promotionsPageConfig?.hero || {}),
+            ...(cloudConfig.promotionsPageConfig?.hero || {})
+          },
+          guideSteps: {
+            ...DEFAULT_SITE_CONFIG.promotionsPageConfig.guideSteps,
+            ...(currentConfig.promotionsPageConfig?.guideSteps || {}),
+            ...(cloudConfig.promotionsPageConfig?.guideSteps || {}),
+            steps: (Array.isArray(cloudConfig.promotionsPageConfig?.guideSteps?.steps) && cloudConfig.promotionsPageConfig.guideSteps.steps.length > 0)
+              ? cloudConfig.promotionsPageConfig.guideSteps.steps
+              : ((currentConfig.promotionsPageConfig?.guideSteps?.steps) || DEFAULT_SITE_CONFIG.promotionsPageConfig.guideSteps.steps)
+          },
+          commitments: {
+            ...DEFAULT_SITE_CONFIG.promotionsPageConfig.commitments,
+            ...(currentConfig.promotionsPageConfig?.commitments || {}),
+            ...(cloudConfig.promotionsPageConfig?.commitments || {}),
+            items: (Array.isArray(cloudConfig.promotionsPageConfig?.commitments?.items) && cloudConfig.promotionsPageConfig.commitments.items.length > 0)
+              ? cloudConfig.promotionsPageConfig.commitments.items
+              : ((currentConfig.promotionsPageConfig?.commitments?.items) || DEFAULT_SITE_CONFIG.promotionsPageConfig.commitments.items)
+          },
+          hotline: {
+            ...DEFAULT_SITE_CONFIG.promotionsPageConfig.hotline,
+            ...(currentConfig.promotionsPageConfig?.hotline || {}),
+            ...(cloudConfig.promotionsPageConfig?.hotline || {})
+          }
         }
       };
 

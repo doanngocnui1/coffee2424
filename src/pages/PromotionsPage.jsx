@@ -43,6 +43,12 @@ export default function PromotionsPage({ navigate }) {
     };
   }, []);
 
+  const pageConfig = siteConfig?.promotionsPageConfig || DEFAULT_SITE_CONFIG.promotionsPageConfig || {};
+  const heroConfig = pageConfig?.hero || DEFAULT_SITE_CONFIG.promotionsPageConfig?.hero;
+  const guideConfig = pageConfig?.guideSteps || DEFAULT_SITE_CONFIG.promotionsPageConfig?.guideSteps;
+  const commitConfig = pageConfig?.commitments || DEFAULT_SITE_CONFIG.promotionsPageConfig?.commitments;
+  const hotlineConfig = pageConfig?.hotline || DEFAULT_SITE_CONFIG.promotionsPageConfig?.hotline;
+
   const livePromotions = (siteConfig?.promotionsList && Array.isArray(siteConfig.promotionsList) && siteConfig.promotionsList.length > 0)
     ? siteConfig.promotionsList
     : PROMOTIONS;
@@ -120,106 +126,100 @@ export default function PromotionsPage({ navigate }) {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 space-y-12">
-        
+
         {/* 1. HERO BANNER - FROSTED GLASS */}
-        <section className="relative overflow-hidden rounded-[36px] sm:rounded-[48px] bg-white/60 backdrop-blur-3xl border border-white/80 p-8 sm:p-14 shadow-[0_20px_50px_rgba(60,35,15,0.06)]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            
-            {/* Left Content */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 text-[#8c5932] text-xs font-black uppercase tracking-wider border border-white/90 shadow-xs">
-                <Flame className="w-4 h-4 text-orange-600 fill-orange-600 animate-pulse" />
-                <span>Đặc Quyền Tiếp Sức 24/24</span>
-              </div>
-
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] tracking-tight leading-[1.3] sm:leading-[1.35]">
-                Kho Voucher & Ưu Đãi <br />
-                <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">
-                  Dành Riêng Cho Bạn
-                </span>
-              </h1>
-
-              <p className="text-base sm:text-lg text-[#5c3d2e] font-normal max-w-2xl leading-relaxed">
-                Giảm tới <strong className="text-[#2b170e] font-black">40% Giờ Vàng</strong>, combo <strong className="text-[#2b170e] font-black">Cú Đêm 69K</strong>, món nóng cứu đói và mã freeship xuyên đêm. Thưởng thức trọn vẹn menu cà phê rang mộc nguyên chất 24/7 không lo về giá!
-              </p>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                <button
-                  onClick={() => navigate('/dathang')}
-                  className="px-8 py-4 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-black text-sm tracking-wide flex items-center gap-2.5 shadow-xl hover:shadow-2xl hover:scale-102 transition-all cursor-pointer"
-                >
-                  <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
-                  <span>ĐẶT MÓN & ÁP MÃ NGAY</span>
-                </button>
-
-                <a
-                  href="#voucher-grid"
-                  className="px-6 py-4 rounded-full bg-white/70 hover:bg-white text-[#2b170e] font-bold text-sm border border-white/90 shadow-sm transition-all flex items-center gap-2"
-                >
-                  <span>Xem Danh Sách Voucher</span>
-                  <ArrowRight className="w-4 h-4 text-[#8c5932]" />
-                </a>
-              </div>
-
-              {/* Quick Trust Highlights */}
-              <div className="pt-6 border-t border-[#dfd4c7] grid grid-cols-2 sm:grid-cols-4 gap-4 text-center lg:text-left">
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-[#2b170e]">6+ Deals</div>
-                  <div className="text-xs sm:text-sm text-[#7a5843] font-medium">Cập nhật mỗi ngày</div>
+        {heroConfig?.enabled !== false && (
+          <section className="relative overflow-hidden rounded-[36px] sm:rounded-[48px] bg-white/60 backdrop-blur-3xl border border-white/80 p-8 sm:p-14 shadow-[0_20px_50px_rgba(60,35,15,0.06)]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              
+              {/* Left Content */}
+              <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 text-[#8c5932] text-xs font-black uppercase tracking-wider border border-white/90 shadow-xs">
+                  <Flame className="w-4 h-4 text-orange-600 fill-orange-600 animate-pulse" />
+                  <span>{heroConfig?.badge || 'Đặc Quyền Tiếp Sức 24/24'}</span>
                 </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-[#2b170e]">Tới 40%</div>
-                  <div className="text-xs sm:text-sm text-[#7a5843] font-medium">Chiết khấu trực tiếp</div>
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-[#2b170e]">24/24 H</div>
-                  <div className="text-xs sm:text-sm text-[#7a5843] font-medium">Phục vụ xuyên đêm</div>
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-[#2b170e]">25 Phút</div>
-                  <div className="text-xs sm:text-sm text-[#7a5843] font-medium">Giao hỏa tốc đêm</div>
-                </div>
-              </div>
-            </div>
 
-            {/* Right Hero Image Card (Portrait 3:4) */}
-            <div className="lg:col-span-5">
-              <div className="relative group">
-                <div className="relative rounded-[32px] overflow-hidden border border-white/80 shadow-2xl bg-white/70">
-                  <div className="relative w-full aspect-[3/4] max-h-[520px] overflow-hidden bg-stone-900">
-                    <img 
-                      src={heroImage} 
-                      alt={heroTitle} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/95 via-[#2b170e]/30 to-transparent" />
-                    
-                    {/* Floating Ticket Feature Overlay */}
-                    <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-2 shadow-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider flex items-center gap-1.5">
-                          <Flame className="w-4 h-4 fill-orange-600 text-orange-600" />
-                          {heroTag}
-                        </span>
-                        <span className="text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
-                          {heroDiscount}
-                        </span>
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#2b170e] tracking-tight leading-[1.3] sm:leading-[1.35]">
+                  {heroConfig?.title || 'Kho Voucher & Ưu Đãi'} <br />
+                  <span className="text-[#8c5932] inline-block mt-1 sm:mt-2">
+                    {heroConfig?.highlightTitle || 'Dành Riêng Cho Bạn'}
+                  </span>
+                </h1>
+
+                <p className="text-base sm:text-lg text-[#5c3d2e] font-normal max-w-2xl leading-relaxed">
+                  {heroConfig?.description || 'Giảm tới 40% Giờ Vàng, combo Cú Đêm 69K, món nóng cứu đói và mã freeship xuyên đêm. Thưởng thức trọn vẹn menu cà phê rang mộc nguyên chất 24/7 không lo về giá!'}
+                </p>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                  <button
+                    onClick={() => navigate(heroConfig?.ctaLink || '/dathang')}
+                    className="px-8 py-4 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-black text-sm tracking-wide flex items-center gap-2.5 shadow-xl hover:shadow-2xl hover:scale-102 transition-all cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
+                    <span>{heroConfig?.ctaText || 'ĐẶT MÓN & ÁP MÃ NGAY'}</span>
+                  </button>
+
+                  <a
+                    href="#voucher-grid"
+                    className="px-6 py-4 rounded-full bg-white/70 hover:bg-white text-[#2b170e] font-bold text-sm border border-white/90 shadow-sm transition-all flex items-center gap-2"
+                  >
+                    <span>{heroConfig?.secondaryText || 'Xem Danh Sách Voucher'}</span>
+                    <ArrowRight className="w-4 h-4 text-[#8c5932]" />
+                  </a>
+                </div>
+
+                {/* Quick Trust Highlights */}
+                {Array.isArray(heroConfig?.stats) && heroConfig.stats.length > 0 && (
+                  <div className="pt-6 border-t border-[#dfd4c7] grid grid-cols-2 sm:grid-cols-4 gap-4 text-center lg:text-left">
+                    {heroConfig.stats.map((stat, sIdx) => (
+                      <div key={stat.id || sIdx}>
+                        <div className="text-2xl sm:text-3xl font-black text-[#2b170e]">{stat.number}</div>
+                        <div className="text-xs sm:text-sm text-[#7a5843] font-medium">{stat.label}</div>
                       </div>
-                      <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
-                      <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
-                        <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
-                        <span className="text-[#8c5932] font-bold">{heroValidUntil}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Hero Image Card (Portrait 3:4) */}
+              <div className="lg:col-span-5">
+                <div className="relative group">
+                  <div className="relative rounded-[32px] overflow-hidden border border-white/80 shadow-2xl bg-white/70">
+                    <div className="relative w-full aspect-[3/4] max-h-[520px] overflow-hidden bg-stone-900">
+                      <img 
+                        src={heroImage} 
+                        alt={heroTitle} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/95 via-[#2b170e]/30 to-transparent" />
+                      
+                      {/* Floating Ticket Feature Overlay */}
+                      <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-2 shadow-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider flex items-center gap-1.5">
+                            <Flame className="w-4 h-4 fill-orange-600 text-orange-600" />
+                            {heroTag}
+                          </span>
+                          <span className="text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
+                            {heroDiscount}
+                          </span>
+                        </div>
+                        <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
+                        <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
+                          <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
+                          <span className="text-[#8c5932] font-bold">{heroValidUntil}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* 2. CATEGORY FILTER TABS & VOUCHER GRID */}
         <section id="voucher-grid" className="space-y-8">
@@ -413,158 +413,127 @@ export default function PromotionsPage({ navigate }) {
 
         </section>
 
-        {/* 3. HƯỚNG DẪN 3 BƯỚC DÙNG VOUCHER */}
-        <section className="bg-white/60 backdrop-blur-2xl rounded-[36px] sm:rounded-[44px] p-8 sm:p-12 border border-white/80 shadow-[0_15px_40px_rgba(60,35,15,0.06)] space-y-10">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-[#8c5932] uppercase tracking-wider bg-white/80 px-4 py-1.5 rounded-full border border-white/90 inline-block shadow-xs">
-              Cách Thức Áp Dụng
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#2b170e]">
-              3 Bước Sử Dụng Voucher Cực Dễ Dàng
-            </h2>
-            <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
-              Chỉ với vài thao tác đơn giản, bạn sẽ nhận ngay ưu đãi giảm giá tốt nhất khi đặt món trực tuyến hoặc thưởng thức tại quán.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Step 1 */}
-            <div className="bg-white/70 rounded-3xl p-6 sm:p-7 border border-white/90 space-y-3 relative shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-[#2b170e] text-white font-black text-lg flex items-center justify-center shadow-md">
-                01
-              </div>
-              <h3 className="text-lg font-black text-[#2b170e]">Lưu Mã Ưu Đãi</h3>
+        {/* 3. HƯỚNG DẪN CÁC BƯỚC DÙNG VOUCHER */}
+        {guideConfig?.enabled !== false && (
+          <section className="bg-white/60 backdrop-blur-2xl rounded-[36px] sm:rounded-[44px] p-8 sm:p-12 border border-white/80 shadow-[0_15px_40px_rgba(60,35,15,0.06)] space-y-10">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-xs font-black text-[#8c5932] uppercase tracking-wider bg-white/80 px-4 py-1.5 rounded-full border border-white/90 inline-block shadow-xs">
+                {guideConfig?.badge || 'CÁCH THỨC ÁP DỤNG'}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#2b170e]">
+                {guideConfig?.title || '3 Bước Sử Dụng Voucher Cực Dễ Dàng'}
+              </h2>
               <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
-                Chọn voucher phù hợp với nhu cầu và nhấn nút <strong>"Chép mã"</strong> hoặc <strong>"Dùng ngay"</strong> để hệ thống tự động lưu mã vào bộ nhớ.
+                {guideConfig?.description || 'Chỉ với vài thao tác đơn giản, bạn sẽ nhận ngay ưu đãi giảm giá tốt nhất khi đặt món trực tuyến hoặc thưởng thức tại quán.'}
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div className="bg-white/70 rounded-3xl p-6 sm:p-7 border border-white/90 space-y-3 relative shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-[#8c5932] text-white font-black text-lg flex items-center justify-center shadow-md">
-                02
-              </div>
-              <h3 className="text-lg font-black text-[#2b170e]">Chọn Thức Uống & Món Ăn</h3>
-              <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
-                Khám phá thực đơn Cà Phê Rang Mộc, Cold Brew Cam Vàng, Bánh Nướng Giòn hoặc Mì Xào Bếp Đêm rồi thêm vào giỏ hàng.
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {(guideConfig?.steps || DEFAULT_SITE_CONFIG.promotionsPageConfig.guideSteps.steps).map((item, idx) => (
+                <div key={item.id || idx} className="bg-white/70 rounded-3xl p-6 sm:p-7 border border-white/90 space-y-3 relative shadow-sm">
+                  <div 
+                    className="w-12 h-12 rounded-2xl text-white font-black text-lg flex items-center justify-center shadow-md"
+                    style={{ backgroundColor: item.color || (idx === 0 ? '#2b170e' : idx === 1 ? '#8c5932' : '#047857') }}
+                  >
+                    {item.step || `0${idx + 1}`}
+                  </div>
+                  <h3 className="text-lg font-black text-[#2b170e]">{item.title}</h3>
+                  <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
             </div>
-
-            {/* Step 3 */}
-            <div className="bg-white/70 rounded-3xl p-6 sm:p-7 border border-white/90 space-y-3 relative shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-700 text-white font-black text-lg flex items-center justify-center shadow-md">
-                03
-              </div>
-              <h3 className="text-lg font-black text-[#2b170e]">Áp Mã & Thưởng Thức</h3>
-              <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed">
-                Tại bước xác nhận đơn, dán mã đã sao chép để được giảm giá trực tiếp vào hóa đơn và nhận đồ uống trong 15-25 phút!
-              </p>
-            </div>
-
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 4. CAM KẾT DỊCH VỤ 24/24 */}
-        <section className="bg-white/60 backdrop-blur-3xl rounded-[36px] sm:rounded-[44px] p-8 sm:p-12 border border-white/80 shadow-[0_15px_40px_rgba(60,35,15,0.06)] relative overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            
-            <div className="lg:col-span-6 space-y-4">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 text-[#8c5932] text-xs font-bold border border-white/90 shadow-xs">
-                <Coffee className="w-4 h-4 text-[#8c5932]" />
-                Chuẩn Mực Phục Vụ 24/7
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-[#2b170e] tracking-tight leading-snug">
-                Không Chỉ Là Cà Phê, <br />
-                <span className="text-[#8c5932]">Đó Là Trạm Năng Lượng 24/24</span>
-              </h2>
-              <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed font-normal">
-                Cho dù bạn cần một không gian yên tĩnh cày deadline lúc 2 giờ sáng, tụ họp học nhóm hay một ly cà phê mộc đậm đà khởi đầu ngày mới — COFFEE 24/24 luôn sẵn sàng chào đón bạn.
-              </p>
+        {commitConfig?.enabled !== false && (
+          <section className="bg-white/60 backdrop-blur-3xl rounded-[36px] sm:rounded-[44px] p-8 sm:p-12 border border-white/80 shadow-[0_15px_40px_rgba(60,35,15,0.06)] relative overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
+              <div className="lg:col-span-6 space-y-4">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 text-[#8c5932] text-xs font-bold border border-white/90 shadow-xs">
+                  <Coffee className="w-4 h-4 text-[#8c5932]" />
+                  {commitConfig?.badge || 'Chuẩn Mực Phục Vụ 24/7'}
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-black text-[#2b170e] tracking-tight leading-snug">
+                  {commitConfig?.title || 'Không Chỉ Là Cà Phê,'} <br />
+                  <span className="text-[#8c5932]">{commitConfig?.highlightTitle || 'Đó Là Trạm Năng Lượng 24/24'}</span>
+                </h2>
+                <p className="text-sm sm:text-base text-[#5c3d2e] leading-relaxed font-normal">
+                  {commitConfig?.description || 'Cho dù bạn cần một không gian yên tĩnh cày deadline lúc 2 giờ sáng, tụ họp học nhóm hay một ly cà phê mộc đậm đà khởi đầu ngày mới — COFFEE 24/24 luôn sẵn sàng chào đón bạn.'}
+                </p>
 
-              <div className="pt-2 flex flex-wrap gap-4">
-                <button
-                  onClick={() => navigate('/dathang')}
-                  className="px-6 py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer"
-                >
-                  <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
-                  <span>Đặt Món Ngay Bây Giờ</span>
-                </button>
-                <button
-                  onClick={() => navigate('/gioithieu')}
-                  className="px-6 py-3.5 rounded-full bg-white/70 hover:bg-white text-[#2b170e] font-bold text-sm border border-white/90 shadow-xs transition-all cursor-pointer"
-                >
-                  <span>Xem Không Gian Quán</span>
-                </button>
+                <div className="pt-2 flex flex-wrap gap-4">
+                  <button
+                    onClick={() => navigate('/dathang')}
+                    className="px-6 py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
+                    <span>Đặt Món Ngay Bây Giờ</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/gioithieu')}
+                    className="px-6 py-3.5 rounded-full bg-white/70 hover:bg-white text-[#2b170e] font-bold text-sm border border-white/90 shadow-xs transition-all cursor-pointer"
+                  >
+                    <span>Xem Không Gian Quán</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Feature Highlights */}
+              <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {(commitConfig?.items || DEFAULT_SITE_CONFIG.promotionsPageConfig.commitments.items).map((com, cIdx) => (
+                  <div key={com.id || cIdx} className="p-5 rounded-2xl bg-white/75 border border-white/90 space-y-2 shadow-xs">
+                    <div className="text-[#2b170e] font-black text-base flex items-center gap-2">
+                      {cIdx === 0 && <Coffee className="w-5 h-5 text-[#8c5932]" />}
+                      {cIdx === 1 && <Utensils className="w-5 h-5 text-[#8c5932]" />}
+                      {cIdx === 2 && <Zap className="w-5 h-5 text-[#8c5932]" />}
+                      {cIdx >= 3 && <Truck className="w-5 h-5 text-[#8c5932]" />}
+                      <span>{com.title}</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
+                      {com.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
             </div>
-
-            {/* 4 Feature Highlights */}
-            <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl bg-white/75 border border-white/90 space-y-2 shadow-xs">
-                <div className="text-[#2b170e] font-black text-base flex items-center gap-2">
-                  <Coffee className="w-5 h-5 text-[#8c5932]" /> Rang Mộc Nguyên Chất
-                </div>
-                <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
-                  100% hạt Robusta & Arabica chọn lọc từ nông trại Đắk Lắk & Cầu Đất, rang mộc chuẩn vị không phụ gia.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/75 border border-white/90 space-y-2 shadow-xs">
-                <div className="text-[#2b170e] font-black text-base flex items-center gap-2">
-                  <Utensils className="w-5 h-5 text-[#8c5932]" /> Bếp Nóng 24/24
-                </div>
-                <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
-                  Mì xào bò bốc khói, trứng ốp la, bánh nướng giòn rụm phục vụ cả ngày lẫn đêm không tính phụ thu giờ khuya.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/75 border border-white/90 space-y-2 shadow-xs">
-                <div className="text-[#2b170e] font-black text-base flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-[#8c5932]" /> Wifi 500Mbps & Ổ Sạc
-                </div>
-                <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
-                  Đường truyền internet cáp quang tốc độ cao, ổ cắm điện cắm sạc laptop và điện thoại tại từng vị trí ngồi.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/75 border border-white/90 space-y-2 shadow-xs">
-                <div className="text-[#2b170e] font-black text-base flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-[#8c5932]" /> Giao Hỏa Tốc 25 Phút
-                </div>
-                <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed">
-                  Đội ngũ giao nhận hỏa tốc chuyên nghiệp khắp khu vực Phú Nhuận, Gò Vấp và Bình Thạnh trong đêm.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 5. HOTLINE & HỖ TRỢ ĐẶT BÀN NHÓM */}
-        <section className="p-6 sm:p-8 rounded-[32px] bg-white/70 backdrop-blur-2xl border border-white/90 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_10px_30px_rgba(60,35,15,0.05)]">
-          <div className="flex items-center gap-4 text-center md:text-left">
-            <div className="w-14 h-14 rounded-2xl bg-white text-[#2b170e] flex items-center justify-center flex-shrink-0 border border-white/90 shadow-sm">
-              <PhoneCall className="w-7 h-7 text-[#8c5932]" />
+        {hotlineConfig?.enabled !== false && (
+          <section className="p-6 sm:p-8 rounded-[32px] bg-white/70 backdrop-blur-2xl border border-white/90 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_10px_30px_rgba(60,35,15,0.05)]">
+            <div className="flex items-center gap-4 text-center md:text-left">
+              <div className="w-14 h-14 rounded-2xl bg-white text-[#2b170e] flex items-center justify-center flex-shrink-0 border border-white/90 shadow-sm">
+                <PhoneCall className="w-7 h-7 text-[#8c5932]" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-[#2b170e]">
+                  {hotlineConfig?.title || 'Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?'}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#5c3d2e]">
+                  {hotlineConfig?.desc || 'Liên hệ hotline chăm sóc khách hàng 24/7:'}{' '}
+                  <a href={hotlineConfig?.phoneLink || 'tel:0906916816'} className="font-bold text-[#8c5932] hover:underline font-mono">
+                    {hotlineConfig?.phone || '0906 916 816'}
+                  </a>
+                  {' '}hoặc ghé trực tiếp chi nhánh gần nhất.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-[#2b170e]">
-                Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?
-              </h3>
-              <p className="text-xs sm:text-sm text-[#5c3d2e]">
-                Liên hệ hotline chăm sóc khách hàng 24/7: <a href="tel:0906916816" className="font-bold text-[#8c5932] hover:underline font-mono">0906 916 816</a> hoặc ghé trực tiếp chi nhánh gần nhất.
-              </p>
-            </div>
-          </div>
 
-          <button
-            onClick={() => navigate('/dathang')}
-            className="px-6 py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-xs sm:text-sm whitespace-nowrap shadow-md transition-all cursor-pointer flex items-center gap-2"
-          >
-            <span>Dùng Voucher Đặt Món</span>
-            <ChevronRight className="w-4 h-4 stroke-[3]" />
-          </button>
-        </section>
+            <button
+              onClick={() => navigate('/dathang')}
+              className="px-6 py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-xs sm:text-sm whitespace-nowrap shadow-md transition-all cursor-pointer flex items-center gap-2"
+            >
+              <span>{hotlineConfig?.ctaText || 'Dùng Voucher Đặt Món'}</span>
+              <ChevronRight className="w-4 h-4 stroke-[3]" />
+            </button>
+          </section>
+        )}
 
       </div>
 
