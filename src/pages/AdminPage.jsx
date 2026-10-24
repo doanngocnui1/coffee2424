@@ -79,7 +79,7 @@ import {
   pushLocalConfigToCloud, 
   pullCloudConfigToLocal 
 } from '../data/siteConfig';
-import { supabase, isSupabaseConfigured, isLocalhost, uploadImageToSupabase, saveCloudSiteConfig } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, isLocalhost, uploadImageToSupabase, saveCloudSiteConfig, compressImageToWebP } from '../lib/supabase';
 import { getJobs, saveJobs } from '../data/jobs';
 import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
@@ -631,10 +631,11 @@ export default function AdminPage({ navigate }) {
   };
 
   const handleUploadBranchImage = async (e, idx) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
     try {
       setUploadingBranchIdx(idx);
+      const file = await compressImageToWebP(rawFile);
       const publicUrl = await uploadImageToSupabase(file, 'branches');
       if (publicUrl) {
         const copy = branchesList.map((b, i) => i === idx ? { ...b, image: publicUrl } : b);
@@ -646,7 +647,7 @@ export default function AdminPage({ navigate }) {
           saveSiteConfig(updatedCfg);
           saveCloudSiteConfig(updatedCfg);
         } catch (_) {}
-        triggerAlert('✓ Đã tải ảnh chi nhánh lên Supabase Cloud thành công!');
+        triggerAlert('✓ Đã nén WebP & tải ảnh chi nhánh lên Supabase Cloud thành công!');
       } else {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -655,7 +656,7 @@ export default function AdminPage({ navigate }) {
             const copy = branchesList.map((b, i) => i === idx ? { ...b, image: localUrl } : b);
             setBranchesList(copy);
             saveBranches(copy);
-            triggerAlert('Đã chọn ảnh chi nhánh (lưu nội bộ). Nhớ bấm LƯU!');
+            triggerAlert('Đã chọn ảnh chi nhánh (lưu nội bộ WebP). Nhớ bấm LƯU!');
           }
         };
         reader.readAsDataURL(file);
