@@ -58,17 +58,35 @@ export default function PromotionsPage({ navigate }) {
   const selectedPromoId = heroConfig?.featuredPromoId;
   const activePromo = (selectedPromoId ? livePromotions.find(p => p.id === selectedPromoId) : null) || livePromotions[0] || null;
   const heroImage = heroConfig?.customImage || activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
-  const heroTitle = activePromo?.title || 'Giờ Vàng Giảm 40% Tất Cả Đồ Uống';
-  const heroTag = activePromo?.tag || activePromo?.highlightTag || 'ƯU ĐÃI NỔI BẬT NHẤT';
-  const heroDiscount = activePromo?.discount || 'GIẢM 40%';
+  // Bật/tắt toàn bộ thẻ thông tin nổi trên Hero Poster
+  const showHeroCard = (heroConfig?.showFloatingCard !== false) && (heroConfig?.showTicketCard !== false) && (heroConfig?.showCard !== false);
 
-  // Chỉ hiển thị Mã trên thẻ Hero khi:
-  // 1. Cấu hình Hero không tắt (heroConfig.showVoucherCode !== false)
-  // 2. Chương trình ưu đãi không tắt (activePromo.showVoucherCode !== false)
-  // 3. activePromo.code có nội dung thực tế (người dùng chưa xóa mã)
+  // Lấy nội dung cho thẻ Hero (ưu tiên trường custom từ heroConfig nếu có, sau đó đến activePromo, không gán chữ demo nếu người dùng xóa trống):
+  const heroTag = ((heroConfig?.customCardTag !== undefined && heroConfig?.customCardTag !== '') 
+    ? heroConfig.customCardTag 
+    : (activePromo?.tag || activePromo?.highlightTag || '')).trim();
+
+  const heroDiscount = ((heroConfig?.customCardDiscount !== undefined && heroConfig?.customCardDiscount !== '') 
+    ? heroConfig.customCardDiscount 
+    : (activePromo?.discount || '')).trim();
+
+  const heroTitle = ((heroConfig?.customCardTitle !== undefined && heroConfig?.customCardTitle !== '') 
+    ? heroConfig.customCardTitle 
+    : (activePromo?.title || '')).trim();
+
+  const heroSubtitle = ((heroConfig?.customCardSubtitle !== undefined && heroConfig?.customCardSubtitle !== '') 
+    ? heroConfig.customCardSubtitle 
+    : (activePromo?.subtitle || '')).trim();
+
   const isHeroCodeEnabled = (heroConfig?.showVoucherCode !== false) && (activePromo?.showVoucherCode !== false);
-  const heroCode = (isHeroCodeEnabled && typeof activePromo?.code === 'string' && activePromo.code.trim()) ? activePromo.code.trim() : '';
-  const heroValidUntil = activePromo?.validUntil || '16:00 - 19:00 Mỗi ngày';
+  const rawCode = (heroConfig?.customCardCode !== undefined && heroConfig?.customCardCode !== '') 
+    ? heroConfig.customCardCode 
+    : (activePromo?.code || '');
+  const heroCode = (isHeroCodeEnabled && typeof rawCode === 'string' && rawCode.trim()) ? rawCode.trim() : '';
+
+  const heroValidUntil = ((heroConfig?.customCardValidUntil !== undefined && heroConfig?.customCardValidUntil !== '') 
+    ? heroConfig.customCardValidUntil 
+    : (activePromo?.validUntil || '')).trim();
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [copiedCode, setCopiedCode] = useState(null);
@@ -209,29 +227,44 @@ export default function PromotionsPage({ navigate }) {
                       <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/95 via-[#2b170e]/30 to-transparent" />
                       
                       {/* Floating Ticket Feature Overlay */}
-                      <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-2 shadow-lg">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider flex items-center gap-1.5">
-                            <Flame className="w-4 h-4 fill-orange-600 text-orange-600" />
-                            {heroTag}
-                          </span>
-                          <span className="text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
-                            {heroDiscount}
-                          </span>
-                        </div>
-                        <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
-                        <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
-                          {heroCode ? (
-                            <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
-                          ) : (
-                            <span className="text-xs text-[#8c5932] font-bold italic flex items-center gap-1">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
-                              <span>Ưu đãi áp dụng tự động</span>
-                            </span>
+                      {showHeroCard && (heroTitle || heroTag || heroDiscount || heroCode || heroValidUntil || heroSubtitle) && (
+                        <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-2 shadow-lg">
+                          {(heroTag || heroDiscount) && (
+                            <div className="flex items-center justify-between gap-2">
+                              {heroTag ? (
+                                <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider flex items-center gap-1.5">
+                                  <Flame className="w-4 h-4 fill-orange-600 text-orange-600" />
+                                  {heroTag}
+                                </span>
+                              ) : <div />}
+                              {heroDiscount && (
+                                <span className="text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
+                                  {heroDiscount}
+                                </span>
+                              )}
+                            </div>
                           )}
-                          {heroValidUntil && <span className="text-[#8c5932] font-bold ml-auto">{heroValidUntil}</span>}
+
+                          {heroTitle && (
+                            <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
+                          )}
+
+                          {heroSubtitle && (
+                            <div className="text-xs text-[#7a5843] line-clamp-1">{heroSubtitle}</div>
+                          )}
+
+                          {(heroCode || heroValidUntil) && (
+                            <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
+                              {heroCode ? (
+                                <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
+                              ) : <div />}
+                              {heroValidUntil && (
+                                <span className="text-[#8c5932] font-bold ml-auto">{heroValidUntil}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -352,39 +385,51 @@ export default function PromotionsPage({ navigate }) {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
                       
                       {/* Floating badges */}
-                      <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-[11px] font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
-                          <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
-                          {promo.badge || promo.tag || 'HOT DEAL 🔥'}
-                        </span>
-                      </div>
+                      {(promo.badge || promo.tag) && (
+                        <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                          <span className="px-3 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-[11px] font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
+                            <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
+                            {promo.badge || promo.tag}
+                          </span>
+                        </div>
+                      )}
 
-                      <div className="absolute top-3.5 right-3.5">
-                        <span className="px-3 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
-                          {promo.discount || 'ƯU ĐÃI'}
-                        </span>
-                      </div>
+                      {promo.discount && (
+                        <div className="absolute top-3.5 right-3.5">
+                          <span className="px-3 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
+                            {promo.discount}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Time validity tag */}
-                      <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs font-bold">
-                        <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
-                          <Clock className="w-3.5 h-3.5 text-amber-300" />
-                          {promo.validUntil || 'Cả ngày & đêm 24/24'}
-                        </span>
-                      </div>
+                      {promo.validUntil && (
+                        <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs font-bold">
+                          <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
+                            <Clock className="w-3.5 h-3.5 text-amber-300" />
+                            {promo.validUntil}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* MIDDLE: Content (Tiêu đề, danh mục, thời gian) */}
                     <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-3">
                       <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
-                            {promo.subtitle || 'Ưu Đãi Đặc Quyền'}
-                          </span>
-                          <span className="text-sm font-black text-[#8c5932]">
-                            {promo.discountValue || promo.discount}
-                          </span>
-                        </div>
+                        {(promo.subtitle || promo.discountValue || promo.discount) && (
+                          <div className="flex items-center justify-between">
+                            {promo.subtitle ? (
+                              <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
+                                {promo.subtitle}
+                              </span>
+                            ) : <div />}
+                            {(promo.discountValue || promo.discount) && (
+                              <span className="text-sm font-black text-[#8c5932]">
+                                {promo.discountValue || promo.discount}
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                         <h3 className="font-black text-[#2b170e] text-xl sm:text-2xl leading-snug group-hover:text-[#8c5932] transition-colors">
                           {promo.title}
@@ -506,38 +551,50 @@ export default function PromotionsPage({ navigate }) {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
                         
                         {/* Floating badges */}
-                        <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                          <span className="px-3.5 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-xs font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
-                            <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
-                            {promo.badge || promo.tag || 'HOT DEAL 🔥'}
-                          </span>
-                        </div>
+                        {(promo.badge || promo.tag) && (
+                          <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                            <span className="px-3.5 py-1 rounded-full bg-[#2b170e]/90 backdrop-blur-md text-white text-xs font-black uppercase shadow-md flex items-center gap-1.5 border border-white/20">
+                              <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500 animate-pulse" />
+                              {promo.badge || promo.tag}
+                            </span>
+                          </div>
+                        )}
 
-                        <div className="absolute top-3.5 right-3.5">
-                          <span className="px-3.5 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
-                            {promo.discount || 'ƯU ĐÃI'}
-                          </span>
-                        </div>
+                        {promo.discount && (
+                          <div className="absolute top-3.5 right-3.5">
+                            <span className="px-3.5 py-1 rounded-full bg-white/95 text-[#8c5932] border border-white text-xs font-black shadow-md backdrop-blur-xs">
+                              {promo.discount}
+                            </span>
+                          </div>
+                        )}
 
                         {/* Time validity tag */}
-                        <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
-                          <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
-                            <Clock className="w-3.5 h-3.5 text-amber-300" />
-                            {promo.validUntil || 'Cả ngày & đêm 24/24'}
-                          </span>
-                        </div>
+                        {promo.validUntil && (
+                          <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
+                            <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
+                              <Clock className="w-3.5 h-3.5 text-amber-300" />
+                              {promo.validUntil}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* MIDDLE BODY: Title & Subtitle (KHÔNG CÓ DÒNG HƯỚNG DẪN DƯ THỪA) */}
                       <div className="p-6 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
-                            {promo.subtitle || 'Ưu Đãi Đặc Quyền'}
-                          </span>
-                          <span className="text-sm font-black text-[#8c5932]">
-                            {promo.discountValue || promo.discount}
-                          </span>
-                        </div>
+                        {(promo.subtitle || promo.discountValue || promo.discount) && (
+                          <div className="flex items-center justify-between">
+                            {promo.subtitle ? (
+                              <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white/80 px-2.5 py-1 rounded-lg border border-white/90 shadow-xs">
+                                {promo.subtitle}
+                              </span>
+                            ) : <div />}
+                            {(promo.discountValue || promo.discount) && (
+                              <span className="text-sm font-black text-[#8c5932]">
+                                {promo.discountValue || promo.discount}
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                         <h3 className="font-black text-[#2b170e] text-lg sm:text-xl leading-snug group-hover:text-[#8c5932] transition-colors">
                           {promo.title}
@@ -784,36 +841,48 @@ export default function PromotionsPage({ navigate }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
 
               {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                <span className="px-3.5 py-1 rounded-full bg-[#f39c12] text-white text-xs font-black shadow-md uppercase tracking-wider">
-                  {selectedDetailPromo.badge || selectedDetailPromo.tag || 'HOT DEAL 🔥'}
-                </span>
-                <span className="px-3.5 py-1 rounded-full bg-white text-[#8c5932] text-xs font-black shadow-md">
-                  {selectedDetailPromo.discount || 'ƯU ĐÃI'}
-                </span>
-              </div>
+              {(selectedDetailPromo.badge || selectedDetailPromo.tag || selectedDetailPromo.discount) && (
+                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                  {(selectedDetailPromo.badge || selectedDetailPromo.tag) && (
+                    <span className="px-3.5 py-1 rounded-full bg-[#f39c12] text-white text-xs font-black shadow-md uppercase tracking-wider">
+                      {selectedDetailPromo.badge || selectedDetailPromo.tag}
+                    </span>
+                  )}
+                  {selectedDetailPromo.discount && (
+                    <span className="px-3.5 py-1 rounded-full bg-white text-[#8c5932] text-xs font-black shadow-md">
+                      {selectedDetailPromo.discount}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Time Validity */}
-              <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
-                <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
-                  <Clock className="w-4 h-4 text-amber-300" />
-                  {selectedDetailPromo.validUntil || 'Cả ngày & đêm 24/24'}
-                </span>
-                {selectedDetailPromo.category && (
-                  <span className="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs uppercase font-semibold">
-                    {selectedDetailPromo.category}
-                  </span>
-                )}
-              </div>
+              {(selectedDetailPromo.validUntil || selectedDetailPromo.category) && (
+                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
+                  {selectedDetailPromo.validUntil ? (
+                    <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
+                      <Clock className="w-4 h-4 text-amber-300" />
+                      {selectedDetailPromo.validUntil}
+                    </span>
+                  ) : <div />}
+                  {selectedDetailPromo.category && (
+                    <span className="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs uppercase font-semibold ml-auto">
+                      {selectedDetailPromo.category}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Scrollable Content */}
             <div className="p-6 sm:p-7 overflow-y-auto space-y-5 flex-1">
               {/* Subtitle & Title */}
               <div>
-                <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white px-3 py-1 rounded-lg border border-[#e8ded3] shadow-2xs inline-block mb-2">
-                  {selectedDetailPromo.subtitle || 'Ưu Đãi Đặc Quyền'}
-                </span>
+                {selectedDetailPromo.subtitle && (
+                  <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white px-3 py-1 rounded-lg border border-[#e8ded3] shadow-2xs inline-block mb-2">
+                    {selectedDetailPromo.subtitle}
+                  </span>
+                )}
                 <h3 className="font-black text-xl sm:text-2xl text-[#2b170e] leading-snug">
                   {selectedDetailPromo.title}
                 </h3>

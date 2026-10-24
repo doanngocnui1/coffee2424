@@ -426,6 +426,13 @@ export const DEFAULT_SITE_CONFIG = {
       enabled: true,
       featuredPromoId: '', // ID ưu đãi muốn hiển thị trên Hero Card (rỗng = tự lấy ưu đãi đầu tiên)
       showVoucherCode: true, // Bật/tắt hiển thị dòng mã voucher trên thẻ poster Hero
+      showFloatingCard: true, // Bật/tắt toàn bộ khung thẻ thông tin nổi trên poster Hero
+      customCardTitle: '', // Tùy chỉnh tiêu đề thẻ nổi (để trống = lấy theo chương trình)
+      customCardTag: '', // Tùy chỉnh huy hiệu tag thẻ nổi (để trống = lấy theo chương trình)
+      customCardDiscount: '', // Tùy chỉnh mức giảm thẻ nổi (để trống = lấy theo chương trình)
+      customCardSubtitle: '', // Tùy chỉnh phụ đề thẻ nổi (để trống = lấy theo chương trình)
+      customCardCode: '', // Tùy chỉnh mã voucher trên thẻ nổi (để trống = lấy theo chương trình)
+      customCardValidUntil: '', // Tùy chỉnh thời gian hiệu lực thẻ nổi (để trống = lấy theo chương trình)
       customImage: '',
       badge: 'Đặc Quyền Tiếp Sức 24/24',
       title: 'Kho Voucher & Ưu Đãi',

@@ -1459,6 +1459,32 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
           : null) || promotions[0] || null;
         const currentHeroPoster = pageConfig.hero?.customImage || selectedHeroPromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image;
 
+        const previewTag = ((pageConfig.hero?.customCardTag !== undefined && pageConfig.hero?.customCardTag !== '')
+          ? pageConfig.hero.customCardTag
+          : (selectedHeroPromo?.tag || selectedHeroPromo?.badge || '')).trim();
+
+        const previewDiscount = ((pageConfig.hero?.customCardDiscount !== undefined && pageConfig.hero?.customCardDiscount !== '')
+          ? pageConfig.hero.customCardDiscount
+          : (selectedHeroPromo?.discount || '')).trim();
+
+        const previewTitle = ((pageConfig.hero?.customCardTitle !== undefined && pageConfig.hero?.customCardTitle !== '')
+          ? pageConfig.hero.customCardTitle
+          : (selectedHeroPromo?.title || '')).trim();
+
+        const previewSubtitle = ((pageConfig.hero?.customCardSubtitle !== undefined && pageConfig.hero?.customCardSubtitle !== '')
+          ? pageConfig.hero.customCardSubtitle
+          : (selectedHeroPromo?.subtitle || '')).trim();
+
+        const previewIsCodeEnabled = (pageConfig.hero?.showVoucherCode !== false) && (selectedHeroPromo?.showVoucherCode !== false);
+        const rawPreviewCode = (pageConfig.hero?.customCardCode !== undefined && pageConfig.hero?.customCardCode !== '')
+          ? pageConfig.hero.customCardCode
+          : (selectedHeroPromo?.code || '');
+        const previewCode = (previewIsCodeEnabled && typeof rawPreviewCode === 'string' && rawPreviewCode.trim()) ? rawPreviewCode.trim() : '';
+
+        const previewValidUntil = ((pageConfig.hero?.customCardValidUntil !== undefined && pageConfig.hero?.customCardValidUntil !== '')
+          ? pageConfig.hero.customCardValidUntil
+          : (selectedHeroPromo?.validUntil || '')).trim();
+
         return (
           <div className="space-y-6">
             {/* Informational Guidance Banner */}
@@ -1590,25 +1616,144 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                       )}
                     </div>
                   </div>
-                  {/* Bật/Tắt Hiển Thị Dòng Mã Voucher Trên Thẻ Poster Hero */}
-                  <div className="pt-3 border-t border-[#dfd4c7]/70">
+                  {/* BẬT / TẮT TOÀN BỘ KHUNG THẺ THÔNG TIN NỔI TRÊN POSTER HERO */}
+                  <div className="pt-3 border-t border-[#dfd4c7]/70 space-y-3">
                     <label className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 cursor-pointer hover:bg-amber-500/15 transition-colors">
                       <input
                         type="checkbox"
-                        checked={pageConfig.hero?.showVoucherCode !== false}
-                        onChange={(e) => handleUpdateHeroField('showVoucherCode', e.target.checked)}
+                        checked={pageConfig.hero?.showFloatingCard !== false}
+                        onChange={(e) => handleUpdateHeroField('showFloatingCard', e.target.checked)}
                         className="w-4 h-4 mt-0.5 accent-amber-600 rounded shrink-0 cursor-pointer"
                       />
                       <div className="space-y-0.5">
                         <span className="text-xs font-black text-[#2b170e] block">
-                          Hiển thị Dòng Mã Voucher Trên Thẻ Poster Hero
+                          Bật hiển thị Khung Thẻ Thông Tin Nổi Trên Poster Hero
                         </span>
                         <p className="text-[11px] text-[#7a5843] leading-relaxed">
-                          Tích chọn để hiện "Mã: {selectedHeroPromo?.code || '...'}" ở chân thẻ poster. Nếu bỏ tích hoặc mã của chương trình đang để trống, hệ thống sẽ tự động ẩn dòng mã này.
+                          Tích chọn để hiển thị khung thẻ thông tin ở góc dưới tấm áp phích. Nếu bỏ tích, tấm poster 3:4 sẽ hiển thị nguyên bản toàn màn hình mà không bị khung thẻ che.
                         </p>
                       </div>
                     </label>
+
+                    {/* Bật/Tắt Hiển Thị Dòng Mã Voucher */}
+                    {pageConfig.hero?.showFloatingCard !== false && (
+                      <label className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#dfd4c7] cursor-pointer hover:border-[#8c5932] transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={pageConfig.hero?.showVoucherCode !== false}
+                          onChange={(e) => handleUpdateHeroField('showVoucherCode', e.target.checked)}
+                          className="w-4 h-4 mt-0.5 accent-amber-600 rounded shrink-0 cursor-pointer"
+                        />
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-black text-[#2b170e] block">
+                            Hiển thị Dòng Mã Voucher Trên Thẻ Nổi
+                          </span>
+                          <p className="text-[11px] text-[#7a5843] leading-relaxed">
+                            Nếu bỏ tích hoặc mã voucher đang để trống, dòng mã này sẽ tự động ẩn hoàn toàn.
+                          </p>
+                        </div>
+                      </label>
+                    )}
                   </div>
+
+                  {/* SỬA TOÀN BỘ NỘI DUNG CỦA THẺ NỔI NÀY */}
+                  {pageConfig.hero?.showFloatingCard !== false && (
+                    <div className="pt-3 border-t border-[#dfd4c7]/70 space-y-3 p-4 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7]">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-xs font-black uppercase text-[#8c5932] flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#8c5932]" />
+                          Tùy Chỉnh Nội Dung Thẻ Nổi (Để trống = Tự động lấy theo ưu đãi)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleUpdateHeroField('customCardTitle', '');
+                            handleUpdateHeroField('customCardTag', '');
+                            handleUpdateHeroField('customCardDiscount', '');
+                            handleUpdateHeroField('customCardSubtitle', '');
+                            handleUpdateHeroField('customCardCode', '');
+                            handleUpdateHeroField('customCardValidUntil', '');
+                            triggerAlert?.('✓ Đã đặt lại nội dung thẻ nổi theo chương trình ưu đãi đang chọn!');
+                          }}
+                          className="text-[11px] font-bold text-[#8c5932] hover:text-[#2b170e] underline cursor-pointer"
+                        >
+                          Đồng bộ theo ưu đãi đang chọn
+                        </button>
+                      </div>
+
+                      <p className="text-[11px] text-[#7a5843] italic">
+                        * Bất kỳ ô nào không có nội dung (cả ở ưu đãi lẫn ở đây), trên trang chính sẽ TỰ ĐỘNG ẨN HOÀN TOÀN, không hiển thị chữ mẫu hay giá trị mặc định.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-[#7a5843]">Tiêu Đề Thẻ Nổi</label>
+                          <input
+                            type="text"
+                            value={pageConfig.hero?.customCardTitle ?? ''}
+                            onChange={(e) => handleUpdateHeroField('customCardTitle', e.target.value)}
+                            placeholder={selectedHeroPromo?.title || 'Nhập tiêu đề hoặc để trống...'}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-[#7a5843]">Huy Hiệu Tag (Góc trái)</label>
+                          <input
+                            type="text"
+                            value={pageConfig.hero?.customCardTag ?? ''}
+                            onChange={(e) => handleUpdateHeroField('customCardTag', e.target.value)}
+                            placeholder={selectedHeroPromo?.tag || selectedHeroPromo?.badge || 'VD: Hội Viên, Hot Deal...'}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-[#7a5843]">Mức Giảm (Badge góc phải)</label>
+                          <input
+                            type="text"
+                            value={pageConfig.hero?.customCardDiscount ?? ''}
+                            onChange={(e) => handleUpdateHeroField('customCardDiscount', e.target.value)}
+                            placeholder={selectedHeroPromo?.discount || 'VD: GIẢM TỚI 15%...'}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-rose-600 focus:outline-none focus:border-[#8c5932]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-[#7a5843]">Phụ Đề Nhỏ</label>
+                          <input
+                            type="text"
+                            value={pageConfig.hero?.customCardSubtitle ?? ''}
+                            onChange={(e) => handleUpdateHeroField('customCardSubtitle', e.target.value)}
+                            placeholder={selectedHeroPromo?.subtitle || 'Nhập phụ đề hoặc để trống...'}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#5c3d2e] focus:outline-none focus:border-[#8c5932]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-[#7a5843]">Mã Voucher / Ghi Chú (Góc dưới trái)</label>
+                          <input
+                            type="text"
+                            value={pageConfig.hero?.customCardCode ?? ''}
+                            onChange={(e) => handleUpdateHeroField('customCardCode', e.target.value)}
+                            placeholder={selectedHeroPromo?.code || 'Nhập mã hoặc để trống sẽ tự ẩn...'}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-bold text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-[#7a5843]">Thời Gian Hiệu Lực (Góc dưới phải)</label>
+                          <input
+                            type="text"
+                            value={pageConfig.hero?.customCardValidUntil ?? ''}
+                            onChange={(e) => handleUpdateHeroField('customCardValidUntil', e.target.value)}
+                            placeholder={selectedHeroPromo?.validUntil || 'Nhập khung giờ hoặc để trống sẽ tự ẩn...'}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Mini Live Preview Card */}
@@ -1616,7 +1761,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                   <div className="w-64 aspect-[3/4] rounded-3xl overflow-hidden relative shadow-xl border-2 border-amber-500/30 bg-stone-900 group">
                     <img
                       src={currentHeroPoster}
-                      alt={selectedHeroPromo?.title || 'Hero Poster'}
+                      alt={previewTitle || 'Hero Poster'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
                         e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promo_banner.jpg';
@@ -1625,28 +1770,50 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
 
                     {/* Floating Ticket Feature Overlay */}
-                    <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-1 shadow-md">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-[#8c5932] flex items-center gap-1">
-                          <Flame className="w-3 h-3 text-orange-600 fill-orange-600" />
-                          {selectedHeroPromo?.tag || selectedHeroPromo?.badge || 'HOT DEAL'}
-                        </span>
-                        <span className="text-[10px] font-black bg-rose-600 text-white px-2 py-0.2 rounded-full">
-                          {selectedHeroPromo?.discount || 'GIẢM'}
-                        </span>
-                      </div>
-                      <div className="text-xs font-black text-[#2b170e] truncate">{selectedHeroPromo?.title || 'Tiêu đề ưu đãi'}</div>
-                      <div className="flex items-center justify-between text-[10px] text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
-                        {pageConfig.hero?.showVoucherCode !== false && selectedHeroPromo?.showVoucherCode !== false && Boolean(selectedHeroPromo?.code && selectedHeroPromo.code.trim()) ? (
-                          <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{selectedHeroPromo.code.trim()}</strong></span>
-                        ) : (
-                          <span className="text-emerald-700 font-bold flex items-center gap-1">
-                            ✓ Ưu đãi áp dụng tự động
-                          </span>
+                    {pageConfig.hero?.showFloatingCard !== false && (previewTitle || previewTag || previewDiscount || previewCode || previewValidUntil || previewSubtitle) ? (
+                      <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-1 shadow-md">
+                        {(previewTag || previewDiscount) && (
+                          <div className="flex items-center justify-between gap-1">
+                            {previewTag ? (
+                              <span className="text-[10px] font-black uppercase text-[#8c5932] flex items-center gap-1">
+                                <Flame className="w-3 h-3 text-orange-600 fill-orange-600" />
+                                {previewTag}
+                              </span>
+                            ) : <div />}
+                            {previewDiscount && (
+                              <span className="text-[10px] font-black bg-rose-600 text-white px-2 py-0.2 rounded-full">
+                                {previewDiscount}
+                              </span>
+                            )}
+                          </div>
                         )}
-                        <span className="text-[#8c5932] font-bold">{selectedHeroPromo?.validUntil || '24/24'}</span>
+
+                        {previewTitle && (
+                          <div className="text-xs font-black text-[#2b170e] truncate">{previewTitle}</div>
+                        )}
+
+                        {previewSubtitle && (
+                          <div className="text-[10px] text-[#7a5843] truncate">{previewSubtitle}</div>
+                        )}
+
+                        {(previewCode || previewValidUntil) && (
+                          <div className="flex items-center justify-between text-[10px] text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
+                            {previewCode ? (
+                              <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{previewCode}</strong></span>
+                            ) : <div />}
+                            {previewValidUntil && (
+                              <span className="text-[#8c5932] font-bold ml-auto">{previewValidUntil}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    ) : (
+                      pageConfig.hero?.showFloatingCard === false && (
+                        <div className="absolute bottom-3 left-3 right-3 p-2 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 text-center text-[10px] text-amber-200 font-bold">
+                          🚫 Khung thẻ nổi đang TẮT
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
