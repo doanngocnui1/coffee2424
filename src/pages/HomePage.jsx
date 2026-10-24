@@ -465,6 +465,9 @@ export default function HomePage({ navigate, onSelectBranch }) {
                     <img 
                       src={heroMedia} 
                       alt={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
+                      loading="eager"
+                      fetchpriority="high"
+                      decoding="async"
                       style={heroFilterStyle}
                       className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700" 
                     />
@@ -689,6 +692,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
                                 <img 
                                   src={dish.image} 
                                   alt={dish.title}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                                 />
                                 {dish.tag && (
@@ -754,6 +759,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
                               <img 
                                 src={dish.image} 
                                 alt={dish.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                               />
                               {dish.tag && (
@@ -926,6 +933,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
                                 <img 
                                   src={promo.image} 
                                   alt={promo.title}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                                 />
                                 {promo.tag && (
@@ -991,6 +1000,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
                               <img 
                                 src={promo.image} 
                                 alt={promo.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                               />
                               {promo.tag && (
@@ -1140,6 +1151,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
                     <img 
                       src={photo.image} 
                       alt={photo.title || `Không gian ${idx + 1}`} 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                       onError={(e) => {
                         e.currentTarget.src = '/images/branch_downtown.jpg';

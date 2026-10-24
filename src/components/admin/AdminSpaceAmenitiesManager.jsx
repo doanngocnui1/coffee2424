@@ -16,9 +16,11 @@ import {
   Save, 
   Eye, 
   Image as ImageIcon,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG, saveSiteConfig } from '../../data/siteConfig';
+import { uploadImageToSupabase, isSupabaseConfigured, saveCloudSiteConfig } from '../../lib/supabase';
 
 export const CHIP_ICONS = {
   zap: Zap,
@@ -70,6 +72,9 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
     };
   });
 
+  const [uploadingIndex, setUploadingIndex] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     if (config?.spaceAmenities) {
       const basePhotos = config.spaceAmenities.photos || defaultSpaceConfig.photos || [];
@@ -120,7 +125,8 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
   };
 
   // Upload photo from device with auto compression (16:9 aspect, max 800x450, JPEG 0.85)
-  const handleUploadPhoto = (index, file) => {
+  // và tải trực tiếp lên Supabase Storage bucket 'coffee2424-media' thư mục 'spaces'
+  const handleUploadPhoto = async (index, file) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -128,52 +134,120 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const rawDataUrl = e.target?.result;
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 450;
-        const ctx = canvas.getContext('2d');
+    setUploadingIndex(index);
+    triggerAlert?.(`⏳ Đang tối ưu và tải ảnh góc quán #${index + 1} lên Supabase Storage...`);
 
-        if (!ctx) {
-          handleUpdatePhoto(index, 'image', rawDataUrl);
-          return;
-        }
+    // 1. Center-crop 16:9 & nén ảnh bằng canvas (max 800x450, JPEG 0.85)
+    let compressedBlob = null;
+    let localDataUrl = null;
 
-        // Center crop 16:9
-        const targetRatio = 800 / 450;
-        const imgRatio = img.width / img.height;
-        let sWidth = img.width;
-        let sHeight = img.height;
-        let sx = 0;
-        let sy = 0;
+    try {
+      const result = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const rawDataUrl = e.target?.result;
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 450;
+            const ctx = canvas.getContext('2d');
 
-        if (imgRatio > targetRatio) {
-          sWidth = img.height * targetRatio;
-          sx = (img.width - sWidth) / 2;
-        } else {
-          sHeight = img.width / targetRatio;
-          sy = (img.height - sHeight) / 2;
-        }
+            if (!ctx) {
+              resolve({ blob: file, dataUrl: rawDataUrl });
+              return;
+            }
 
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, 800, 450);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const targetRatio = 800 / 450;
+            const imgRatio = img.width / img.height;
+            let sWidth = img.width;
+            let sHeight = img.height;
+            let sx = 0;
+            let sy = 0;
 
-        handleUpdatePhoto(index, 'image', compressedDataUrl);
-        triggerAlert?.(`✓ Đã nén và cập nhật ảnh góc quán #${index + 1} thành công!`);
-      };
-      img.src = rawDataUrl;
-    };
-    reader.readAsDataURL(file);
+            if (imgRatio > targetRatio) {
+              sWidth = img.height * targetRatio;
+              sx = (img.width - sWidth) / 2;
+            } else {
+              sHeight = img.width / targetRatio;
+              sy = (img.height - sHeight) / 2;
+            }
+
+            ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, 800, 450);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            canvas.toBlob((blob) => {
+              resolve({ blob: blob || file, dataUrl });
+            }, 'image/jpeg', 0.85);
+          };
+          img.onerror = () => resolve({ blob: file, dataUrl: rawDataUrl });
+          img.src = rawDataUrl;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      compressedBlob = result.blob;
+      localDataUrl = result.dataUrl;
+
+      // 2. Tải trực tiếp lên Supabase Storage bucket 'coffee2424-media' thư mục 'spaces'
+      const uploadTarget = compressedBlob || file;
+      const cloudUrl = await uploadImageToSupabase(uploadTarget, 'spaces');
+
+      if (cloudUrl) {
+        handleUpdatePhoto(index, 'image', cloudUrl);
+        try {
+          localStorage.setItem(`coffee2424_space_photo_${index}`, cloudUrl);
+        } catch (_) {}
+        triggerAlert?.(`✓ Đã tải ảnh góc quán #${index + 1} lên Supabase Storage thành công! Bấm "LƯU CẤU HÌNH" để áp dụng cho mọi thiết bị.`);
+        setUploadingIndex(null);
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi khi tải ảnh lên Supabase Storage:', err);
+    }
+
+    // 3. Dự phòng nếu tải lên Supabase Storage gặp lỗi
+    if (localDataUrl) {
+      handleUpdatePhoto(index, 'image', localDataUrl);
+      try {
+        localStorage.setItem(`coffee2424_space_photo_${index}`, localDataUrl);
+      } catch (_) {}
+      triggerAlert?.(`⚠️ Đã lưu ảnh cục bộ trên máy. Không thể tải lên Supabase Storage (vui lòng kiểm tra quyền Storage hoặc kết nối mạng).`);
+    }
+    setUploadingIndex(null);
   };
 
   // Save changes
-  const handleSaveAll = () => {
-    // 1. Lưu trực tiếp 4 ảnh và tiêu đề vào các khóa chuyên biệt độc lập để không lo tràn hạn mức
-    (spaceData.photos || []).forEach((photo, idx) => {
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    triggerAlert?.('⏳ Đang lưu cấu hình và đồng bộ lên Supabase Cloud...');
+
+    // 1. Kiểm tra nếu còn ảnh nào là base64 thì cố gắng tải lên Supabase Storage trước khi lưu
+    const currentPhotos = [...(spaceData.photos || [])];
+    for (let i = 0; i < currentPhotos.length; i++) {
+      const p = currentPhotos[i];
+      if (p.image && p.image.startsWith('data:image')) {
+        try {
+          const res = await fetch(p.image);
+          const blob = await res.blob();
+          const cloudUrl = await uploadImageToSupabase(blob, 'spaces');
+          if (cloudUrl) {
+            currentPhotos[i] = { ...p, image: cloudUrl };
+          }
+        } catch (uploadErr) {
+          console.warn(`Lỗi upload ảnh #${i + 1} từ base64 lên Supabase:`, uploadErr);
+        }
+      }
+    }
+
+    const finalSpaceData = {
+      ...spaceData,
+      photos: currentPhotos
+    };
+    setSpaceData(finalSpaceData);
+
+    // 2. Lưu trực tiếp các URL và tiêu đề vào bộ nhớ local
+    currentPhotos.forEach((photo, idx) => {
       if (photo.image) {
         try {
           localStorage.setItem(`coffee2424_space_photo_${idx}`, photo.image);
@@ -189,17 +263,33 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
     });
 
     try {
-      localStorage.setItem('coffee2424_space_amenities_backup', JSON.stringify(spaceData));
+      localStorage.setItem('coffee2424_space_amenities_backup', JSON.stringify(finalSpaceData));
     } catch (_) {}
 
     const updatedConfig = {
       ...config,
-      spaceAmenities: spaceData
+      spaceAmenities: finalSpaceData
     };
+
     saveSiteConfig(updatedConfig);
     onSaveConfig?.(updatedConfig);
     window.dispatchEvent(new Event('site-config-updated'));
-    triggerAlert?.('✓ Đã lưu vĩnh viễn 4 ảnh & cấu hình Không Gian! Khi reload trang chủ hoặc F5 sẽ không bao giờ bị mất.');
+
+    // 3. Đồng bộ trực tiếp lên Supabase Cloud database
+    const cloudRes = await saveCloudSiteConfig(updatedConfig);
+    setIsSaving(false);
+
+    if (cloudRes && cloudRes.success) {
+      triggerAlert?.('✓ ĐÃ ĐỒNG BỘ LÊN SUPABASE CLOUD THÀNH CÔNG! Điện thoại và máy tính khác đã cập nhật ngay.');
+    } else {
+      const errDetail = cloudRes?.error || 'Lỗi kết nối';
+      console.warn('Lỗi lưu Supabase Cloud:', errDetail);
+      if (errDetail.includes('violates row-level security policy') || errDetail.includes('42501')) {
+        alert('⚠️ Chưa thể đồng bộ lên Cloud Supabase do phiên đăng nhập quản trị bị chặn quyền (RLS).\n\nVui lòng vào Supabase Dashboard -> SQL Editor và chạy câu lệnh cấp quyền:\n\nCREATE POLICY "Public manage site_config" ON public.site_config FOR ALL USING (true) WITH CHECK (true);\nCREATE POLICY "Public media upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = \'coffee2424-media\');');
+      } else {
+        triggerAlert?.(`⚠️ Đã lưu trên máy này. Lưu Cloud: ${errDetail}`);
+      }
+    }
   };
 
   // Reset defaults
@@ -258,11 +348,21 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
 
           <button
             type="button"
+            disabled={isSaving}
             onClick={handleSaveAll}
-            className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
+            className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-black font-black text-xs flex items-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
           >
-            <Save className="w-4 h-4 stroke-[2.5]" />
-            <span>LƯU CẤU HÌNH</span>
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>ĐANG ĐỒNG BỘ CLOUD...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 stroke-[2.5]" />
+                <span>LƯU CẤU HÌNH</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -399,11 +499,15 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
                 <span className="text-[10px] font-mono font-bold text-amber-400 uppercase">
                   Góc ảnh #{idx + 1}
                 </span>
-                {photo.image?.startsWith('data:image') && (
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-bold">
-                    Ảnh Đã Tải Lên
+                {photo.image?.includes('supabase.co') ? (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                    ✓ Đã Lưu Cloud
                   </span>
-                )}
+                ) : photo.image?.startsWith('data:image') ? (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+                    Ảnh Cục Bộ
+                  </span>
+                ) : null}
               </div>
 
               {/* Photo Preview Box */}
@@ -413,6 +517,12 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
                   alt={photo.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
+                {uploadingIndex === idx && (
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-20">
+                    <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
+                    <span className="text-[11px] font-bold text-white">Đang tải lên Supabase...</span>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5">
                   <span className="text-[11px] font-bold text-white truncate w-full">
                     {photo.title || `Góc #${idx + 1}`}
@@ -435,11 +545,21 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
                 />
                 <button
                   type="button"
+                  disabled={uploadingIndex === idx}
                   onClick={() => document.getElementById(`space-photo-input-${idx}`)?.click()}
-                  className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
+                  className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-black text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Đổi Ảnh Từ Máy</span>
+                  {uploadingIndex === idx ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang Tải Lên...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Đổi Ảnh Từ Máy</span>
+                    </>
+                  )}
                 </button>
               </div>
 

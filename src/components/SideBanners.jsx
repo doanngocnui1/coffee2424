@@ -37,6 +37,8 @@ export default function SideBanners({ config, navigate }) {
             <img 
               src={left.image || '/images/poster_vertical_left.jpg'} 
               alt={left.title || 'Poster COFFEE 24/24'} 
+              loading="lazy"
+              decoding="async"
               className="w-full h-auto max-h-[82vh] block group-hover:scale-105 transition-transform duration-700"
             />
 
@@ -102,6 +104,8 @@ export default function SideBanners({ config, navigate }) {
             <img 
               src={right.image || '/images/poster_vertical_right.jpg'} 
               alt={right.title || 'Poster Ưu Đãi COFFEE 24/24'} 
+              loading="lazy"
+              decoding="async"
               className="w-full h-auto max-h-[82vh] block group-hover:scale-105 transition-transform duration-700"
             />
 

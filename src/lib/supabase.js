@@ -27,12 +27,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export async function uploadImageToSupabase(file, folder = 'general') {
   if (!isSupabaseConfigured) return null;
   try {
-    const ext = file.name ? file.name.split('.').pop() : 'webp';
+    let ext = 'jpg';
+    let contentType = 'image/jpeg';
+    if (file.name) {
+      ext = file.name.split('.').pop().toLowerCase();
+      contentType = file.type || (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+    } else if (file.type) {
+      ext = file.type.split('/')[1] || 'jpg';
+      if (ext === 'jpeg') ext = 'jpg';
+      contentType = file.type;
+    }
     const cleanName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
 
     const { error } = await supabase.storage
       .from('coffee2424-media')
       .upload(cleanName, file, {
+        contentType,
         cacheControl: '31536000',
         upsert: false
       });
