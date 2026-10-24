@@ -164,11 +164,19 @@ export default function OrderPage({ selectedBranch, setSelectedBranch }) {
                 >
                   <div>
                     {/* Image & Badges */}
-                    <div className="relative h-64 overflow-hidden bg-stone-100">
+                    <div className={`relative overflow-hidden bg-stone-100 ${
+                      branch.aspectRatio === '3/4'
+                        ? 'aspect-[3/4] max-h-[460px]'
+                        : branch.aspectRatio === '16/9'
+                        ? 'aspect-[16/9] max-h-[340px]'
+                        : 'aspect-[4/3] max-h-[380px]'
+                    }`}>
                       <img 
-                        src={branch.image} 
+                        src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
                         alt={branch.name} 
+                        style={{ objectPosition: branch.imagePosition || 'center' }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
                       />
                       
                       <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-2 z-10">

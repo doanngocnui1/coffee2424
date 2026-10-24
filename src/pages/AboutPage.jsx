@@ -212,23 +212,33 @@ export default function AboutPage({ navigate }) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {branches.map((branch, idx) => (
-            <div key={branch.id || idx} className="ios-glass-card rounded-[32px] overflow-hidden group flex flex-col justify-between">
-              <div>
-                <div className="h-64 sm:h-72 overflow-hidden bg-stone-100 relative">
-                  <img 
-                    src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
-                    alt={branch.name || branch.shortName} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold border border-white/20">
-                      {branch.hours || 'Mở cửa 24/7'}
-                    </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          {branches.map((branch, idx) => {
+            const isVertical = branch.aspectRatio === '3/4';
+            const isWide = branch.aspectRatio === '16/9';
+            const aspectClass = isVertical 
+              ? 'aspect-[3/4] max-h-[580px]' 
+              : isWide
+              ? 'aspect-[16/9] max-h-[380px]'
+              : 'aspect-[4/3] max-h-[460px]';
+
+            return (
+              <div key={branch.id || idx} className="ios-glass-card rounded-[32px] overflow-hidden group flex flex-col justify-between">
+                <div>
+                  <div className={`w-full overflow-hidden bg-stone-100 relative ${aspectClass}`}>
+                    <img 
+                      src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
+                      alt={branch.name || branch.shortName} 
+                      style={{ objectPosition: branch.imagePosition || 'center' }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
+                    />
+                    <div className="absolute top-4 left-4 z-10">
+                      <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold border border-white/20 shadow-md">
+                        {branch.hours || 'Mở cửa 24/7'}
+                      </span>
+                    </div>
                   </div>
-                </div>
                 <div className="p-8 space-y-3">
                   <span className="text-xs sm:text-sm font-bold text-[#8c5932] uppercase tracking-wider block">
                     {branch.shortName ? `CHI NHÁNH ${branch.shortName.toUpperCase()}` : (branch.name || '').toUpperCase()}
@@ -252,7 +262,8 @@ export default function AboutPage({ navigate }) {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="text-center pt-6">

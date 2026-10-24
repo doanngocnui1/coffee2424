@@ -53,7 +53,8 @@ import {
   UtensilsCrossed,
   Percent,
   ShoppingBag,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Loader2
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES } from '../data/articles';
@@ -64,7 +65,7 @@ import {
   pushLocalConfigToCloud, 
   pullCloudConfigToLocal 
 } from '../data/siteConfig';
-import { supabase, isSupabaseConfigured, isLocalhost, uploadImageToSupabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, isLocalhost, uploadImageToSupabase, saveCloudSiteConfig } from '../lib/supabase';
 import { getJobs, saveJobs } from '../data/jobs';
 import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
@@ -496,7 +497,7 @@ export default function AdminPage({ navigate }) {
   };
 
   // Save branches helper
-  const handleSaveBranches = () => {
+  const handleSaveBranches = async () => {
     saveBranches(branchesList);
     // Also sync the hotlines into siteConfig
     const phiBranch = branchesList.find(b => b.code === '413PHI');
@@ -504,11 +505,15 @@ export default function AdminPage({ navigate }) {
     const updatedConfig = {
       ...config,
       hotlinePHI: phiBranch ? phiBranch.hotline : config.hotlinePHI,
-      hotlineD5: d5Branch ? d5Branch.hotline : config.hotlineD5
+      hotlineD5: d5Branch ? d5Branch.hotline : config.hotlineD5,
+      branches: branchesList
     };
     setConfig(updatedConfig);
     saveSiteConfig(updatedConfig);
-    triggerAlert('Đã lưu thông tin 2 chi nhánh & Hotline thành công!');
+    try {
+      await saveCloudSiteConfig(updatedConfig);
+    } catch (_) {}
+    triggerAlert('✓ Đã lưu thông tin chi nhánh & đồng bộ Cloud thành công!');
   };
 
   const handleUploadBranchImage = async (e, idx) => {
@@ -518,25 +523,35 @@ export default function AdminPage({ navigate }) {
       setUploadingBranchIdx(idx);
       const publicUrl = await uploadImageToSupabase(file, 'branches');
       if (publicUrl) {
-        const copy = [...branchesList];
-        copy[idx].image = publicUrl;
+        const copy = branchesList.map((b, i) => i === idx ? { ...b, image: publicUrl } : b);
         setBranchesList(copy);
-        triggerAlert('Đã tải ảnh chi nhánh lên Supabase Cloud thành công!');
+        saveBranches(copy);
+        try {
+          const currentCfg = getSiteConfig();
+          const updatedCfg = { ...currentCfg, branches: copy };
+          saveSiteConfig(updatedCfg);
+          saveCloudSiteConfig(updatedCfg);
+        } catch (_) {}
+        triggerAlert('✓ Đã tải ảnh chi nhánh lên Supabase Cloud thành công!');
       } else {
         const reader = new FileReader();
         reader.onload = (event) => {
-          const copy = [...branchesList];
-          copy[idx].image = event.target?.result;
-          setBranchesList(copy);
-          triggerAlert('Đã chọn ảnh chi nhánh (lưu nội bộ). Nhớ bấm LƯU!');
+          const localUrl = event.target?.result;
+          if (localUrl) {
+            const copy = branchesList.map((b, i) => i === idx ? { ...b, image: localUrl } : b);
+            setBranchesList(copy);
+            saveBranches(copy);
+            triggerAlert('Đã chọn ảnh chi nhánh (lưu nội bộ). Nhớ bấm LƯU!');
+          }
         };
         reader.readAsDataURL(file);
       }
     } catch (err) {
       console.error('Error uploading branch image:', err);
-      triggerAlert('Lỗi tải ảnh chi nhánh!');
+      triggerAlert('Lỗi tải ảnh chi nhánh: ' + (err.message || 'vui lòng thử lại'));
     } finally {
       setUploadingBranchIdx(null);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -4640,24 +4655,133 @@ export default function AdminPage({ navigate }) {
                     </div>
 
                     {/* VỊ TRÍ THAY ẢNH HIỂN THỊ CỦA CHI NHÁNH Ở HÌNH 5 */}
-                    <div className="space-y-3 p-4 rounded-2xl bg-neutral-900/80 border border-neutral-800/90">
-                      <div className="flex items-center justify-between">
+                    <div className="space-y-3.5 p-4 sm:p-5 rounded-2xl bg-neutral-900/80 border border-neutral-800/90 shadow-inner">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                         <label className="text-xs text-amber-300 font-black flex items-center gap-1.5 uppercase tracking-wide">
                           <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
                           <span>Ảnh Không Gian Chi Nhánh (Hình 5) *</span>
                         </label>
-                        <span className="text-[11px] text-neutral-400">Tỉ lệ đẹp: 16:9 hoặc 4:3</span>
+                        <span className="text-[11px] text-amber-400/90 font-medium">
+                          {branch.aspectRatio === '3/4' ? '📐 Khung Dọc 3:4 (Tòa Nhà Cao)' : branch.aspectRatio === '16/9' ? '📐 Khung Rộng 16:9 (Toàn Cảnh)' : '📐 Khung Ngang 4:3 (Tiêu Chuẩn)'}
+                        </span>
+                      </div>
+
+                      {/* TÙY CHỌN TỈ LỆ KHUNG HÌNH (3:4 DỌC / 4:3 NGANG / 16:9 RỘNG) */}
+                      <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-neutral-300 flex items-center gap-1">
+                            <Sliders className="w-3 h-3 text-amber-400" />
+                            <span>Tỉ Lệ Khung Hình Ảnh:</span>
+                          </span>
+                          <span className="text-[10px] text-neutral-400">Chọn 3:4 nếu chụp tòa nhà cao</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, aspectRatio: '3/4' } : b);
+                              setBranchesList(copy);
+                              saveBranches(copy);
+                              triggerAlert('Đã chuyển sang khung ảnh Dọc 3:4 (phù hợp tòa nhà cao)!');
+                            }}
+                            className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer ${
+                              branch.aspectRatio === '3/4'
+                                ? 'bg-amber-500 text-black border-amber-400 shadow-md ring-1 ring-amber-400'
+                                : 'bg-neutral-900 text-neutral-300 border-neutral-700/80 hover:bg-neutral-800'
+                            }`}
+                          >
+                            <span className="text-xs font-black">3:4 (Dọc)</span>
+                            <span className="text-[10px] opacity-85">Tòa Nhà Cao</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, aspectRatio: '4/3' } : b);
+                              setBranchesList(copy);
+                              saveBranches(copy);
+                              triggerAlert('Đã chuyển sang khung ảnh Ngang 4:3 (tiêu chuẩn)!');
+                            }}
+                            className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer ${
+                              (branch.aspectRatio === '4/3' || !branch.aspectRatio)
+                                ? 'bg-amber-500 text-black border-amber-400 shadow-md ring-1 ring-amber-400'
+                                : 'bg-neutral-900 text-neutral-300 border-neutral-700/80 hover:bg-neutral-800'
+                            }`}
+                          >
+                            <span className="text-xs font-black">4:3 (Ngang)</span>
+                            <span className="text-[10px] opacity-85">Tiêu Chuẩn</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, aspectRatio: '16/9' } : b);
+                              setBranchesList(copy);
+                              saveBranches(copy);
+                              triggerAlert('Đã chuyển sang khung ảnh Ngang Rộng 16:9!');
+                            }}
+                            className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer ${
+                              branch.aspectRatio === '16/9'
+                                ? 'bg-amber-500 text-black border-amber-400 shadow-md ring-1 ring-amber-400'
+                                : 'bg-neutral-900 text-neutral-300 border-neutral-700/80 hover:bg-neutral-800'
+                            }`}
+                          >
+                            <span className="text-xs font-black">16:9 (Rộng)</span>
+                            <span className="text-[10px] opacity-85">Toàn Cảnh</span>
+                          </button>
+                        </div>
+
+                        {/* Canh chỉnh vị trí ảnh (Object Position) */}
+                        <div className="pt-2 border-t border-neutral-800/80 flex items-center justify-between text-[11px]">
+                          <span className="text-neutral-400">Trọng tâm ảnh:</span>
+                          <div className="inline-flex rounded-lg bg-neutral-900 p-0.5 border border-neutral-800">
+                            {[
+                              { id: 'top', label: 'Đỉnh (Top)' },
+                              { id: 'center', label: 'Giữa' },
+                              { id: 'bottom', label: 'Đáy' }
+                            ].map(pos => (
+                              <button
+                                key={pos.id}
+                                type="button"
+                                onClick={() => {
+                                  const copy = branchesList.map((b, i) => i === idx ? { ...b, imagePosition: pos.id } : b);
+                                  setBranchesList(copy);
+                                  saveBranches(copy);
+                                }}
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
+                                  (branch.imagePosition || 'center') === pos.id
+                                    ? 'bg-amber-500 text-black'
+                                    : 'text-neutral-400 hover:text-white'
+                                }`}
+                              >
+                                {pos.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
                       {/* Image Live Preview */}
-                      <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 group shadow-inner">
+                      <div className={`relative w-full rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 group shadow-inner transition-all duration-300 ${
+                        branch.aspectRatio === '3/4'
+                          ? 'aspect-[3/4] max-w-[280px] mx-auto'
+                          : branch.aspectRatio === '4/3'
+                          ? 'aspect-[4/3] max-w-[420px] mx-auto'
+                          : 'aspect-[16/9]'
+                      }`}>
                         <img 
                           src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
                           alt={branch.name}
+                          style={{ objectPosition: branch.imagePosition || 'center' }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+                        <div className="absolute top-2.5 left-2.5">
+                          <span className="px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-amber-300 font-mono text-[10px] font-bold border border-amber-500/30">
+                            {branch.aspectRatio === '3/4' ? 'Khung 3:4 Dọc' : branch.aspectRatio === '16/9' ? 'Khung 16:9 Rộng' : 'Khung 4:3 Ngang'}
+                          </span>
+                        </div>
                         <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white text-[11px] font-bold">
                           <span className="truncate">{branch.shortName || branch.name}</span>
                           <span className="text-amber-300 shrink-0">Live Preview</span>
@@ -4697,9 +4821,9 @@ export default function AdminPage({ navigate }) {
                           <button
                             type="button"
                             onClick={() => {
-                              const copy = [...branchesList];
-                              copy[idx].image = '/images/branch_downtown.jpg';
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: '/images/branch_downtown.jpg' } : b);
                               setBranchesList(copy);
+                              saveBranches(copy);
                               triggerAlert('Đã áp dụng ảnh mặc định Downtown (Phan Huy Ích)!');
                             }}
                             className="px-2.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700 cursor-pointer transition-colors"
@@ -4710,9 +4834,9 @@ export default function AdminPage({ navigate }) {
                           <button
                             type="button"
                             onClick={() => {
-                              const copy = [...branchesList];
-                              copy[idx].image = '/images/branch_rooftop.jpg';
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: '/images/branch_rooftop.jpg' } : b);
                               setBranchesList(copy);
+                              saveBranches(copy);
                               triggerAlert('Đã áp dụng ảnh mặc định Rooftop (Đường D5)!');
                             }}
                             className="px-2.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700 cursor-pointer transition-colors"
@@ -4727,8 +4851,7 @@ export default function AdminPage({ navigate }) {
                             type="text"
                             value={branch.image || ''}
                             onChange={(e) => {
-                              const copy = [...branchesList];
-                              copy[idx].image = e.target.value;
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: e.target.value } : b);
                               setBranchesList(copy);
                             }}
                             placeholder="Hoặc dán URL ảnh trực tiếp (https://...)"

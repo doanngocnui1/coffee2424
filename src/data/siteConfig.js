@@ -1556,6 +1556,14 @@ export async function syncSiteConfigWithCloud(force = false) {
         } catch (_) {}
       }
 
+      // Tự động đồng bộ danh sách chi nhánh (ảnh, mô tả, khung hình 3:4 / 4:3) từ Cloud
+      if (Array.isArray(cloudData.branches) && cloudData.branches.length > 0) {
+        try {
+          localStorage.setItem('coffee2424_branches', JSON.stringify(cloudData.branches));
+          window.dispatchEvent(new Event('branches-updated'));
+        } catch (_) {}
+      }
+
       window.dispatchEvent(new Event('site-config-updated'));
       console.info('✓ Đã đồng bộ cấu hình thành công từ Supabase Cloud!');
       return mergedConfig;
@@ -1571,6 +1579,12 @@ export async function syncSiteConfigWithCloud(force = false) {
  */
 export async function pushLocalConfigToCloud() {
   const currentConfig = getSiteConfig();
+  try {
+    const rawBranches = localStorage.getItem('coffee2424_branches');
+    if (rawBranches) {
+      currentConfig.branches = JSON.parse(rawBranches);
+    }
+  } catch (_) {}
   return await saveCloudSiteConfig(currentConfig);
 }
 

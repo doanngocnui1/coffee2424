@@ -10,6 +10,8 @@ export const DEFAULT_BRANCHES = [
     hours: 'Mở cửa 24/7',
     status: 'Đang mở cửa',
     image: '/images/branch_rooftop.jpg',
+    aspectRatio: '4/3',
+    imagePosition: 'center',
     qrImage: '/images/qr_menu_96d5.png',
     cardImage: '/images/qr_menu_table_card_96d5.png',
     menuUrl: 'https://coffee2424.web-store.online/menu/363827',
@@ -28,6 +30,8 @@ export const DEFAULT_BRANCHES = [
     hours: 'Mở cửa 24/7',
     status: 'Đang mở cửa',
     image: '/images/branch_downtown.jpg',
+    aspectRatio: '4/3',
+    imagePosition: 'center',
     qrImage: '/images/qr_menu_table.png',
     cardImage: '/images/qr_menu_table_card.png',
     menuUrl: 'https://coffee2424.web-store.online/menu/363688',
@@ -52,6 +56,13 @@ export function getBranches() {
           }
           if (b.id === 'cn-413phi' && (!b.menuUrl || b.menuUrl.includes('web-store.online') === false)) {
             b.menuUrl = 'https://coffee2424.web-store.online/menu/363688';
+          }
+          // Chuẩn hóa khung hình: '3/4' (dọc), '4/3' (ngang), '16/9' (rộng)
+          if (!b.aspectRatio) {
+            b.aspectRatio = '4/3';
+          }
+          if (!b.imagePosition) {
+            b.imagePosition = 'center';
           }
           return b;
         });
@@ -89,6 +100,8 @@ export function createBranch(newBranchData) {
       hours: newBranchData.hours || 'Mở cửa 24/7',
       status: 'Đang mở cửa',
       image: newBranchData.image || '/images/branch_downtown.jpg',
+      aspectRatio: newBranchData.aspectRatio || '4/3',
+      imagePosition: newBranchData.imagePosition || 'center',
       menuUrl: newBranchData.menuUrl || 'https://coffee2424.web-store.online',
       mapUrl: newBranchData.mapUrl || '',
       features: newBranchData.features || ['Phục vụ 24/7', 'Wifi tốc độ cao', 'Ổ cắm điện'],
