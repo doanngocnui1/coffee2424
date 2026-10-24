@@ -38,10 +38,11 @@ import {
   ExternalLink,
   Search,
   Clock,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG, saveSiteConfig } from '../../data/siteConfig';
-import { uploadImageToSupabase } from '../../lib/supabase';
+import { uploadImageToSupabase, saveCloudSiteConfig } from '../../lib/supabase';
 
 export default function AdminPromotionsManager({ config, onSaveConfig, triggerAlert }) {
   const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [];
@@ -106,6 +107,10 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       title: 'Không Chỉ Là Cà Phê,',
       highlightTitle: 'Đó Là Trạm Năng Lượng 24/24',
       description: 'Cho dù bạn cần một không gian yên tĩnh cày deadline lúc 2 giờ sáng, tụ họp học nhóm hay một ly cà phê mộc đậm đà khởi đầu ngày mới — COFFEE 24/24 luôn sẵn sàng chào đón bạn.',
+      primaryBtnText: 'Đặt Món Ngay Bây Giờ',
+      primaryBtnLink: '/dathang',
+      secondaryBtnText: 'Xem Không Gian Quán',
+      secondaryBtnLink: '/gioithieu',
       items: [
         { id: 'com-1', title: 'Rang Mộc Nguyên Chất', desc: '100% hạt Robusta & Arabica chọn lọc từ nông trại Đắk Lắk & Cầu Đất, rang mộc chuẩn vị không phụ gia.' },
         { id: 'com-2', title: 'Bếp Nóng 24/24', desc: 'Mì xào bò bốc khói, trứng ốp la, bánh nướng giòn rụm phục vụ cả ngày lẫn đêm không tính phụ thu giờ khuya.' },
@@ -116,12 +121,16 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     hotline: {
       enabled: true,
       title: 'Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?',
-      desc: 'Liên hệ hotline chăm sóc khách hàng 24/7 hoặc ghé trực tiếp chi nhánh gần nhất.',
+      desc: 'Liên hệ hotline chăm sóc khách hàng 24/7: 0906 916 816 hoặc ghé trực tiếp chi nhánh gần nhất.',
       phone: '0906 916 816',
       phoneLink: 'tel:0906916816',
-      ctaText: 'Dùng Voucher Đặt Món'
+      ctaText: 'TỚI QUÁN TRẢI NGHIỆM NGAY >',
+      ctaLink: '/cuahang'
     }
   };
+
+  // State đồng bộ Cloud
+  const [isSaving, setIsSaving] = useState(false);
 
   // Sub-tabs điều hướng trong trang Quản Lý Khuyến Mãi
   const [activeSubTab, setActiveSubTab] = useState('vouchers'); // 'vouchers' | 'guideSteps' | 'heroBanner' | 'commitments' | 'homeSection'
@@ -485,8 +494,47 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     }));
   };
 
+  // ==================== XỬ LÝ KHỐI CAM KẾT & HOTLINE ====================
+  const handleUpdateCommitmentField = (field, value) => {
+    setPageConfig(prev => ({
+      ...prev,
+      commitments: {
+        ...prev.commitments,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleUpdateCommitmentItem = (index, field, value) => {
+    setPageConfig(prev => {
+      const items = [...(prev.commitments?.items || defaultPageConfig.commitments.items)];
+      items[index] = {
+        ...items[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        commitments: {
+          ...prev.commitments,
+          items
+        }
+      };
+    });
+  };
+
+  const handleUpdateHotlineField = (field, value) => {
+    setPageConfig(prev => ({
+      ...prev,
+      hotline: {
+        ...prev.hotline,
+        [field]: value
+      }
+    }));
+  };
+
   // ==================== LƯU TOÀN BỘ CẤU HÌNH ====================
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
+    setIsSaving(true);
     const currentNavMenu = Array.isArray(config?.navMenu) && config.navMenu.length > 0 
       ? config.navMenu 
       : DEFAULT_SITE_CONFIG.navMenu;
@@ -525,7 +573,20 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     onSaveConfig?.(updatedConfig);
     saveSiteConfig(updatedConfig);
     window.dispatchEvent(new Event('site-config-updated'));
-    triggerAlert?.('✓ Đã lưu toàn bộ cấu hình Khuyến Mãi (Voucher, 3 Bước, Hero & Trang Chủ) thành công!');
+
+    // Đồng bộ Supabase Cloud
+    try {
+      const cloudRes = await saveCloudSiteConfig(updatedConfig);
+      setIsSaving(false);
+      if (cloudRes && cloudRes.success) {
+        triggerAlert?.('✓ ĐÃ ĐỒNG BỘ SUPABASE CLOUD THÀNH CÔNG! Điện thoại và máy tính khác đã cập nhật ngay.');
+      } else {
+        triggerAlert?.('✓ Đã lưu cấu hình Khuyến Mãi thành công (Đã cập nhật trên máy này)!');
+      }
+    } catch (_) {
+      setIsSaving(false);
+      triggerAlert?.('✓ Đã lưu toàn bộ cấu hình Khuyến Mãi thành công!');
+    }
   };
 
   const handleResetDefaults = () => {
@@ -601,11 +662,21 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
 
           <button
             type="button"
+            disabled={isSaving}
             onClick={handleSaveAll}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-all cursor-pointer active:scale-95 disabled:opacity-60"
           >
-            <Save className="w-4 h-4 stroke-[3]" />
-            <span>LƯU CẤU HÌNH</span>
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>ĐANG ĐỒNG BỘ CLOUD...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 stroke-[3]" />
+                <span>LƯU CẤU HÌNH</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -667,7 +738,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
           }`}
         >
           <ShieldCheck className="w-4 h-4 text-blue-500" />
-          <span>Cam Kết 24/24 & Hotline</span>
+          <span>Cam Kết 24/24 & Hotline (2 Khối Cuối)</span>
         </button>
 
         <button
@@ -1421,29 +1492,44 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       )}
 
       {/* ============================================================== */}
-      {/* TAB 4: CAM KẾT 24/24 & HOTLINE                                 */}
+      {/* TAB 4: CAM KẾT 24/24 & HOTLINE (2 KHỐI CUỐI TRANG KHUYẾN MÃI)  */}
       {/* ============================================================== */}
       {activeSubTab === 'commitments' && (
         <div className="space-y-6">
-          {/* Commitments Box */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-5">
+          {/* Informational Banner */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-blue-500/10 border border-blue-500/20 text-[#2b170e] flex items-start gap-3.5">
+            <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm leading-relaxed">
+              <strong className="text-blue-900 font-bold block mb-0.5">Vị trí chỉnh sửa 2 khối cuối trang Khuyến Mãi (/khuyenmai):</strong>
+              Tab này quản lý trực tiếp <strong>Khối Cam Kết Phục Vụ 24/24</strong> (tiêu đề, 2 nút bấm và 4 ô dịch vụ: rang mộc, bếp nóng, wifi, giao hỏa tốc) và <strong>Khối Hotline / Hỗ Trợ Đặt Bàn Nhóm</strong> (chân trang khuyến mãi).
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* KHỐI 1: CAM KẾT PHỤC VỤ 24/24 (HÌNH ẢNH 2: RANG MỘC, BẾP NÓNG, WIFI, GIAO HỎA TỐC) */}
+          {/* ========================================================================= */}
+          <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#dfd4c7]">
               <div>
-                <h3 className="text-lg font-black text-[#2b170e]">Khối Cam Kết Phục Vụ 24/24</h3>
-                <p className="text-xs text-[#7a5843]">4 tiêu chuẩn dịch vụ (Rang mộc, bếp nóng, wifi ổ sạc, giao hỏa tốc).</p>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-500/15 text-amber-800">
+                    <Coffee className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-lg font-black text-[#2b170e]">1. Khối Cam Kết Phục Vụ 24/24</h3>
+                </div>
+                <p className="text-xs text-[#7a5843] mt-0.5">
+                  Gồm tiêu đề, đoạn giới thiệu, 2 nút bấm đặt món / xem quán và 4 ô tiêu chuẩn chất lượng.
+                </p>
               </div>
 
               <label className="inline-flex items-center gap-3 cursor-pointer select-none bg-[#fbf8f5] px-4 py-2 rounded-xl border border-[#dfd4c7]">
                 <span className="text-xs font-bold text-[#2b170e]">
-                  {pageConfig.commitments?.enabled !== false ? 'Hiển Thị' : 'Ẩn'}
+                  {pageConfig.commitments?.enabled !== false ? 'Đang Hiển Thị' : 'Đang Ẩn'}
                 </span>
                 <input
                   type="checkbox"
                   checked={pageConfig.commitments?.enabled !== false}
-                  onChange={(e) => setPageConfig(prev => ({
-                    ...prev,
-                    commitments: { ...prev.commitments, enabled: e.target.checked }
-                  }))}
+                  onChange={(e) => handleUpdateCommitmentField('enabled', e.target.checked)}
                   className="sr-only"
                 />
                 <div className={`w-10 h-5 rounded-full transition-colors relative ${
@@ -1456,54 +1542,171 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
               </label>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#5c3d2e]">Tiêu Đề Dòng 1</label>
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Huy Hiệu (Badge)</label>
                 <input
                   type="text"
-                  value={pageConfig.commitments?.title || ''}
-                  onChange={(e) => setPageConfig(prev => ({
-                    ...prev,
-                    commitments: { ...prev.commitments, title: e.target.value }
-                  }))}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                  value={pageConfig.commitments?.badge || 'Chuẩn Mực Phục Vụ 24/7'}
+                  onChange={(e) => handleUpdateCommitmentField('badge', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
+                  placeholder="Chuẩn Mực Phục Vụ 24/7"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#5c3d2e]">Tiêu Đề Nổi Bật Dòng 2</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Dòng 1</label>
                 <input
                   type="text"
-                  value={pageConfig.commitments?.highlightTitle || ''}
-                  onChange={(e) => setPageConfig(prev => ({
-                    ...prev,
-                    commitments: { ...prev.commitments, highlightTitle: e.target.value }
-                  }))}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932]"
+                  value={pageConfig.commitments?.title || 'Không Chỉ Là Cà Phê,'}
+                  onChange={(e) => handleUpdateCommitmentField('title', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
+                  placeholder="Không Chỉ Là Cà Phê,"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Nổi Bật Dòng 2</label>
+                <input
+                  type="text"
+                  value={pageConfig.commitments?.highlightTitle || 'Đó Là Trạm Năng Lượng 24/24'}
+                  onChange={(e) => handleUpdateCommitmentField('highlightTitle', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
+                  placeholder="Đó Là Trạm Năng Lượng 24/24"
+                />
+              </div>
+
+              <div className="sm:col-span-3 space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Đoạn Giới Thiệu Khối Cam Kết</label>
+                <textarea
+                  rows={2}
+                  value={pageConfig.commitments?.description || ''}
+                  onChange={(e) => handleUpdateCommitmentField('description', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs sm:text-sm text-[#4a2e1b] focus:outline-none focus:border-[#8c5932]"
+                  placeholder="Cho dù bạn cần một không gian yên tĩnh cày deadline lúc 2 giờ sáng..."
+                />
+              </div>
+            </div>
+
+            {/* 2 Buttons Configuration */}
+            <div className="pt-2 border-t border-[#dfd4c7]/60">
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] mb-3">Cấu Hình 2 Nút Bấm Điều Hướng</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-3.5 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7] space-y-2">
+                  <span className="text-[11px] font-black uppercase text-[#2b170e] block">Nút 1: Đặt Món (Nền Đen)</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={pageConfig.commitments?.primaryBtnText || 'Đặt Món Ngay Bây Giờ'}
+                      onChange={(e) => handleUpdateCommitmentField('primaryBtnText', e.target.value)}
+                      placeholder="Tên nút (Đặt Món Ngay Bây Giờ)"
+                      className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                    />
+                    <input
+                      type="text"
+                      value={pageConfig.commitments?.primaryBtnLink || '/dathang'}
+                      onChange={(e) => handleUpdateCommitmentField('primaryBtnLink', e.target.value)}
+                      placeholder="Link (/dathang)"
+                      className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-bold text-[#8c5932]"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7] space-y-2">
+                  <span className="text-[11px] font-black uppercase text-[#2b170e] block">Nút 2: Xem Không Gian (Nền Sáng)</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={pageConfig.commitments?.secondaryBtnText || 'Xem Không Gian Quán'}
+                      onChange={(e) => handleUpdateCommitmentField('secondaryBtnText', e.target.value)}
+                      placeholder="Tên nút (Xem Không Gian Quán)"
+                      className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                    />
+                    <input
+                      type="text"
+                      value={pageConfig.commitments?.secondaryBtnLink || '/gioithieu'}
+                      onChange={(e) => handleUpdateCommitmentField('secondaryBtnLink', e.target.value)}
+                      placeholder="Link (/gioithieu)"
+                      className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-bold text-[#8c5932]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Feature Items Grid */}
+            <div className="pt-2 border-t border-[#dfd4c7]/60">
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] mb-3">
+                Chỉnh Sửa 4 Ô Tiêu Chuẩn Dịch Vụ (Rang Mộc, Bếp Nóng, Wifi, Giao Hỏa Tốc)
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {(pageConfig.commitments?.items || defaultPageConfig.commitments.items).map((com, cIdx) => (
+                  <div key={com.id || cIdx} className="p-4 rounded-2xl bg-white border border-[#dfd4c7] shadow-2xs space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-800 flex items-center justify-center font-bold text-xs">
+                        #{cIdx + 1}
+                      </span>
+                      <span className="text-xs font-black uppercase text-[#8c5932]">
+                        {cIdx === 0 && 'Cà Phê Rang Mộc'}
+                        {cIdx === 1 && 'Bếp Nóng 24/24'}
+                        {cIdx === 2 && 'Wifi & Ổ Cắm Điện'}
+                        {cIdx >= 3 && 'Giao Hàng Hỏa Tốc'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-[#5c3d2e]">Tiêu Đề Ô</label>
+                      <input
+                        type="text"
+                        value={com.title || ''}
+                        onChange={(e) => handleUpdateCommitmentItem(cIdx, 'title', e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[#fcfaf7] border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                        placeholder="Tiêu đề tiêu chuẩn..."
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-[#5c3d2e]">Nội Dung Mô Tả Chi Tiết</label>
+                      <textarea
+                        rows={2}
+                        value={com.desc || ''}
+                        onChange={(e) => handleUpdateCommitmentItem(cIdx, 'desc', e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[#fcfaf7] border border-[#dfd4c7] text-xs text-[#4a2e1b]"
+                        placeholder="Nội dung mô tả ngắn gọn..."
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Hotline Box */}
+          {/* ========================================================================= */}
+          {/* KHỐI 2: HOTLINE & HỖ TRỢ ĐẶT BÀN NHÓM CHÂN TRANG (HÌNH ẢNH 1: THANH BO TRÒN) */}
+          {/* ========================================================================= */}
           <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#dfd4c7]">
               <div>
-                <h3 className="text-lg font-black text-[#2b170e]">Khối Hotline & Hỗ Trợ Đặt Bàn Nhóm</h3>
-                <p className="text-xs text-[#7a5843]">Số điện thoại chăm sóc khách hàng ở cuối trang khuyến mãi.</p>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-800">
+                    <PhoneCall className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-lg font-black text-[#2b170e]">2. Khối Hotline & Đặt Bàn Nhóm Chân Trang</h3>
+                </div>
+                <p className="text-xs text-[#7a5843] mt-0.5">
+                  Thanh màu sáng bo tròn ở cuối trang khuyến mãi gồm icon điện thoại, câu hỏi, hotline và nút trải nghiệm.
+                </p>
               </div>
 
               <label className="inline-flex items-center gap-3 cursor-pointer select-none bg-[#fbf8f5] px-4 py-2 rounded-xl border border-[#dfd4c7]">
                 <span className="text-xs font-bold text-[#2b170e]">
-                  {pageConfig.hotline?.enabled !== false ? 'Hiển Thị' : 'Ẩn'}
+                  {pageConfig.hotline?.enabled !== false ? 'Đang Hiển Thị' : 'Đang Ẩn'}
                 </span>
                 <input
                   type="checkbox"
                   checked={pageConfig.hotline?.enabled !== false}
-                  onChange={(e) => setPageConfig(prev => ({
-                    ...prev,
-                    hotline: { ...prev.hotline, enabled: e.target.checked }
-                  }))}
+                  onChange={(e) => handleUpdateHotlineField('enabled', e.target.checked)}
                   className="sr-only"
                 />
                 <div className={`w-10 h-5 rounded-full transition-colors relative ${
@@ -1517,33 +1720,68 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#5c3d2e]">Số Điện Thoại Hotline / Zalo</label>
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Khối Hotline</label>
                 <input
                   type="text"
-                  value={pageConfig.hotline?.phone || '0906 916 816'}
-                  onChange={(e) => setPageConfig(prev => ({
-                    ...prev,
-                    hotline: { 
-                      ...prev.hotline, 
-                      phone: e.target.value,
-                      phoneLink: `tel:${e.target.value.replace(/\s+/g, '')}`
-                    }
-                  }))}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-black text-[#8c5932]"
+                  value={pageConfig.hotline?.title || 'Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?'}
+                  onChange={(e) => handleUpdateHotlineField('title', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs sm:text-sm font-bold text-[#2b170e]"
+                  placeholder="Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#5c3d2e]">Tên Nút Kêu Gọi</label>
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Nội Dung Hướng Dẫn / Liên Hệ</label>
                 <input
                   type="text"
-                  value={pageConfig.hotline?.ctaText || 'Dùng Voucher Đặt Món'}
-                  onChange={(e) => setPageConfig(prev => ({
-                    ...prev,
-                    hotline: { ...prev.hotline, ctaText: e.target.value }
-                  }))}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                  value={pageConfig.hotline?.desc || 'Liên hệ hotline chăm sóc khách hàng 24/7: 0906 916 816 hoặc ghé trực tiếp chi nhánh gần nhất.'}
+                  onChange={(e) => handleUpdateHotlineField('desc', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs sm:text-sm text-[#4a2e1b]"
+                  placeholder="Liên hệ hotline chăm sóc khách hàng 24/7: 0906 916 816 hoặc ghé trực tiếp chi nhánh gần nhất."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Số Điện Thoại Hotline</label>
+                <input
+                  type="text"
+                  value={pageConfig.hotline?.phone || '0906 916 816'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPageConfig(prev => ({
+                      ...prev,
+                      hotline: { 
+                        ...prev.hotline, 
+                        phone: val,
+                        phoneLink: `tel:${val.replace(/\s+/g, '')}`
+                      }
+                    }));
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-black text-[#8c5932]"
+                  placeholder="0906 916 816"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Tên Nút Kêu Gọi</label>
+                <input
+                  type="text"
+                  value={pageConfig.hotline?.ctaText || 'TỚI QUÁN TRẢI NGHIỆM NGAY >'}
+                  onChange={(e) => handleUpdateHotlineField('ctaText', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                  placeholder="TỚI QUÁN TRẢI NGHIỆM NGAY >"
+                />
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="text-xs font-black uppercase text-[#7a5843]">Đường Dẫn Khi Bấm Nút</label>
+                <input
+                  type="text"
+                  value={pageConfig.hotline?.ctaLink || '/cuahang'}
+                  onChange={(e) => handleUpdateHotlineField('ctaLink', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-bold text-[#8c5932]"
+                  placeholder="/cuahang hoặc /dathang"
                 />
               </div>
             </div>

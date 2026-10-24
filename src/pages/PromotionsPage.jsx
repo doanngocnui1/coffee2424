@@ -646,17 +646,17 @@ export default function PromotionsPage({ navigate }) {
 
                 <div className="pt-2 flex flex-wrap gap-4">
                   <button
-                    onClick={() => navigate('/dathang')}
+                    onClick={() => navigate(commitConfig?.primaryBtnLink || '/dathang')}
                     className="px-6 py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer"
                   >
                     <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
-                    <span>Đặt Món Ngay Bây Giờ</span>
+                    <span>{commitConfig?.primaryBtnText || 'Đặt Món Ngay Bây Giờ'}</span>
                   </button>
                   <button
-                    onClick={() => navigate('/gioithieu')}
+                    onClick={() => navigate(commitConfig?.secondaryBtnLink || '/gioithieu')}
                     className="px-6 py-3.5 rounded-full bg-white/70 hover:bg-white text-[#2b170e] font-bold text-sm border border-white/90 shadow-xs transition-all cursor-pointer"
                   >
-                    <span>Xem Không Gian Quán</span>
+                    <span>{commitConfig?.secondaryBtnText || 'Xem Không Gian Quán'}</span>
                   </button>
                 </div>
               </div>
@@ -695,20 +695,36 @@ export default function PromotionsPage({ navigate }) {
                   {hotlineConfig?.title || 'Bạn Có Câu Hỏi Về Mã Ưu Đãi Hoặc Cần Đặt Bàn Nhóm?'}
                 </h3>
                 <p className="text-xs sm:text-sm text-[#5c3d2e]">
-                  {hotlineConfig?.desc || 'Liên hệ hotline chăm sóc khách hàng 24/7:'}{' '}
-                  <a href={hotlineConfig?.phoneLink || 'tel:0906916816'} className="font-bold text-[#8c5932] hover:underline font-mono">
-                    {hotlineConfig?.phone || '0906 916 816'}
-                  </a>
-                  {' '}hoặc ghé trực tiếp chi nhánh gần nhất.
+                  {hotlineConfig?.desc ? (
+                    hotlineConfig.desc.includes(hotlineConfig?.phone || '0906') ? (
+                      hotlineConfig.desc
+                    ) : (
+                      <>
+                        {hotlineConfig.desc}{' '}
+                        <a href={hotlineConfig?.phoneLink || 'tel:0906916816'} className="font-bold text-[#8c5932] hover:underline font-mono">
+                          {hotlineConfig?.phone || '0906 916 816'}
+                        </a>
+                        {' '}hoặc ghé trực tiếp chi nhánh gần nhất.
+                      </>
+                    )
+                  ) : (
+                    <>
+                      Liên hệ hotline chăm sóc khách hàng 24/7:{' '}
+                      <a href={hotlineConfig?.phoneLink || 'tel:0906916816'} className="font-bold text-[#8c5932] hover:underline font-mono">
+                        {hotlineConfig?.phone || '0906 916 816'}
+                      </a>
+                      {' '}hoặc ghé trực tiếp chi nhánh gần nhất.
+                    </>
+                  )}
                 </p>
               </div>
             </div>
 
             <button
-              onClick={() => navigate('/dathang')}
+              onClick={() => navigate(hotlineConfig?.ctaLink || '/cuahang')}
               className="px-6 py-3.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white font-bold text-xs sm:text-sm whitespace-nowrap shadow-md transition-all cursor-pointer flex items-center gap-2"
             >
-              <span>{hotlineConfig?.ctaText || 'Dùng Voucher Đặt Món'}</span>
+              <span>{hotlineConfig?.ctaText || 'TỚI QUÁN TRẢI NGHIỆM NGAY >'}</span>
               <ChevronRight className="w-4 h-4 stroke-[3]" />
             </button>
           </section>

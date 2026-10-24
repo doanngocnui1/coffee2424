@@ -475,6 +475,10 @@ export const DEFAULT_SITE_CONFIG = {
       title: 'Không Chỉ Là Cà Phê,',
       highlightTitle: 'Đó Là Trạm Năng Lượng 24/24',
       description: 'Cho dù bạn cần một không gian yên tĩnh cày deadline lúc 2 giờ sáng, tụ họp học nhóm hay một ly cà phê mộc đậm đà khởi đầu ngày mới — COFFEE 24/24 luôn sẵn sàng chào đón bạn.',
+      primaryBtnText: 'Đặt Món Ngay Bây Giờ',
+      primaryBtnLink: '/dathang',
+      secondaryBtnText: 'Xem Không Gian Quán',
+      secondaryBtnLink: '/gioithieu',
       items: [
         { id: 'com-1', title: 'Rang Mộc Nguyên Chất', desc: '100% hạt Robusta & Arabica chọn lọc từ nông trại Đắk Lắk & Cầu Đất, rang mộc chuẩn vị không phụ gia.' },
         { id: 'com-2', title: 'Bếp Nóng 24/24', desc: 'Mì xào bò bốc khói, trứng ốp la, bánh nướng giòn rụm phục vụ cả ngày lẫn đêm không tính phụ thu giờ khuya.' },
@@ -489,7 +493,8 @@ export const DEFAULT_SITE_CONFIG = {
       desc: 'Liên hệ hotline chăm sóc khách hàng 24/7: 0906 916 816 hoặc ghé trực tiếp chi nhánh gần nhất.',
       phone: '0906 916 816',
       phoneLink: 'tel:0906916816',
-      ctaText: 'Dùng Voucher Đặt Món'
+      ctaText: 'TỚI QUÁN TRẢI NGHIỆM NGAY >',
+      ctaLink: '/cuahang'
     }
   },
   // Khối Món Mới Trình Làng & Ưu Đãi Đặc Quyền (Tương thích ngược)
