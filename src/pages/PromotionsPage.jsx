@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Tag, 
   Sparkles, 
@@ -92,6 +93,11 @@ export default function PromotionsPage({ navigate }) {
   const [copiedCode, setCopiedCode] = useState(null);
   const [selectedDetailPromo, setSelectedDetailPromo] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' (ưu tiên mặc định) | 'grid'
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Khóa cuộn màn hình và phím ESC khi mở modal xem chi tiết
   useEffect(() => {
@@ -99,10 +105,11 @@ export default function PromotionsPage({ navigate }) {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') setSelectedDetailPromo(null);
     };
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedDetailPromo]);
@@ -442,11 +449,24 @@ export default function PromotionsPage({ navigate }) {
                         )}
                       </div>
 
-                      <div className="pt-2 flex items-center gap-3 text-xs text-[#7a5843]">
+                      <div className="pt-2 flex items-center justify-between gap-3 text-xs text-[#7a5843] flex-wrap">
                         <span className="flex items-center gap-1.5 font-bold">
                           <Calendar className="w-3.5 h-3.5 text-[#8c5932]" />
                           <span>Áp dụng 24/7 tại toàn bộ chi nhánh & đặt online</span>
                         </span>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDetailPromo(promo);
+                          }}
+                          className="inline-flex items-center gap-1 font-black text-xs text-[#8c5932] hover:text-[#2b170e] bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1 rounded-full transition-colors cursor-pointer"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          <span>Xem chi tiết</span>
+                          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
                       </div>
                     </div>
 
@@ -599,6 +619,19 @@ export default function PromotionsPage({ navigate }) {
                         <h3 className="font-black text-[#2b170e] text-lg sm:text-xl leading-snug group-hover:text-[#8c5932] transition-colors">
                           {promo.title}
                         </h3>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDetailPromo(promo);
+                          }}
+                          className="pt-1 inline-flex items-center gap-1 font-black text-xs text-[#8c5932] hover:text-[#2b170e] cursor-pointer"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          <span>Xem chi tiết thể lệ</span>
+                          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
                       </div>
                     </div>
 
@@ -813,60 +846,70 @@ export default function PromotionsPage({ navigate }) {
       </div>
 
       {/* 6. MODAL CHI TIẾT CHƯƠNG TRÌNH KHUYẾN MÃI (KHI BẤM VÀO THẺ) */}
-      {selectedDetailPromo && (
+      {mounted && typeof document !== 'undefined' && selectedDetailPromo && createPortal(
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/80 backdrop-blur-md animate-fadeIn"
           onClick={() => setSelectedDetailPromo(null)}
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div 
-            className="relative w-full max-w-xl bg-[#fcfaf7] rounded-[32px] sm:rounded-[36px] shadow-2xl border border-white/80 overflow-hidden flex flex-col max-h-[90vh] text-[#2b170e]"
+            className="relative w-full max-w-4xl lg:max-w-5xl bg-[#fcfaf7] rounded-[28px] sm:rounded-[36px] shadow-2xl border border-white/80 overflow-hidden flex flex-col md:flex-row max-h-[92vh] sm:max-h-[88vh] text-[#2b170e] my-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
+            {/* Nút đóng modal cố định góc trên phải */}
             <button
               onClick={() => setSelectedDetailPromo(null)}
-              className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md transition-all cursor-pointer shadow-md"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center backdrop-blur-md transition-all cursor-pointer shadow-lg active:scale-95 border border-white/20"
               aria-label="Đóng"
             >
               <X className="w-5 h-5 stroke-[2.5]" />
             </button>
 
-            {/* Poster Header */}
-            <div className="relative w-full aspect-[16/9] sm:aspect-[2/1] overflow-hidden bg-neutral-900 flex-shrink-0">
+            {/* CỘT TRÁI / PHẦN TRÊN: FRAME POSTER KHUYẾN MÃI (TRỌN VẸN 100%, KHÔNG BỊ CẮT XÉN BẤT KỲ TỶ LỆ NÀO) */}
+            <div className="relative w-full md:w-5/12 lg:w-1/2 bg-[#120b07] flex items-center justify-center overflow-hidden shrink-0 min-h-[260px] sm:min-h-[340px] md:min-h-[480px]">
+              {/* Nền ảnh mờ nghệ thuật tràn viền tạo chiều sâu */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center filter blur-2xl opacity-40 scale-125 pointer-events-none"
+                style={{ backgroundImage: `url(${selectedDetailPromo.image || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80'})` }}
+              />
+              <div className="absolute inset-0 bg-black/35 pointer-events-none" />
+
+              {/* Ảnh poster chính - Giữ nguyên 100% tỉ lệ gốc (3:4, 4:3, 1:1, 16:9), hiển thị trọn vẹn không cắt hình */}
               <img
                 src={selectedDetailPromo.image || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80'}
                 alt={selectedDetailPromo.title}
-                className="w-full h-full object-cover"
+                className="relative z-10 w-full h-full max-h-[35vh] sm:max-h-[42vh] md:max-h-[82vh] object-contain p-2 sm:p-3 md:p-5 drop-shadow-2xl"
+                onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80'; }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
 
-              {/* Badges */}
+              {/* Huy hiệu nổi trên poster */}
               {(selectedDetailPromo.badge || selectedDetailPromo.tag || selectedDetailPromo.discount) && (
-                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-2 pointer-events-none">
                   {(selectedDetailPromo.badge || selectedDetailPromo.tag) && (
-                    <span className="px-3.5 py-1 rounded-full bg-[#f39c12] text-white text-xs font-black shadow-md uppercase tracking-wider">
+                    <span className="px-3 py-1 rounded-full bg-[#f39c12] text-white text-xs font-black shadow-lg uppercase tracking-wider flex items-center gap-1 border border-white/20">
+                      <Flame className="w-3.5 h-3.5 fill-white" />
                       {selectedDetailPromo.badge || selectedDetailPromo.tag}
                     </span>
                   )}
                   {selectedDetailPromo.discount && (
-                    <span className="px-3.5 py-1 rounded-full bg-white text-[#8c5932] text-xs font-black shadow-md">
+                    <span className="px-3 py-1 rounded-full bg-white text-[#8c5932] text-xs font-black shadow-lg border border-white/40">
                       {selectedDetailPromo.discount}
                     </span>
                   )}
                 </div>
               )}
 
-              {/* Time Validity */}
+              {/* Thời hạn áp dụng gắn ở đáy poster */}
               {(selectedDetailPromo.validUntil || selectedDetailPromo.category) && (
-                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white text-xs sm:text-sm font-bold">
+                <div className="absolute bottom-2.5 left-3 right-3 sm:bottom-3 sm:left-4 sm:right-4 z-20 pointer-events-none flex items-center justify-between gap-2">
                   {selectedDetailPromo.validUntil ? (
-                    <span className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
-                      <Clock className="w-4 h-4 text-amber-300" />
+                    <span className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-3 py-1 rounded-xl border border-white/20 text-white text-xs font-bold shadow-md">
+                      <Clock className="w-3.5 h-3.5 text-amber-300" />
                       {selectedDetailPromo.validUntil}
                     </span>
                   ) : <div />}
                   {selectedDetailPromo.category && (
-                    <span className="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs uppercase font-semibold ml-auto">
+                    <span className="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[11px] uppercase font-bold border border-white/10 ml-auto">
                       {selectedDetailPromo.category}
                     </span>
                   )}
@@ -874,124 +917,128 @@ export default function PromotionsPage({ navigate }) {
               )}
             </div>
 
-            {/* Scrollable Content */}
-            <div className="p-6 sm:p-7 overflow-y-auto space-y-5 flex-1">
-              {/* Subtitle & Title */}
-              <div>
-                {selectedDetailPromo.subtitle && (
-                  <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white px-3 py-1 rounded-lg border border-[#e8ded3] shadow-2xs inline-block mb-2">
-                    {selectedDetailPromo.subtitle}
-                  </span>
-                )}
-                <h3 className="font-black text-xl sm:text-2xl text-[#2b170e] leading-snug">
-                  {selectedDetailPromo.title}
-                </h3>
-              </div>
-
-              {/* Scarcity Bar if present */}
-              {(selectedDetailPromo.claimed || selectedDetailPromo.remaining) && (
-                <div className="p-3.5 rounded-2xl bg-white border border-[#e8ded3] space-y-2">
-                  <div className="flex items-center justify-between text-xs font-black">
-                    <span className="text-orange-600 flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 fill-orange-500" />
-                      Đã nhận {selectedDetailPromo.claimed || 85}%
-                    </span>
-                    <span className="text-[#8c5932]">
-                      Còn {selectedDetailPromo.remaining || 20} suất hôm nay
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
-                      style={{ width: `${selectedDetailPromo.claimed || 85}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Full Description */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#8c5932]" />
-                  Chi Tiết Chương Trình
-                </h4>
-                <div className="p-4 rounded-2xl bg-white border border-[#e8ded3] text-sm text-[#4a2e1b] leading-relaxed whitespace-pre-line font-medium shadow-2xs">
-                  {selectedDetailPromo.description || 'Ưu đãi đặc quyền dành riêng cho khách hàng trải nghiệm tại COFFEE 24/24.'}
-                </div>
-              </div>
-
-              {/* Terms & Conditions */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-[#8c5932]" />
-                  Điều Kiện Áp Dụng
-                </h4>
-                <div className="p-4 rounded-2xl bg-[#f4ece1] border border-[#e5d8c7] text-xs sm:text-sm text-[#5c3d2e] leading-relaxed whitespace-pre-line">
-                  {selectedDetailPromo.condition || 'Áp dụng cho toàn bộ khách hàng dùng tại quán hoặc đặt giao tận nơi 24/24. Không áp dụng đồng thời với các chương trình khuyến mãi khác.'}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Actions Stub */}
-            <div className="p-5 bg-white border-t border-[#e8ded3] flex items-center justify-between gap-3 shadow-lg flex-shrink-0">
-              {selectedDetailPromo.showVoucherCode !== false && Boolean(selectedDetailPromo.code && selectedDetailPromo.code.trim()) && (
+            {/* CỘT PHẢI: NỘI DUNG CHI TIẾT & NÚT HÀNH ĐỘNG */}
+            <div className="flex-1 flex flex-col justify-between overflow-hidden bg-[#fcfaf7]">
+              {/* Vùng cuộn thông tin chi tiết */}
+              <div className="p-5 sm:p-7 md:p-8 overflow-y-auto space-y-4 sm:space-y-5 flex-1 overscroll-contain">
+                {/* Subtitle & Tiêu đề */}
                 <div>
-                  <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
-                  <span className="text-base font-mono font-black text-[#2b170e] bg-[#f7f2eb] border border-[#dfd4c7] px-3 py-1 rounded-xl inline-block shadow-2xs mt-0.5">
-                    {selectedDetailPromo.code.trim()}
-                  </span>
+                  {selectedDetailPromo.subtitle && (
+                    <span className="text-xs font-black uppercase text-[#8c5932] tracking-wider bg-white px-3 py-1 rounded-lg border border-[#e8ded3] shadow-2xs inline-block mb-2">
+                      {selectedDetailPromo.subtitle}
+                    </span>
+                  )}
+                  <h3 className="font-black text-xl sm:text-2xl md:text-3xl text-[#2b170e] leading-snug">
+                    {selectedDetailPromo.title}
+                  </h3>
                 </div>
-              )}
 
-              <div className="flex items-center gap-2 ml-auto">
-                {selectedDetailPromo.showCopyBtn !== false && Boolean(selectedDetailPromo.code && selectedDetailPromo.code.trim()) && (
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(selectedDetailPromo.code.trim())}
-                    className="px-4 py-2.5 rounded-full bg-[#f4ece1] hover:bg-[#ede1d2] text-[#2b170e] text-xs font-bold border border-[#dfd4c7] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                  >
-                    {copiedCode === selectedDetailPromo.code.trim() ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                        <span className="text-emerald-700">Đã chép mã</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 text-[#8c5932]" />
-                        <span>Chép mã</span>
-                      </>
-                    )}
-                  </button>
+                {/* Thanh tiến độ nhận ưu đãi nếu có */}
+                {(selectedDetailPromo.claimed || selectedDetailPromo.remaining) && (
+                  <div className="p-3.5 rounded-2xl bg-white border border-[#e8ded3] space-y-2 shadow-2xs">
+                    <div className="flex items-center justify-between text-xs font-black">
+                      <span className="text-orange-600 flex items-center gap-1">
+                        <Flame className="w-3.5 h-3.5 fill-orange-500" />
+                        Đã nhận {selectedDetailPromo.claimed || 85}%
+                      </span>
+                      <span className="text-[#8c5932]">
+                        Còn {selectedDetailPromo.remaining || 20} suất hôm nay
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                        style={{ width: `${selectedDetailPromo.claimed || 85}%` }}
+                      />
+                    </div>
+                  </div>
                 )}
 
-                {selectedDetailPromo.showCtaBtn !== false && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleUseNow(selectedDetailPromo.code?.trim() || '');
-                      setSelectedDetailPromo(null);
-                    }}
-                    className="ios-btn-primary px-5 py-2.5 rounded-full font-black text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                  >
-                    <span>{selectedDetailPromo.cta || 'Dùng ngay'}</span>
-                    <ArrowRight className="w-4 h-4 stroke-[3]" />
-                  </button>
-                )}
+                {/* Chi tiết chương trình */}
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#8c5932]" />
+                    Chi Tiết Chương Trình
+                  </h4>
+                  <div className="p-4 rounded-2xl bg-white border border-[#e8ded3] text-sm text-[#4a2e1b] leading-relaxed whitespace-pre-line font-medium shadow-2xs">
+                    {selectedDetailPromo.description || 'Ưu đãi đặc quyền dành riêng cho khách hàng trải nghiệm tại COFFEE 24/24.'}
+                  </div>
+                </div>
 
-                {selectedDetailPromo.showCtaBtn === false && selectedDetailPromo.showCopyBtn === false && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDetailPromo(null)}
-                    className="px-5 py-2.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
-                  >
-                    Đóng
-                  </button>
-                )}
+                {/* Điều kiện áp dụng */}
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-[#8c5932]" />
+                    Điều Kiện Áp Dụng
+                  </h4>
+                  <div className="p-4 rounded-2xl bg-[#f4ece1] border border-[#e5d8c7] text-xs sm:text-sm text-[#5c3d2e] leading-relaxed whitespace-pre-line">
+                    {selectedDetailPromo.condition || 'Áp dụng cho toàn bộ khách hàng dùng tại quán hoặc đặt giao tận nơi 24/24. Không áp dụng đồng thời với các chương trình khuyến mãi khác.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Thanh thao tác dưới cùng (Mã ưu đãi, Chép mã, Dùng ngay) */}
+              <div className="p-4 sm:p-5 bg-white border-t border-[#e8ded3] flex items-center justify-between gap-3 shadow-lg flex-shrink-0">
+                {selectedDetailPromo.showVoucherCode !== false && Boolean(selectedDetailPromo.code && selectedDetailPromo.code.trim()) ? (
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
+                    <span className="text-sm sm:text-base font-mono font-black text-[#2b170e] bg-[#f7f2eb] border border-[#dfd4c7] px-2.5 sm:px-3 py-1 rounded-xl inline-block shadow-2xs mt-0.5">
+                      {selectedDetailPromo.code.trim()}
+                    </span>
+                  </div>
+                ) : <div />}
+
+                <div className="flex items-center gap-2 ml-auto">
+                  {selectedDetailPromo.showCopyBtn !== false && Boolean(selectedDetailPromo.code && selectedDetailPromo.code.trim()) && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(selectedDetailPromo.code.trim())}
+                      className="px-3.5 sm:px-4 py-2.5 rounded-full bg-[#f4ece1] hover:bg-[#ede1d2] text-[#2b170e] text-xs font-bold border border-[#dfd4c7] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    >
+                      {copiedCode === selectedDetailPromo.code.trim() ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                          <span className="text-emerald-700">Đã chép mã</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 text-[#8c5932]" />
+                          <span>Chép mã</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {selectedDetailPromo.showCtaBtn !== false && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleUseNow(selectedDetailPromo.code?.trim() || '');
+                        setSelectedDetailPromo(null);
+                      }}
+                      className="ios-btn-primary px-4 sm:px-5 py-2.5 rounded-full font-black text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <span>{selectedDetailPromo.cta || 'Dùng ngay'}</span>
+                      <ArrowRight className="w-4 h-4 stroke-[3]" />
+                    </button>
+                  )}
+
+                  {selectedDetailPromo.showCtaBtn === false && selectedDetailPromo.showCopyBtn === false && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailPromo(null)}
+                      className="px-5 py-2.5 rounded-full bg-[#2b170e] hover:bg-[#3d2215] text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+                    >
+                      Đóng
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
