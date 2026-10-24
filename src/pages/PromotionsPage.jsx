@@ -55,8 +55,9 @@ export default function PromotionsPage({ navigate }) {
     ? siteConfig.promotionsList
     : (DEFAULT_SITE_CONFIG.promotionsList || PROMOTIONS);
 
-  const activePromo = livePromotions[0] || null;
-  const heroImage = activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
+  const selectedPromoId = heroConfig?.featuredPromoId;
+  const activePromo = (selectedPromoId ? livePromotions.find(p => p.id === selectedPromoId) : null) || livePromotions[0] || null;
+  const heroImage = heroConfig?.customImage || activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
   const heroTitle = activePromo?.title || 'Giờ Vàng Giảm 40% Tất Cả Đồ Uống';
   const heroTag = activePromo?.tag || activePromo?.highlightTag || 'ƯU ĐÃI NỔI BẬT NHẤT';
   const heroDiscount = activePromo?.discount || 'GIẢM 40%';
@@ -187,7 +188,10 @@ export default function PromotionsPage({ navigate }) {
 
               {/* Right Hero Image Card (Portrait 3:4) */}
               <div className="lg:col-span-5">
-                <div className="relative group">
+                <div 
+                  className="relative group cursor-pointer"
+                  onClick={() => activePromo && setSelectedDetailPromo(activePromo)}
+                >
                   <div className="relative rounded-[32px] overflow-hidden border border-white/80 shadow-2xl bg-white/70">
                     <div className="relative w-full aspect-[3/4] max-h-[520px] overflow-hidden bg-stone-900">
                       <img 

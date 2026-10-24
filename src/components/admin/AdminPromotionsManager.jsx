@@ -58,6 +58,8 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
   const defaultPageConfig = DEFAULT_SITE_CONFIG.promotionsPageConfig || {
     hero: {
       enabled: true,
+      featuredPromoId: '',
+      customImage: '',
       badge: 'Đặc Quyền Tiếp Sức 24/24',
       title: 'Kho Voucher & Ưu Đãi',
       highlightTitle: 'Dành Riêng Cho Bạn',
@@ -492,6 +494,70 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
         steps: updated
       }
     }));
+  };
+
+  // ==================== XỬ LÝ KHỐI HERO BANNER ====================
+  const [isUploadingHeroPoster, setIsUploadingHeroPoster] = useState(false);
+
+  const handleUpdateHeroField = (field, value) => {
+    setPageConfig(prev => ({
+      ...prev,
+      hero: {
+        ...prev.hero,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleUpdateHeroStat = (index, field, value) => {
+    setPageConfig(prev => {
+      const stats = [...(prev.hero?.stats || defaultPageConfig.hero.stats)];
+      stats[index] = {
+        ...stats[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        hero: {
+          ...prev.hero,
+          stats
+        }
+      };
+    });
+  };
+
+  const handleUploadHeroCustomImage = async (file) => {
+    if (!file) return;
+    setIsUploadingHeroPoster(true);
+    try {
+      const uploadedUrl = await uploadImageToSupabase(file, 'promos');
+      if (uploadedUrl) {
+        handleUpdateHeroField('customImage', uploadedUrl);
+        setIsUploadingHeroPoster(false);
+        triggerAlert?.('✓ Đã tải áp phích Hero lên Supabase Storage thành công!');
+        return;
+      }
+    } catch (err) {
+      console.warn('Lỗi upload hero poster:', err);
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 800;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 600, 800);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        handleUpdateHeroField('customImage', dataUrl);
+        setIsUploadingHeroPoster(false);
+        triggerAlert?.('✓ Đã lưu áp phích Hero dự phòng!');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   // ==================== XỬ LÝ KHỐI CAM KẾT & HOTLINE ====================
@@ -1381,115 +1447,328 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       {/* ============================================================== */}
       {/* TAB 3: CẤU HÌNH HERO BANNER ĐẦU TRANG                          */}
       {/* ============================================================== */}
-      {activeSubTab === 'heroBanner' && (
-        <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#dfd4c7]">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="p-2 rounded-xl bg-amber-500/20 text-amber-600">
-                  <Sparkles className="w-5 h-5 stroke-[2.5]" />
-                </span>
-                <h3 className="text-lg sm:text-xl font-black text-[#2b170e]">
-                  Hero Banner Đầu Trang Khuyến Mãi
+      {activeSubTab === 'heroBanner' && (() => {
+        const selectedHeroPromo = (pageConfig.hero?.featuredPromoId 
+          ? promotions.find(p => p.id === pageConfig.hero.featuredPromoId)
+          : null) || promotions[0] || null;
+        const currentHeroPoster = pageConfig.hero?.customImage || selectedHeroPromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image;
+
+        return (
+          <div className="space-y-6">
+            {/* Informational Guidance Banner */}
+            <div className="p-4 sm:p-5 rounded-3xl bg-amber-500/10 border border-amber-500/25 text-[#2b170e] flex items-start gap-3.5">
+              <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs sm:text-sm leading-relaxed">
+                <strong className="text-[#8c5932] font-bold block mb-0.5">Vị trí chỉnh sửa khối đầu trang Khuyến Mãi (/khuyenmai):</strong>
+                Tại đây bạn có thể <strong>chọn chương trình ưu đãi hiển thị trên tấm áp phích (poster 3:4 bên phải)</strong>, chỉnh sửa tiêu đề giới thiệu, 2 nút bấm điều hướng và <strong>4 con số thống kê</strong> nổi bật bên dưới.
+              </div>
+            </div>
+
+            {/* PHẦN 1: CHỌN CHƯƠNG TRÌNH / VOUCHER CHO TẤM ÁP PHÍCH HERO (POSTER BÊN PHẢI) */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#dfd4c7]">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-800">
+                      <Ticket className="w-4 h-4" />
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-[#2b170e]">
+                      1. Chọn Chương Trình / Voucher Cho Tấm Áp Phích Hero (Bên Phải)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-[#7a5843] mt-0.5">
+                    Chọn ưu đãi nào từ danh sách bên dưới để đưa lên làm ảnh đại diện chính của trang khuyến mãi.
+                  </p>
+                </div>
+
+                {/* Toggle Hero */}
+                <label className="inline-flex items-center gap-3 cursor-pointer select-none bg-[#fbf8f5] px-4 py-2 rounded-xl border border-[#dfd4c7]">
+                  <span className="text-xs font-bold text-[#2b170e]">
+                    {pageConfig.hero?.enabled !== false ? 'Đang Bật Hero' : 'Đang Ẩn Hero'}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={pageConfig.hero?.enabled !== false}
+                    onChange={(e) => handleUpdateHeroField('enabled', e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-10 h-5 rounded-full transition-colors relative ${
+                    pageConfig.hero?.enabled !== false ? 'bg-amber-600' : 'bg-neutral-300'
+                  }`}>
+                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform absolute top-0.5 ${
+                      pageConfig.hero?.enabled !== false ? 'left-5.5' : 'left-1'
+                    }`} />
+                  </div>
+                </label>
+              </div>
+
+              {/* Selector & Preview Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                {/* Left Controls */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase text-[#7a5843] block">
+                      Chọn Chương Trình Khuyến Mãi Muốn Đưa Lên Hero Card:
+                    </label>
+                    <select
+                      value={pageConfig.hero?.featuredPromoId || ''}
+                      onChange={(e) => handleUpdateHeroField('featuredPromoId', e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl bg-white border border-[#dfd4c7] text-xs sm:text-sm font-bold text-[#2b170e] focus:outline-none focus:border-[#8c5932] shadow-xs cursor-pointer"
+                    >
+                      <option value="">-- [Mặc định] Ưu đãi #1 trong danh sách ({promotions[0]?.title || 'Ưu đãi đầu tiên'}) --</option>
+                      {promotions.map((p, pIdx) => (
+                        <option key={p.id || pIdx} value={p.id}>
+                          Ưu đãi #{pIdx + 1}: {p.title} - [{p.discount || 'ƯU ĐÃI'}] {p.code ? `(Mã: ${p.code})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7] text-xs space-y-2 text-[#5c3d2e]">
+                    <div className="font-bold text-[#2b170e] flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Đang chọn hiển thị: <strong>{selectedHeroPromo?.title || 'Chưa chọn'}</strong></span>
+                    </div>
+                    <p className="leading-relaxed">
+                      Khi chọn chương trình ở đây, hệ thống sẽ tự động dùng hình ảnh, mức giảm, mã code và thời hạn áp dụng của chương trình đó trên tấm poster Hero.
+                    </p>
+                  </div>
+
+                  {/* Custom Poster Upload (Optional) */}
+                  <div className="pt-2 border-t border-[#dfd4c7]/70 space-y-2.5">
+                    <label className="text-xs font-black uppercase text-[#7a5843] block">
+                      Hoặc Tải Lên Ảnh Áp Phích Tùy Chỉnh (Tỉ Lệ 3:4):
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <input
+                        type="file"
+                        id="hero-custom-poster-input"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadHeroCustomImage(file);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={isUploadingHeroPoster}
+                        onClick={() => document.getElementById('hero-custom-poster-input')?.click()}
+                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-2 cursor-pointer transition-all shadow-xs disabled:opacity-60"
+                      >
+                        {isUploadingHeroPoster ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Đang Tải Lên Supabase...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Tải Ảnh Mới Từ Máy</span>
+                          </>
+                        )}
+                      </button>
+
+                      {pageConfig.hero?.customImage && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleUpdateHeroField('customImage', '');
+                            triggerAlert?.('✓ Đã khôi phục dùng ảnh tự động theo chương trình!');
+                          }}
+                          className="px-4 py-2.5 rounded-xl bg-neutral-200 hover:bg-neutral-300 text-neutral-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Dùng Lại Ảnh Gốc Của Voucher</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Mini Live Preview Card */}
+                <div className="lg:col-span-5 flex justify-center">
+                  <div className="w-64 aspect-[3/4] rounded-3xl overflow-hidden relative shadow-xl border-2 border-amber-500/30 bg-stone-900 group">
+                    <img
+                      src={currentHeroPoster}
+                      alt={selectedHeroPromo?.title || 'Hero Poster'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promo_banner.jpg';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
+
+                    {/* Floating Ticket Feature Overlay */}
+                    <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-white/95 backdrop-blur-md border border-white text-[#2b170e] space-y-1 shadow-md">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase text-[#8c5932] flex items-center gap-1">
+                          <Flame className="w-3 h-3 text-orange-600 fill-orange-600" />
+                          {selectedHeroPromo?.tag || selectedHeroPromo?.badge || 'HOT DEAL'}
+                        </span>
+                        <span className="text-[10px] font-black bg-rose-600 text-white px-2 py-0.2 rounded-full">
+                          {selectedHeroPromo?.discount || 'GIẢM'}
+                        </span>
+                      </div>
+                      <div className="text-xs font-black text-[#2b170e] truncate">{selectedHeroPromo?.title || 'Tiêu đề ưu đãi'}</div>
+                      <div className="flex items-center justify-between text-[10px] text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
+                        <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{selectedHeroPromo?.code || 'COFFEE24'}</strong></span>
+                        <span className="text-[#8c5932] font-bold">{selectedHeroPromo?.validUntil || '24/24'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PHẦN 2: NỘI DUNG GIỚI THIỆU & 2 NÚT BẤM (BÊN TRÁI) */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-5">
+              <div className="pb-4 border-b border-[#dfd4c7]">
+                <h3 className="text-base sm:text-lg font-black text-[#2b170e]">
+                  2. Tiêu Đề, Đoạn Giới Thiệu & 2 Nút Bấm (Bên Trái)
                 </h3>
+                <p className="text-xs text-[#7a5843] mt-0.5">
+                  Chỉnh sửa các dòng chữ hiển thị ở cột bên trái của Hero Banner.
+                </p>
               </div>
-              <p className="text-xs sm:text-sm text-[#7a5843]">
-                Khối biểu ngữ ấn tượng trên cùng của trang /khuyenmai với poster 3:4 và các nút kêu gọi đặt món.
-              </p>
-            </div>
 
-            {/* Toggle Hero */}
-            <label className="inline-flex items-center gap-3 cursor-pointer select-none bg-[#fbf8f5] px-4 py-2.5 rounded-2xl border border-[#dfd4c7] shadow-2xs">
-              <span className="text-xs font-black text-[#2b170e]">
-                {pageConfig.hero?.enabled !== false ? 'Đang Bật Hero' : 'Đang Ẩn Hero'}
-              </span>
-              <input
-                type="checkbox"
-                checked={pageConfig.hero?.enabled !== false}
-                onChange={(e) => setPageConfig(prev => ({
-                  ...prev,
-                  hero: { ...prev.hero, enabled: e.target.checked }
-                }))}
-                className="sr-only"
-              />
-              <div className={`w-11 h-6 rounded-full transition-colors relative ${
-                pageConfig.hero?.enabled !== false ? 'bg-amber-600' : 'bg-neutral-300'
-              }`}>
-                <div className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${
-                  pageConfig.hero?.enabled !== false ? 'left-6' : 'left-1'
-                }`} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase text-[#7a5843]">Huy Hiệu Nhỏ (Badge)</label>
+                  <input
+                    type="text"
+                    value={pageConfig.hero?.badge || ''}
+                    onChange={(e) => handleUpdateHeroField('badge', e.target.value)}
+                    placeholder="🔥 ĐẶC QUYỀN CỦA BẠN KHI ĐẾN 24/24"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Dòng 1</label>
+                  <input
+                    type="text"
+                    value={pageConfig.hero?.title || ''}
+                    onChange={(e) => handleUpdateHeroField('title', e.target.value)}
+                    placeholder="ƯU ĐÃI ĐỘC QUYỀN"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Nổi Bật Dòng 2</label>
+                  <input
+                    type="text"
+                    value={pageConfig.hero?.highlightTitle || ''}
+                    onChange={(e) => handleUpdateHeroField('highlightTitle', e.target.value)}
+                    placeholder="Dành Riêng Cho Bạn"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
+                  />
+                </div>
+
+                <div className="sm:col-span-3 space-y-1.5">
+                  <label className="text-xs font-black uppercase text-[#7a5843]">Đoạn Văn Giới Thiệu Hero</label>
+                  <textarea
+                    rows={2}
+                    value={pageConfig.hero?.description || ''}
+                    onChange={(e) => handleUpdateHeroField('description', e.target.value)}
+                    placeholder="Tích điểm giảm giá tới 15%. Giờ Vàng giảm giá tới 33%, combo Cú Đêm 42K..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs sm:text-sm text-[#4a2e1b] focus:outline-none focus:border-[#8c5932]"
+                  />
+                </div>
               </div>
-            </label>
+
+              {/* 2 Buttons */}
+              <div className="pt-2 border-t border-[#dfd4c7]/70">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#7a5843] mb-3">Cấu Hình 2 Nút Bấm Điều Hướng</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-3.5 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7] space-y-2">
+                    <span className="text-[11px] font-black uppercase text-[#2b170e] block">Nút 1: Đặt Món (Nền Đen)</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={pageConfig.hero?.ctaText || 'ĐẶT MÓN & ÁP MÃ NGAY'}
+                        onChange={(e) => handleUpdateHeroField('ctaText', e.target.value)}
+                        placeholder="Tên nút (ĐẶT MÓN)"
+                        className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                      />
+                      <input
+                        type="text"
+                        value={pageConfig.hero?.ctaLink || '/dathang'}
+                        onChange={(e) => handleUpdateHeroField('ctaLink', e.target.value)}
+                        placeholder="Link (/dathang)"
+                        className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-bold text-[#8c5932]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#fbf8f5] border border-[#dfd4c7] space-y-2">
+                    <span className="text-[11px] font-black uppercase text-[#2b170e] block">Nút 2: Xem Voucher (Nền Sáng)</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={pageConfig.hero?.secondaryText || 'Xem Danh Sách Voucher'}
+                        onChange={(e) => handleUpdateHeroField('secondaryText', e.target.value)}
+                        placeholder="Tên nút (Xem Danh Sách Voucher)"
+                        className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-bold text-[#2b170e]"
+                      />
+                      <input
+                        type="text"
+                        value={pageConfig.hero?.secondaryLink || '#voucher-grid'}
+                        onChange={(e) => handleUpdateHeroField('secondaryLink', e.target.value)}
+                        placeholder="Link (#voucher-grid)"
+                        className="px-3 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs font-mono font-bold text-[#8c5932]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PHẦN 3: 4 CON SỐ THỐNG KÊ (ẢNH 2: 6+ Deals, Tới 40%, 24/24 H, 25 Phút) */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-sm space-y-4">
+              <div className="pb-3 border-b border-[#dfd4c7]">
+                <h3 className="text-base sm:text-lg font-black text-[#2b170e]">
+                  3. Bốn Con Số Thống Kê Nổi Bật (Dưới 2 Nút Bấm)
+                </h3>
+                <p className="text-xs text-[#7a5843] mt-0.5">
+                  Chỉnh sửa trực tiếp 4 con số và chú thích bên dưới (6+ Deals, Tới 40%, 24/24 H, 25 Phút).
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                {(pageConfig.hero?.stats || defaultPageConfig.hero.stats).map((stat, sIdx) => (
+                  <div key={stat.id || sIdx} className="p-3.5 rounded-2xl bg-white border border-[#dfd4c7] shadow-2xs space-y-2">
+                    <span className="text-[10px] font-black uppercase text-[#8c5932] block">
+                      Thống Kê #{sIdx + 1}
+                    </span>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-[#5c3d2e]">Con Số / Chữ Lớn</label>
+                      <input
+                        type="text"
+                        value={stat.number || ''}
+                        onChange={(e) => handleUpdateHeroStat(sIdx, 'number', e.target.value)}
+                        placeholder={sIdx === 0 ? '6+ Deals' : sIdx === 1 ? 'Tới 40%' : sIdx === 2 ? '24/24 H' : '25 Phút'}
+                        className="w-full px-3 py-1.5 rounded-xl bg-[#fcfaf7] border border-[#dfd4c7] text-xs font-black text-[#2b170e]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-[#5c3d2e]">Dòng Chú Thích Dưới</label>
+                      <input
+                        type="text"
+                        value={stat.label || ''}
+                        onChange={(e) => handleUpdateHeroStat(sIdx, 'label', e.target.value)}
+                        placeholder={sIdx === 0 ? 'Cập nhật mỗi ngày' : sIdx === 1 ? 'Chiết khấu trực tiếp' : sIdx === 2 ? 'Phục vụ xuyên đêm' : 'Giao hỏa tốc đêm'}
+                        className="w-full px-3 py-1.5 rounded-xl bg-[#fcfaf7] border border-[#dfd4c7] text-xs font-medium text-[#7a5843]"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-[#7a5843]">Huy Hiệu (Badge)</label>
-              <input
-                type="text"
-                value={pageConfig.hero?.badge || ''}
-                onChange={(e) => setPageConfig(prev => ({
-                  ...prev,
-                  hero: { ...prev.hero, badge: e.target.value }
-                }))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-black text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Dòng 1</label>
-              <input
-                type="text"
-                value={pageConfig.hero?.title || ''}
-                onChange={(e) => setPageConfig(prev => ({
-                  ...prev,
-                  hero: { ...prev.hero, title: e.target.value }
-                }))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-black text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-[#7a5843]">Tiêu Đề Nổi Bật Dòng 2</label>
-              <input
-                type="text"
-                value={pageConfig.hero?.highlightTitle || ''}
-                onChange={(e) => setPageConfig(prev => ({
-                  ...prev,
-                  hero: { ...prev.hero, highlightTitle: e.target.value }
-                }))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-black text-[#8c5932] focus:outline-none focus:border-[#8c5932]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-[#7a5843]">Tên Nút Đặt Món</label>
-              <input
-                type="text"
-                value={pageConfig.hero?.ctaText || ''}
-                onChange={(e) => setPageConfig(prev => ({
-                  ...prev,
-                  hero: { ...prev.hero, ctaText: e.target.value }
-                }))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs font-black text-[#2b170e] focus:outline-none focus:border-[#8c5932]"
-              />
-            </div>
-
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-black uppercase text-[#7a5843]">Đoạn Giới Thiệu Banner</label>
-              <textarea
-                rows={2}
-                value={pageConfig.hero?.description || ''}
-                onChange={(e) => setPageConfig(prev => ({
-                  ...prev,
-                  hero: { ...prev.hero, description: e.target.value }
-                }))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#dfd4c7] text-xs sm:text-sm text-[#4a2e1b] focus:outline-none focus:border-[#8c5932]"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ============================================================== */}
       {/* TAB 4: CAM KẾT 24/24 & HOTLINE (2 KHỐI CUỐI TRANG KHUYẾN MÃI)  */}

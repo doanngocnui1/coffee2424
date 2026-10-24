@@ -424,6 +424,8 @@ export const DEFAULT_SITE_CONFIG = {
     // 1. Khối Hero Banner Đầu Trang
     hero: {
       enabled: true,
+      featuredPromoId: '', // ID ưu đãi muốn hiển thị trên Hero Card (rỗng = tự lấy ưu đãi đầu tiên)
+      customImage: '',
       badge: 'Đặc Quyền Tiếp Sức 24/24',
       title: 'Kho Voucher & Ưu Đãi',
       highlightTitle: 'Dành Riêng Cho Bạn',
