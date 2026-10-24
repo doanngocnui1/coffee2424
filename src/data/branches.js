@@ -1,3 +1,6 @@
+import { saveCloudSiteConfig } from '../lib/supabase.js';
+import { getSiteConfig } from './siteConfig.js';
+
 export const DEFAULT_BRANCHES = [
   {
     id: 'cn-96d5',
@@ -9,15 +12,15 @@ export const DEFAULT_BRANCHES = [
     hotline: '0347374858',
     hours: 'Mở cửa 24/7',
     status: 'Đang mở cửa',
-    image: '/images/branch_rooftop.jpg',
-    aspectRatio: '4/3',
+    image: '/images/branch_96d5.webp',
+    aspectRatio: '3/4',
     imagePosition: 'center',
     qrImage: '/images/qr_menu_96d5.png',
     cardImage: '/images/qr_menu_table_card_96d5.png',
     menuUrl: 'https://coffee2424.web-store.online/menu/363827',
     mapUrl: 'https://maps.google.com/?q=96+duong+D5+Binh+Thanh+Ho+Chi+Minh',
-    features: ['Gió mát tự nhiên', 'Khu học tập yên tĩnh', 'Ổ điện mọi bàn', 'Phục vụ 24h'],
-    description: 'Tọa lạc tuyến phố D5 sầm uất, không gian thoáng đãng và yên tĩnh lý tưởng cho cú đêm & học nhóm.'
+    features: ['Máy lạnh 16 độ mát rượi', 'Ổ điện đầy đủ từng bàn', 'Wifi 1000mbps', 'Giữ xe miễn phí'],
+    description: 'Không gian ấm cúng, yên tĩnh'
   },
   {
     id: 'cn-413phi',
@@ -29,15 +32,15 @@ export const DEFAULT_BRANCHES = [
     hotline: '0986511897',
     hours: 'Mở cửa 24/7',
     status: 'Đang mở cửa',
-    image: '/images/branch_downtown.jpg',
-    aspectRatio: '4/3',
+    image: '/images/branch_413phi.webp',
+    aspectRatio: '3/4',
     imagePosition: 'center',
     qrImage: '/images/qr_menu_table.png',
     cardImage: '/images/qr_menu_table_card.png',
     menuUrl: 'https://coffee2424.web-store.online/menu/363688',
     mapUrl: 'https://maps.google.com/?q=413+Phan+Huy+Ich+Ho+Chi+Minh',
-    features: ['Máy lạnh 2 tầng', 'Ổ sạc từng bàn', 'Wifi 1000Mbps', 'Giữ xe miễn phí'],
-    description: 'Không gian 2 tầng rộng rãi, ánh đèn vàng ấm cúng, phục vụ cà phê mộc xuyên suốt 24/7.'
+    features: ['Máy lạnh 16 độ mát rượi', 'Ổ điện đầy đủ từng bàn', 'Wifi 1000mbps', 'Giữ xe miễn phí'],
+    description: 'Thiết kế 3 tầng lô góc thoáng đãng'
   }
 ];
 
@@ -49,17 +52,29 @@ export function getBranches() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Đồng bộ link KiotViet chuẩn nếu chưa có
+        // Đồng bộ link KiotViet chuẩn & tự động nâng cấp ảnh mockup cũ sang ảnh thực tế
         return parsed.map(b => {
-          if (b.id === 'cn-96d5' && (!b.menuUrl || b.menuUrl.includes('web-store.online') === false)) {
-            b.menuUrl = 'https://coffee2424.web-store.online/menu/363827';
+          if (b.id === 'cn-96d5') {
+            if (!b.menuUrl || b.menuUrl.includes('web-store.online') === false) {
+              b.menuUrl = 'https://coffee2424.web-store.online/menu/363827';
+            }
+            // Tự động thay thế nếu trình duyệt cũ còn lưu ảnh mockup
+            if (!b.image || b.image === '/images/branch_rooftop.jpg') {
+              b.image = '/images/branch_96d5.webp';
+            }
           }
-          if (b.id === 'cn-413phi' && (!b.menuUrl || b.menuUrl.includes('web-store.online') === false)) {
-            b.menuUrl = 'https://coffee2424.web-store.online/menu/363688';
+          if (b.id === 'cn-413phi') {
+            if (!b.menuUrl || b.menuUrl.includes('web-store.online') === false) {
+              b.menuUrl = 'https://coffee2424.web-store.online/menu/363688';
+            }
+            // Tự động thay thế nếu trình duyệt cũ còn lưu ảnh mockup
+            if (!b.image || b.image === '/images/branch_downtown.jpg') {
+              b.image = '/images/branch_413phi.webp';
+            }
           }
-          // Chuẩn hóa khung hình: '3/4' (dọc), '4/3' (ngang), '16/9' (rộng)
+          // Chuẩn hóa khung hình
           if (!b.aspectRatio) {
-            b.aspectRatio = '4/3';
+            b.aspectRatio = '3/4';
           }
           if (!b.imagePosition) {
             b.imagePosition = 'center';
@@ -78,6 +93,17 @@ export function saveBranches(branches) {
   try {
     localStorage.setItem('coffee2424_branches', JSON.stringify(branches));
     window.dispatchEvent(new Event('branches-updated'));
+
+    // Tự động đồng bộ lên Supabase Cloud để mọi thiết bị/trình duyệt khác nhận được ngay
+    if (typeof window !== 'undefined') {
+      try {
+        const cfg = getSiteConfig();
+        saveCloudSiteConfig({ ...cfg, branches }).catch(err => {
+          console.warn('Auto-sync branches to cloud failed:', err);
+        });
+      } catch (_) {}
+    }
+
     return true;
   } catch (e) {
     console.error('Error saving branches to storage:', e);
@@ -99,7 +125,7 @@ export function createBranch(newBranchData) {
       hotline: newBranchData.hotline || '0906916816',
       hours: newBranchData.hours || 'Mở cửa 24/7',
       status: 'Đang mở cửa',
-      image: newBranchData.image || '/images/branch_downtown.jpg',
+      image: newBranchData.image || '/images/branch_413phi.webp',
       aspectRatio: newBranchData.aspectRatio || '4/3',
       imagePosition: newBranchData.imagePosition || 'center',
       menuUrl: newBranchData.menuUrl || 'https://coffee2424.web-store.online',

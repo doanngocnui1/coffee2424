@@ -5252,7 +5252,7 @@ export default function AdminPage({ navigate }) {
                       hotline: '0906916816',
                       hours: 'Mở cửa 24/7',
                       status: 'Đang mở cửa',
-                      image: '/images/branch_downtown.jpg',
+                      image: '/images/branch_413phi.webp',
                       menuUrl: 'https://coffee2424.web-store.online',
                       mapUrl: '',
                       features: ['Phục vụ 24/7', 'Wifi tốc độ cao', 'Ổ cắm điện'],
@@ -5416,11 +5416,11 @@ export default function AdminPage({ navigate }) {
                           : 'aspect-[16/9]'
                       }`}>
                         <img 
-                          src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
+                          src={branch.image || (branch.code === '413PHI' ? '/images/branch_413phi.webp' : '/images/branch_96d5.webp')} 
                           alt={branch.name}
                           style={{ objectPosition: branch.imagePosition || 'center' }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
+                          onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_413phi.webp' : '/images/branch_96d5.webp'; }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
                         <div className="absolute top-2.5 left-2.5">
@@ -5467,27 +5467,27 @@ export default function AdminPage({ navigate }) {
                           <button
                             type="button"
                             onClick={() => {
-                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: '/images/branch_downtown.jpg' } : b);
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: '/images/branch_413phi.webp' } : b);
                               setBranchesList(copy);
                               saveBranches(copy);
-                              triggerAlert('Đã áp dụng ảnh mặc định Downtown (Phan Huy Ích)!');
+                              triggerAlert('Đã áp dụng ảnh thực tế (413 Phan Huy Ích)!');
                             }}
                             className="px-2.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700 cursor-pointer transition-colors"
                           >
-                            Ảnh Downtown
+                            Ảnh 413 Phan Huy Ích
                           </button>
 
                           <button
                             type="button"
                             onClick={() => {
-                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: '/images/branch_rooftop.jpg' } : b);
+                              const copy = branchesList.map((b, i) => i === idx ? { ...b, image: '/images/branch_96d5.webp' } : b);
                               setBranchesList(copy);
                               saveBranches(copy);
-                              triggerAlert('Đã áp dụng ảnh mặc định Rooftop (Đường D5)!');
+                              triggerAlert('Đã áp dụng ảnh thực tế (96 Đường D5)!');
                             }}
                             className="px-2.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium border border-neutral-700 cursor-pointer transition-colors"
                           >
-                            Ảnh Rooftop
+                            Ảnh 96 Đường D5
                           </button>
                         </div>
 

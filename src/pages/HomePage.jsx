@@ -1155,7 +1155,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                       onError={(e) => {
-                        e.currentTarget.src = '/images/branch_downtown.jpg';
+                        e.currentTarget.src = '/images/branch_413phi.webp';
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">

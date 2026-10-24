@@ -47,7 +47,7 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
       { id: 'chip-5', title: 'Nhiệt Độ Mát Mẻ', icon: 'wind', color: 'teal' }
     ],
     photos: [
-      { id: 'photo-1', title: 'Bàn Dài Học Nhóm 8-12 Bạn', image: '/images/branch_downtown.jpg' },
+      { id: 'photo-1', title: 'Bàn Dài Học Nhóm 8-12 Bạn', image: '/images/branch_413phi.webp' },
       { id: 'photo-2', title: 'Góc Chạy Deadline Yên Tĩnh', image: '/images/blog_workspace.jpg' },
       { id: 'photo-3', title: 'Ánh Sáng Chuẩn Công Thái Học', image: '/images/blog_student_study.jpg' },
       { id: 'photo-4', title: 'Sofa Thư Giãn & Xả Stress', image: '/images/blog_gaming_chill.jpg' }
@@ -513,7 +513,7 @@ export default function AdminSpaceAmenitiesManager({ config, onSaveConfig, trigg
               {/* Photo Preview Box */}
               <div className="relative w-full h-36 rounded-xl overflow-hidden bg-neutral-950 border border-neutral-800 shadow-inner group">
                 <img
-                  src={photo.image || '/images/branch_downtown.jpg'}
+                  src={photo.image || '/images/branch_413phi.webp'}
                   alt={photo.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

@@ -57,7 +57,7 @@ export default function AdminOrderOnlineManager({ config, onSaveConfig, triggerA
       hotline: '0906916816',
       hours: 'Mở cửa 24/7',
       status: 'Đang mở cửa',
-      image: '/images/branch_downtown.jpg',
+      image: '/images/branch_413phi.webp',
       menuUrl: 'https://coffee2424.web-store.online',
       mapUrl: '',
       features: ['Phục vụ 24/7', 'Wifi tốc độ cao', 'Ổ cắm điện'],

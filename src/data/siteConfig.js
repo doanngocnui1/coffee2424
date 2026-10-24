@@ -159,7 +159,7 @@ export const DEFAULT_SITE_CONFIG = {
   // 2. Quản lý Hình Nền Phía Sau Lớp Kính Mờ & Độ Trong Suốt Nhìn Thấu
   glassBackground: {
     enabled: true,
-    image: '/images/hero_banner.jpg',
+    image: '/images/journey_farm.jpg',
     preset: 'warm_cafe',
     opacity: 0.38,
     blur: 6,
@@ -176,16 +176,15 @@ export const DEFAULT_SITE_CONFIG = {
   },
   // 2 Side Vertical Promotional Posters
   sideBanners: {
-    enabled: true,
+    enabled: false,
     left: {
       title: 'MÓN MỚI',
       showTitle: true,
       subtitle: 'Cold Brew Cam Vàng',
       showSubtitle: true,
       desc: 'Ủ lạnh 24 giờ thơm mát sảng khoái',
-      showDesc: true,
-      badge: 'NEW',
       showBadge: true,
+      badge: 'NEW',
       image: '/images/poster_vertical_left.jpg',
       link: '/dathang'
     },
@@ -195,9 +194,8 @@ export const DEFAULT_SITE_CONFIG = {
       subtitle: 'Cà Phê & Croissant',
       showSubtitle: true,
       desc: 'Combo sáng năng lượng chỉ 69K',
-      showDesc: true,
-      badge: '69K',
       showBadge: true,
+      badge: '69K',
       image: '/images/poster_vertical_right.jpg',
       link: '/khuyenmai'
     }
@@ -540,7 +538,7 @@ export const DEFAULT_SITE_CONFIG = {
       { id: 'chip-5', title: 'Nhiệt Độ Mát Mẻ', icon: 'wind', color: 'teal' }
     ],
     photos: [
-      { id: 'photo-1', title: 'Bàn Dài Học Nhóm 8-12 Bạn', image: '/images/branch_downtown.jpg' },
+      { id: 'photo-1', title: 'Bàn Dài Học Nhóm 8-12 Bạn', image: '/images/branch_413phi.webp' },
       { id: 'photo-2', title: 'Góc Chạy Deadline Yên Tĩnh', image: '/images/blog_workspace.jpg' },
       { id: 'photo-3', title: 'Ánh Sáng Chuẩn Công Thái Học', image: '/images/blog_student_study.jpg' },
       { id: 'photo-4', title: 'Sofa Thư Giãn & Xả Stress', image: '/images/blog_gaming_chill.jpg' }
@@ -1139,7 +1137,7 @@ export function getSiteConfig() {
       if (storedImg) {
         finalImg = storedImg;
       } else if (finalImg === `__STORED_SPACE_PHOTO_${idx}__` || !finalImg) {
-        finalImg = storedImg || defaultSpacePhotos[idx]?.image || '/images/branch_downtown.jpg';
+        finalImg = storedImg || defaultSpacePhotos[idx]?.image || '/images/branch_413phi.webp';
       }
       return {
         ...photo,
@@ -1576,9 +1574,13 @@ export async function syncSiteConfigWithCloud(force = false) {
       }
 
       // Tự động đồng bộ danh sách chi nhánh (ảnh, mô tả, khung hình 3:4 / 4:3) từ Cloud
-      if (Array.isArray(cloudData.branches) && cloudData.branches.length > 0) {
+      const branchesToSync = (Array.isArray(cloudConfig.branches) && cloudConfig.branches.length > 0)
+        ? cloudConfig.branches
+        : (Array.isArray(mergedConfig.branches) && mergedConfig.branches.length > 0 ? mergedConfig.branches : null);
+
+      if (branchesToSync) {
         try {
-          localStorage.setItem('coffee2424_branches', JSON.stringify(cloudData.branches));
+          localStorage.setItem('coffee2424_branches', JSON.stringify(branchesToSync));
           window.dispatchEvent(new Event('branches-updated'));
         } catch (_) {}
       }

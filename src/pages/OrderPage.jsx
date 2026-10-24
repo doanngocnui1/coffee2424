@@ -172,11 +172,11 @@ export default function OrderPage({ selectedBranch, setSelectedBranch }) {
                         : 'aspect-[4/3] max-h-[380px]'
                     }`}>
                       <img 
-                        src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
+                        src={branch.image || (branch.code === '413PHI' ? '/images/branch_413phi.webp' : '/images/branch_96d5.webp')} 
                         alt={branch.name} 
                         style={{ objectPosition: branch.imagePosition || 'center' }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
+                        onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_413phi.webp' : '/images/branch_96d5.webp'; }}
                       />
                       
                       <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-2 z-10">

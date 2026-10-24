@@ -247,7 +247,7 @@ export default function AboutUnifiedPage({ navigate, initialSection = 'story' })
             <div className="bg-[#14110e] rounded-3xl overflow-hidden border border-[#221c17] hover:border-amber-500/40 transition-all group">
               <div className="h-64 sm:h-72 overflow-hidden bg-[#1a1410]">
                 <img 
-                  src="/images/branch_downtown.jpg" 
+                  src="/images/branch_413phi.webp" 
                   alt="Chi nhánh 413 Phan Huy Ích" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
@@ -266,7 +266,7 @@ export default function AboutUnifiedPage({ navigate, initialSection = 'story' })
             <div className="bg-[#14110e] rounded-3xl overflow-hidden border border-[#221c17] hover:border-amber-500/40 transition-all group">
               <div className="h-64 sm:h-72 overflow-hidden bg-[#1a1410]">
                 <img 
-                  src="/images/branch_rooftop.jpg" 
+                  src="/images/branch_96d5.webp" 
                   alt="Chi nhánh 96 Đường D5" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />

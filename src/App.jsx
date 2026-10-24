@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
-import OrderPage from './pages/OrderPage';
-import AboutPage from './pages/AboutPage';
-import PromotionsPage from './pages/PromotionsPage';
-import CareersPage from './pages/CareersPage';
-import BlogPage from './pages/BlogPage';
-import AdminPage from './pages/AdminPage';
+const OrderPage = React.lazy(() => import('./pages/OrderPage'));
+const AboutPage = React.lazy(() => import('./pages/AboutPage'));
+const PromotionsPage = React.lazy(() => import('./pages/PromotionsPage'));
+const CareersPage = React.lazy(() => import('./pages/CareersPage'));
+const BlogPage = React.lazy(() => import('./pages/BlogPage'));
+const AdminPage = React.lazy(() => import('./pages/AdminPage'));
 
 import SideBanners from './components/SideBanners';
 import BranchOrderModal from './components/BranchOrderModal';
@@ -51,6 +51,13 @@ export default function App() {
 
     // Lắng nghe cập nhật Realtime từ Supabase (khi có ai sửa từ máy khác)
     const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData) => {
+      if (Array.isArray(newCloudData?.branches) && newCloudData.branches.length > 0) {
+        try {
+          localStorage.setItem('coffee2424_branches', JSON.stringify(newCloudData.branches));
+          window.dispatchEvent(new Event('branches-updated'));
+        } catch (_) {}
+      }
+
       setSiteConfig(prev => {
         const localPromos = prev?.promotionsList || [];
         const cloudPromos = newCloudData?.promotionsList || [];
@@ -147,7 +154,16 @@ export default function App() {
 
   // If in admin mode, show full admin dashboard without regular customer header
   if (isAdmin) {
-    return <AdminPage navigate={navigate} />;
+    return (
+      <React.Suspense fallback={
+        <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center text-amber-400 gap-3">
+          <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+          <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Đang khởi chạy Bảng Quản Trị...</span>
+        </div>
+      }>
+        <AdminPage navigate={navigate} />
+      </React.Suspense>
+    );
   }
 
   // Regular Customer Routes (Tách riêng 3 trang Giới Thiệu, Tuyển Dụng, Bài Viết)
@@ -275,7 +291,14 @@ export default function App() {
           key={currentPath} 
           className={`h-full ${isTransitioning ? 'animate-page-exit pointer-events-none' : 'animate-page-enter'}`}
         >
-          {renderCurrentPage()}
+          <React.Suspense fallback={
+            <div className="min-h-[50vh] flex flex-col items-center justify-center gap-2">
+              <div className="w-8 h-8 border-3 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
+              <span className="text-xs text-stone-500 font-medium">Đang tải trang...</span>
+            </div>
+          }>
+            {renderCurrentPage()}
+          </React.Suspense>
         </div>
       </main>
 

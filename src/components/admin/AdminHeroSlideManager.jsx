@@ -524,7 +524,7 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
   // Preset library background photos
   const libraryBackgrounds = [
     { label: 'Quầy Bar Espresso & Barista', url: '/images/hero_banner.jpg' },
-    { label: 'Không Gian Phố Đêm Chi Nhánh', url: '/images/branch_downtown.jpg' },
+    { label: 'Chi Nhánh 413 Phan Huy Ích (Thực tế)', url: '/images/branch_413phi.webp' },
     { label: 'Cold Brew & Trái Cây Mới', url: '/images/promo_banner.jpg' },
     { label: 'Hạt Cà Phê Mộc Rang Đậm', url: '/images/journey_roast.jpg' },
     { label: 'Nông Trại Cầu Đất Đà Lạt', url: '/images/journey_farm.jpg' },

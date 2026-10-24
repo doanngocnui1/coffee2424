@@ -227,11 +227,11 @@ export default function AboutPage({ navigate }) {
                 <div>
                   <div className={`w-full overflow-hidden bg-stone-100 relative ${aspectClass}`}>
                     <img 
-                      src={branch.image || (branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg')} 
+                      src={branch.image || (branch.code === '413PHI' ? '/images/branch_413phi.webp' : '/images/branch_96d5.webp')} 
                       alt={branch.name || branch.shortName} 
                       style={{ objectPosition: branch.imagePosition || 'center' }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_downtown.jpg' : '/images/branch_rooftop.jpg'; }}
+                      onError={(e) => { e.currentTarget.src = branch.code === '413PHI' ? '/images/branch_413phi.webp' : '/images/branch_96d5.webp'; }}
                     />
                     <div className="absolute top-4 left-4 z-10">
                       <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold border border-white/20 shadow-md">

@@ -58,7 +58,7 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
       id: 'downtown_branch',
       label: 'Chi Nhánh Phố Đi Bộ Sang Trọng',
       desc: 'Không gian kính sang trọng, góc nhìn toàn cảnh phố thị',
-      image: '/images/branch_downtown.jpg',
+      image: '/images/branch_413phi.webp',
       presetSettings: { opacity: 0.45, blur: 7, glassBgOpacity: 0.22, glassBlur: 26 }
     },
     {
@@ -72,7 +72,7 @@ export default function AdminGlassBackgroundManager({ config, onSaveConfig, trig
       id: 'rooftop_open',
       label: 'Rooftop Hoàng Hôn Lãng Mạn',
       desc: 'Ánh chiều tà ấm áp bao trùm toàn bộ không gian',
-      image: '/images/branch_rooftop.jpg',
+      image: '/images/branch_96d5.webp',
       presetSettings: { opacity: 0.42, blur: 6, glassBgOpacity: 0.24, glassBlur: 24 }
     }
   ];

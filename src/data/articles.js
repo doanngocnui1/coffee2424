@@ -150,7 +150,7 @@ Không ai hỏi bạn sao lại thức khuya thế. Không ai giục bạn phả
     title: 'Hợp Đồng Tiền Tỷ Được Chốt Lúc 23h30: Khi COFFEE 24/24 Trở Thành Không Gian Gặp Gỡ Đối Tác & Khởi Nghiệp Lý Tưởng',
     excerpt: 'Không gian lịch sự, phân khu bàn họp tách biệt, ánh sáng chuẩn làm việc và cà phê hảo hạng giúp các cuộc đàm phán, gặp gỡ đối tác xuyên đêm đạt hiệu quả tối đa.',
     category: 'Giao Lưu & Hợp Tác',
-    coverImage: '/images/branch_downtown.jpg',
+    coverImage: '/images/branch_413phi.webp',
     author: 'Startup Daily',
     date: '06/10/2026',
     readTime: '5 phút đọc',
