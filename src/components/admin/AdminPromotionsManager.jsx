@@ -895,9 +895,15 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                           <span className="text-[10px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-md">
                             {promo.discount || 'GIẢM GIÁ'}
                           </span>
-                          <span className="text-xs font-mono font-black text-[#2b170e] bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                            Mã: {promo.code || 'PROMO24'}
-                          </span>
+                          {promo.code && promo.code.trim() ? (
+                            <span className="text-xs font-mono font-black text-[#2b170e] bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                              Mã: {promo.code.trim()}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-[#8c7462] bg-[#f0e7db] px-2 py-0.5 rounded-md border border-[#dfd4c7]">
+                              Không dùng mã
+                            </span>
+                          )}
                         </div>
                         <h4 className="font-black text-sm sm:text-base text-[#2b170e] truncate">
                           {promo.title}
@@ -1172,7 +1178,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                                   onChange={() => handleTogglePromotionField(realIndex, 'showVoucherCode')}
                                   className="w-4 h-4 accent-amber-600 rounded"
                                 />
-                                <span>Hiển thị Mã ({promo.code || 'PROMO24'})</span>
+                                <span>Hiển thị Mã {promo.code && promo.code.trim() ? `(${promo.code.trim()})` : '(Đang trống - sẽ tự ẩn)'}</span>
                               </label>
 
                               <label className="flex items-center gap-2 text-xs font-bold text-[#2b170e] cursor-pointer">
@@ -1584,6 +1590,25 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                       )}
                     </div>
                   </div>
+                  {/* Bật/Tắt Hiển Thị Dòng Mã Voucher Trên Thẻ Poster Hero */}
+                  <div className="pt-3 border-t border-[#dfd4c7]/70">
+                    <label className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 cursor-pointer hover:bg-amber-500/15 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={pageConfig.hero?.showVoucherCode !== false}
+                        onChange={(e) => handleUpdateHeroField('showVoucherCode', e.target.checked)}
+                        className="w-4 h-4 mt-0.5 accent-amber-600 rounded shrink-0 cursor-pointer"
+                      />
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-black text-[#2b170e] block">
+                          Hiển thị Dòng Mã Voucher Trên Thẻ Poster Hero
+                        </span>
+                        <p className="text-[11px] text-[#7a5843] leading-relaxed">
+                          Tích chọn để hiện "Mã: {selectedHeroPromo?.code || '...'}" ở chân thẻ poster. Nếu bỏ tích hoặc mã của chương trình đang để trống, hệ thống sẽ tự động ẩn dòng mã này.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Right Mini Live Preview Card */}
@@ -1612,7 +1637,13 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                       </div>
                       <div className="text-xs font-black text-[#2b170e] truncate">{selectedHeroPromo?.title || 'Tiêu đề ưu đãi'}</div>
                       <div className="flex items-center justify-between text-[10px] text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
-                        <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{selectedHeroPromo?.code || 'COFFEE24'}</strong></span>
+                        {pageConfig.hero?.showVoucherCode !== false && selectedHeroPromo?.showVoucherCode !== false && Boolean(selectedHeroPromo?.code && selectedHeroPromo.code.trim()) ? (
+                          <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{selectedHeroPromo.code.trim()}</strong></span>
+                        ) : (
+                          <span className="text-emerald-700 font-bold flex items-center gap-1">
+                            ✓ Ưu đãi áp dụng tự động
+                          </span>
+                        )}
                         <span className="text-[#8c5932] font-bold">{selectedHeroPromo?.validUntil || '24/24'}</span>
                       </div>
                     </div>

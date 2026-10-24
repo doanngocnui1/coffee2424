@@ -61,7 +61,13 @@ export default function PromotionsPage({ navigate }) {
   const heroTitle = activePromo?.title || 'Giờ Vàng Giảm 40% Tất Cả Đồ Uống';
   const heroTag = activePromo?.tag || activePromo?.highlightTag || 'ƯU ĐÃI NỔI BẬT NHẤT';
   const heroDiscount = activePromo?.discount || 'GIẢM 40%';
-  const heroCode = activePromo?.code || 'HAPPY40';
+
+  // Chỉ hiển thị Mã trên thẻ Hero khi:
+  // 1. Cấu hình Hero không tắt (heroConfig.showVoucherCode !== false)
+  // 2. Chương trình ưu đãi không tắt (activePromo.showVoucherCode !== false)
+  // 3. activePromo.code có nội dung thực tế (người dùng chưa xóa mã)
+  const isHeroCodeEnabled = (heroConfig?.showVoucherCode !== false) && (activePromo?.showVoucherCode !== false);
+  const heroCode = (isHeroCodeEnabled && typeof activePromo?.code === 'string' && activePromo.code.trim()) ? activePromo.code.trim() : '';
   const heroValidUntil = activePromo?.validUntil || '16:00 - 19:00 Mỗi ngày';
 
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -215,8 +221,15 @@ export default function PromotionsPage({ navigate }) {
                         </div>
                         <div className="text-base font-black text-[#2b170e] line-clamp-1">{heroTitle}</div>
                         <div className="flex items-center justify-between text-xs sm:text-sm text-[#5c3d2e] pt-1 border-t border-[#dfd4c7]">
-                          <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
-                          <span className="text-[#8c5932] font-bold">{heroValidUntil}</span>
+                          {heroCode ? (
+                            <span>Mã: <strong className="font-mono text-[#8c5932] font-black">{heroCode}</strong></span>
+                          ) : (
+                            <span className="text-xs text-[#8c5932] font-bold italic flex items-center gap-1">
+                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                              <span>Ưu đãi áp dụng tự động</span>
+                            </span>
+                          )}
+                          {heroValidUntil && <span className="text-[#8c5932] font-bold ml-auto">{heroValidUntil}</span>}
                         </div>
                       </div>
                     </div>
@@ -317,7 +330,10 @@ export default function PromotionsPage({ navigate }) {
           {viewMode === 'list' ? (
             <div className="space-y-6">
               {filteredPromotions.map((promo, idx) => {
-                const hasButtons = !(promo.showVoucherCode === false && promo.showCopyBtn === false && promo.showCtaBtn === false);
+                const hasPromoCode = promo.showVoucherCode !== false && Boolean(promo.code && promo.code.trim());
+                const hasCopyBtn = promo.showCopyBtn !== false && Boolean(promo.code && promo.code.trim());
+                const hasCtaBtn = promo.showCtaBtn !== false;
+                const hasButtons = hasPromoCode || hasCopyBtn || hasCtaBtn;
 
                 return (
                   <div
@@ -408,27 +424,27 @@ export default function PromotionsPage({ navigate }) {
 
                         {/* Action buttons stub */}
                         <div className="p-5 sm:p-7 bg-white/40 border-t md:border-t-0 md:border-l border-white/60 flex flex-col justify-center items-stretch md:items-end gap-3 min-w-[210px] shrink-0">
-                          {promo.showVoucherCode !== false && (
+                          {hasPromoCode && (
                             <div className="text-left md:text-right">
                               <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
                               <span className="text-base font-mono font-black text-[#2b170e] bg-white/80 border border-white/90 px-3 py-1 rounded-xl inline-block shadow-xs mt-0.5">
-                                {promo.code || 'PROMO24'}
+                                {promo.code.trim()}
                               </span>
                             </div>
                           )}
 
                           <div className="flex items-center gap-2 w-full md:w-auto">
-                            {promo.showCopyBtn !== false && (
+                            {hasCopyBtn && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleCopy(promo.code || 'PROMO24');
+                                  handleCopy(promo.code.trim());
                                 }}
                                 className="flex-1 md:flex-none px-3.5 py-2.5 rounded-full bg-white/80 hover:bg-white text-[#2b170e] text-xs font-bold border border-white/90 shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
                                 title="Sao chép mã"
                               >
-                                {copiedCode === (promo.code || 'PROMO24') ? (
+                                {copiedCode === promo.code.trim() ? (
                                   <>
                                     <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
                                     <span className="text-emerald-700">Đã chép</span>
@@ -442,12 +458,12 @@ export default function PromotionsPage({ navigate }) {
                               </button>
                             )}
 
-                            {promo.showCtaBtn !== false && (
+                            {hasCtaBtn && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleUseNow(promo.code || 'PROMO24');
+                                  handleUseNow(promo.code ? promo.code.trim() : '');
                                 }}
                                 className="flex-1 md:flex-none ios-btn-primary px-4 py-2.5 rounded-full font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                               >
@@ -467,7 +483,10 @@ export default function PromotionsPage({ navigate }) {
             /* HIỂN THỊ DẠNG LƯỚI (GRID VIEW) */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredPromotions.map((promo, idx) => {
-                const hasButtons = !(promo.showVoucherCode === false && promo.showCopyBtn === false && promo.showCtaBtn === false);
+                const hasPromoCode = promo.showVoucherCode !== false && Boolean(promo.code && promo.code.trim());
+                const hasCopyBtn = promo.showCopyBtn !== false && Boolean(promo.code && promo.code.trim());
+                const hasCtaBtn = promo.showCtaBtn !== false;
+                const hasButtons = hasPromoCode || hasCopyBtn || hasCtaBtn;
 
                 return (
                   <div 
@@ -536,27 +555,27 @@ export default function PromotionsPage({ navigate }) {
                         </div>
 
                         <div className="p-5 bg-white/40 border-t border-white/60 flex items-center justify-between gap-3">
-                          {promo.showVoucherCode !== false && (
+                          {hasPromoCode && (
                             <div>
                               <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
                               <span className="text-sm sm:text-base font-mono font-black text-[#2b170e] bg-white/80 border border-white/90 px-2.5 py-1 rounded-xl inline-block shadow-xs mt-0.5">
-                                {promo.code || 'PROMO24'}
+                                {promo.code.trim()}
                               </span>
                             </div>
                           )}
 
                           <div className="flex items-center gap-2 ml-auto">
-                            {promo.showCopyBtn !== false && (
+                            {hasCopyBtn && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleCopy(promo.code || 'PROMO24');
+                                  handleCopy(promo.code.trim());
                                 }}
                                 className="px-3.5 py-2 rounded-full bg-white/80 hover:bg-white text-[#2b170e] text-xs font-bold border border-white/90 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
                                 title="Sao chép mã"
                               >
-                                {copiedCode === (promo.code || 'PROMO24') ? (
+                                {copiedCode === promo.code.trim() ? (
                                   <>
                                     <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
                                     <span className="text-emerald-700">Đã chép</span>
@@ -570,12 +589,12 @@ export default function PromotionsPage({ navigate }) {
                               </button>
                             )}
 
-                            {promo.showCtaBtn !== false && (
+                            {hasCtaBtn && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleUseNow(promo.code || 'PROMO24');
+                                  handleUseNow(promo.code ? promo.code.trim() : '');
                                 }}
                                 className="ios-btn-primary px-4 py-2 rounded-full font-black text-xs shadow-md transition-all flex items-center gap-1 cursor-pointer active:scale-95"
                               >
@@ -846,23 +865,23 @@ export default function PromotionsPage({ navigate }) {
 
             {/* Bottom Actions Stub */}
             <div className="p-5 bg-white border-t border-[#e8ded3] flex items-center justify-between gap-3 shadow-lg flex-shrink-0">
-              {selectedDetailPromo.showVoucherCode !== false && (
+              {selectedDetailPromo.showVoucherCode !== false && Boolean(selectedDetailPromo.code && selectedDetailPromo.code.trim()) && (
                 <div>
                   <span className="text-[11px] text-[#7a5843] block font-bold uppercase tracking-wider">Mã Ưu Đãi</span>
                   <span className="text-base font-mono font-black text-[#2b170e] bg-[#f7f2eb] border border-[#dfd4c7] px-3 py-1 rounded-xl inline-block shadow-2xs mt-0.5">
-                    {selectedDetailPromo.code || 'PROMO24'}
+                    {selectedDetailPromo.code.trim()}
                   </span>
                 </div>
               )}
 
               <div className="flex items-center gap-2 ml-auto">
-                {selectedDetailPromo.showCopyBtn !== false && (
+                {selectedDetailPromo.showCopyBtn !== false && Boolean(selectedDetailPromo.code && selectedDetailPromo.code.trim()) && (
                   <button
                     type="button"
-                    onClick={() => handleCopy(selectedDetailPromo.code || 'PROMO24')}
+                    onClick={() => handleCopy(selectedDetailPromo.code.trim())}
                     className="px-4 py-2.5 rounded-full bg-[#f4ece1] hover:bg-[#ede1d2] text-[#2b170e] text-xs font-bold border border-[#dfd4c7] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
                   >
-                    {copiedCode === (selectedDetailPromo.code || 'PROMO24') ? (
+                    {copiedCode === selectedDetailPromo.code.trim() ? (
                       <>
                         <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
                         <span className="text-emerald-700">Đã chép mã</span>
@@ -880,7 +899,7 @@ export default function PromotionsPage({ navigate }) {
                   <button
                     type="button"
                     onClick={() => {
-                      handleUseNow(selectedDetailPromo.code || 'PROMO24');
+                      handleUseNow(selectedDetailPromo.code?.trim() || '');
                       setSelectedDetailPromo(null);
                     }}
                     className="ios-btn-primary px-5 py-2.5 rounded-full font-black text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
