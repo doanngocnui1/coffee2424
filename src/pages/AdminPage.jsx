@@ -2180,6 +2180,28 @@ export default function AdminPage({ navigate }) {
                       </div>
                       <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'candidates' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
                     </button>
+
+                    {/* 4.4: GIAO DIỆN HERO, TIÊU ĐỀ, QUYỀN LỢI, SỐ LIỆU & HOTLINE */}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('careersLayout'); setMobileSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                        activeTab === 'careersLayout'
+                          ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                          : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Sparkles className={`w-4 h-4 shrink-0 ${activeTab === 'careersLayout' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                        <div className="truncate">
+                          <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Giao Diện Hero & Bố Cục</span>
+                          <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'careersLayout' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                            Tiêu đề, quyền lợi, số liệu & hotline
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'careersLayout' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                    </button>
                   </div>
                 )}
               </div>

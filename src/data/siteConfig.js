@@ -208,11 +208,22 @@ export const DEFAULT_SITE_CONFIG = {
     heroTitle: 'GIA NHẬP ĐỘI NGŨ',
     heroTitleHighlight: 'COFFEE 24/24',
     heroDescription: 'COFFEE 24/24 chào đón các nhân tài ở mọi vị trí từ Ban Điều Hành, Văn Phòng đến Khối Cửa Hàng Vận Hành 24/7. Môi trường trẻ trung, chế độ đãi ngộ cạnh tranh và lộ trình thăng tiến rõ ràng.',
+    showBadges: true,
     badges: [
       { text: 'Cà phê miễn phí mỗi ca', icon: 'coffee' },
       { text: 'Phụ cấp ca đêm & thưởng KPI', icon: 'award' },
       { text: 'BHXH đầy đủ & ESOP quản lý', icon: 'shield' }
     ],
+    showStats: true,
+    stats: [
+      { value: '12+', label: 'VỊ TRÍ MỞ TUYỂN', highlight: false },
+      { value: '24/7', label: 'MÔI TRƯỜNG NĂNG ĐỘNG', highlight: false },
+      { value: '24 Giờ', label: 'PHẢN HỒI HỒ SƠ', highlight: true }
+    ],
+    showHotline: true,
+    hotlineLabel: 'Hotline Phòng Tuyển Dụng:',
+    hotlineText: '0906 916 816 (Ms. Thư – HR Manager)',
+    hotlinePhone: '0906916816',
     googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1dt8IW_QR7ap30BaEwPkKNa38QNt0k_i4zpomMlGiKYE/edit?gid=0#gid=0',
     googleSheetId: '1dt8IW_QR7ap30BaEwPkKNa38QNt0k_i4zpomMlGiKYE',
     googleDriveFolderUrl: 'https://drive.google.com/drive/folders/1s2L6e8FhQ5rgeYgfIkoHZHTwV8sOOhz-',

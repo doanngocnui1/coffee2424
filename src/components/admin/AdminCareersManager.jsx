@@ -75,15 +75,66 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
   // Layout / Careers Config State
   const careersConfig = config.careersPage || {};
   const [localCareersConfig, setLocalCareersConfig] = useState({
-    heroBadge: careersConfig.heroBadge || 'CƠ HỘI NGHỀ NGHIỆP 24/24',
-    heroTitle: careersConfig.heroTitle || 'GIA NHẬP ĐỘI NGŨ',
-    heroTitleHighlight: careersConfig.heroTitleHighlight || 'COFFEE 24/24',
-    heroDescription: careersConfig.heroDescription || 'COFFEE 24/24 chào đón các nhân tài ở mọi vị trí từ Ban Điều Hành, Văn Phòng đến Khối Cửa Hàng Vận Hành 24/7. Môi trường trẻ trung, chế độ đãi ngộ cạnh tranh và lộ trình thăng tiến rõ ràng.',
+    heroBadge: careersConfig.heroBadge !== undefined ? careersConfig.heroBadge : 'CƠ HỘI NGHỀ NGHIỆP 24/24',
+    heroTitle: careersConfig.heroTitle !== undefined ? careersConfig.heroTitle : 'GIA NHẬP ĐỘI NGŨ',
+    heroTitleHighlight: careersConfig.heroTitleHighlight !== undefined ? careersConfig.heroTitleHighlight : 'COFFEE 24/24',
+    heroDescription: careersConfig.heroDescription !== undefined ? careersConfig.heroDescription : 'COFFEE 24/24 chào đón các nhân tài ở mọi vị trí từ Ban Điều Hành, Văn Phòng đến Khối Cửa Hàng Vận Hành 24/7. Môi trường trẻ trung, chế độ đãi ngộ cạnh tranh và lộ trình thăng tiến rõ ràng.',
+    showBadges: careersConfig.showBadges !== false,
+    badges: Array.isArray(careersConfig.badges) && careersConfig.badges.length > 0 ? careersConfig.badges : [
+      { text: 'Cà phê miễn phí mỗi ca', icon: 'coffee' },
+      { text: 'Phụ cấp ca đêm & thưởng KPI', icon: 'award' },
+      { text: 'BHXH đầy đủ & ESOP quản lý', icon: 'shield' }
+    ],
+    showStats: careersConfig.showStats !== false,
+    stats: Array.isArray(careersConfig.stats) && careersConfig.stats.length > 0 ? careersConfig.stats : [
+      { value: '12+', label: 'Vị Trí Mở Tuyển', highlight: false },
+      { value: '24/7', label: 'Môi Trường Năng Động', highlight: false },
+      { value: '24 Giờ', label: 'Phản Hồi Hồ Sơ', highlight: true }
+    ],
+    showHotline: careersConfig.showHotline !== false,
+    hotlineLabel: careersConfig.hotlineLabel || 'Hotline Phòng Tuyển Dụng:',
+    hotlineText: careersConfig.hotlineText || '0906 916 816 (Ms. Thư – HR Manager)',
+    hotlinePhone: careersConfig.hotlinePhone || '0906916816',
     googleSheetUrl: careersConfig.googleSheetUrl || 'https://docs.google.com/spreadsheets/d/1dt8IW_QR7ap30BaEwPkKNa38QNt0k_i4zpomMlGiKYE/edit?gid=0#gid=0',
     googleDriveFolderUrl: careersConfig.googleDriveFolderUrl || 'https://drive.google.com/drive/folders/1s2L6e8FhQ5rgeYgfIkoHZHTwV8sOOhz-',
     googleScriptUrl: careersConfig.googleScriptUrl || '',
     showFormInHero: careersConfig.showFormInHero !== false
   });
+
+  useEffect(() => {
+    if (config?.careersPage) {
+      setLocalCareersConfig(prev => ({
+        ...prev,
+        ...config.careersPage,
+        badges: Array.isArray(config.careersPage.badges) && config.careersPage.badges.length > 0 ? config.careersPage.badges : prev.badges,
+        stats: Array.isArray(config.careersPage.stats) && config.careersPage.stats.length > 0 ? config.careersPage.stats : prev.stats
+      }));
+    }
+  }, [config?.careersPage]);
+
+  const handleUpdateBadge = (index, field, value) => {
+    setLocalCareersConfig(prev => {
+      const currentBadges = [...(prev.badges || [
+        { text: 'Cà phê miễn phí mỗi ca', icon: 'coffee' },
+        { text: 'Phụ cấp ca đêm & thưởng KPI', icon: 'award' },
+        { text: 'BHXH đầy đủ & ESOP quản lý', icon: 'shield' }
+      ])];
+      currentBadges[index] = { ...currentBadges[index], [field]: value };
+      return { ...prev, badges: currentBadges };
+    });
+  };
+
+  const handleUpdateStat = (index, field, value) => {
+    setLocalCareersConfig(prev => {
+      const currentStats = [...(prev.stats || [
+        { value: '12+', label: 'Vị Trí Mở Tuyển', highlight: false },
+        { value: '24/7', label: 'Môi Trường Năng Động', highlight: false },
+        { value: '24 Giờ', label: 'Phản Hồi Hồ Sơ', highlight: true }
+      ])];
+      currentStats[index] = { ...currentStats[index], [field]: value };
+      return { ...prev, stats: currentStats };
+    });
+  };
   const [isSavingLayout, setIsSavingLayout] = useState(false);
 
   // Sync state
@@ -621,8 +672,8 @@ function doGet(e) {
               : 'text-stone-700 hover:text-black hover:bg-white/60'
           }`}
         >
-          <Settings className="w-4 h-4 text-amber-400" />
-          <span>Bố Cục & Form Ứng Tuyển Nhanh</span>
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>Giao Diện Hero & Bố Cục</span>
         </button>
       </div>
 
@@ -1267,28 +1318,368 @@ function doGet(e) {
       )}
 
       {/* =========================================================================
-          TAB 4: BỐ CỤC & FORM ỨNG TUYỂN NHANH
+          TAB 4: BỐ CỤC & GIAO DIỆN HERO TUYỂN DỤNG
           ========================================================================= */}
       {activeSubTab === 'layout' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-white/90 border border-white/90 shadow-sm space-y-6">
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-[#2b170e]">
-                Tùy Chỉnh Bố Cục Trang Tuyển Dụng & Form Ứng Tuyển Nhanh
-              </h3>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Đưa Form Ứng Tuyển Nhanh lên thay thế ảnh Banner đầu trang để ứng viên nộp hồ sơ tiện lợi nhất.
-              </p>
+          <div className="p-6 sm:p-7 rounded-3xl bg-white/90 border border-white/90 shadow-sm space-y-7">
+            
+            {/* Header tab */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/80 pb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 text-xs font-black uppercase tracking-wider mb-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Tùy Chỉnh Toàn Diện Giao Diện Hero Tuyển Dụng</span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-[#2b170e]">
+                  Tiêu Đề, Quyền Lợi, Số Liệu Thống Kê & Hotline Tuyển Dụng
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Chỉnh sửa trực quan toàn bộ khối giới thiệu bên trái và bật/tắt các thành phần theo nhu cầu.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveCareersConfig}
+                disabled={isSavingLayout}
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#2b170e] to-[#4a2818] hover:brightness-110 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer shrink-0 active:scale-95 transition-all"
+              >
+                {isSavingLayout ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Save className="w-4 h-4 text-amber-400" />}
+                <span>LƯU CẤU HÌNH GIAO DIỆN</span>
+              </button>
             </div>
 
-            {/* Toggle Show Form in Hero */}
+            {/* LIVE PREVIEW BOX (MÔ PHỎNG TRỰC QUAN GIAO DIỆN) */}
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-amber-600" />
+                Xem Trước Thực Tế (Live Preview):
+              </span>
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#f7f3ed] border border-amber-900/15 shadow-inner space-y-4 max-w-2xl text-left">
+                {localCareersConfig.heroBadge !== '' && (
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white text-[#2b170e] text-xs font-extrabold uppercase tracking-wider border border-white/90 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{localCareersConfig.heroBadge || 'CƠ HỘI NGHỀ NGHIỆP 24/24'}</span>
+                  </div>
+                )}
+
+                <h4 className="text-2xl sm:text-3xl font-black text-[#2b170e] uppercase leading-tight tracking-tight">
+                  {localCareersConfig.heroTitle || 'Gia Nhập Đội Ngũ'} <br />
+                  {localCareersConfig.heroTitleHighlight !== '' && (
+                    <span className="text-[#8c5932] inline-block mt-0.5">
+                      {localCareersConfig.heroTitleHighlight || 'COFFEE 24/24'}
+                    </span>
+                  )}
+                </h4>
+
+                {localCareersConfig.heroDescription !== '' && (
+                  <p className="text-xs sm:text-sm text-[#523d2f] font-medium leading-relaxed">
+                    {localCareersConfig.heroDescription}
+                  </p>
+                )}
+
+                {/* Badges preview */}
+                {localCareersConfig.showBadges !== false && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {(localCareersConfig.badges || []).map((b, i) => {
+                      const IconC = b.icon === 'coffee' ? Coffee : (b.icon === 'shield' ? ShieldCheck : Award);
+                      return (
+                        <span key={i} className="text-xs px-3 py-1.5 rounded-xl bg-white text-[#2b170e] font-bold shadow-2xs flex items-center gap-1.5 border border-white">
+                          <IconC className="w-3.5 h-3.5 text-amber-700" />
+                          <span>{b.text}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Stats preview */}
+                {localCareersConfig.showStats !== false && (
+                  <div className="grid grid-cols-3 gap-2.5 pt-2">
+                    {(localCareersConfig.stats || []).map((st, i) => (
+                      <div key={i} className="p-2.5 rounded-xl bg-white border border-white text-center shadow-2xs">
+                        <span className={`text-base font-black block ${st.highlight ? 'text-amber-800' : 'text-[#2b170e]'}`}>
+                          {st.value}
+                        </span>
+                        <span className="text-[10px] font-bold text-stone-500 uppercase block mt-0.5 truncate">
+                          {st.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Hotline preview */}
+                {localCareersConfig.showHotline !== false && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-600/30 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white text-amber-800 flex items-center justify-center font-bold shadow-2xs shrink-0">
+                      <PhoneCall className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold text-[#7a5843] block">
+                        {localCareersConfig.hotlineLabel || 'Hotline Phòng Tuyển Dụng:'}
+                      </span>
+                      <span className="text-xs sm:text-sm font-black text-[#2b170e]">
+                        {localCareersConfig.hotlineText || '0906 916 816 (Ms. Thư – HR Manager)'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* KHỐI 1: TIÊU ĐỀ & MÔ TẢ GIỚI THIỆU */}
+            <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200/90 space-y-4">
+              <h4 className="text-xs sm:text-sm font-black text-[#2b170e] uppercase tracking-wide flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span>1. Tiêu Đề & Giới Thiệu Đầu Trang (Hero Banner)</span>
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-stone-700 block mb-1">
+                    Huy hiệu nhỏ trên đầu (Badge)
+                  </label>
+                  <input
+                    type="text"
+                    value={localCareersConfig.heroBadge}
+                    onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroBadge: e.target.value }))}
+                    placeholder="CƠ HỘI NGHỀ NGHIỆP 24/24"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-bold text-[#2b170e] focus:outline-none focus:border-amber-600"
+                  />
+                  <span className="text-[11px] text-stone-400 mt-1 block">Xóa trống nếu không muốn hiển thị badge này</span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-stone-700 block mb-1">
+                    Tiêu đề chính dòng 1 (Chữ đen)
+                  </label>
+                  <input
+                    type="text"
+                    value={localCareersConfig.heroTitle}
+                    onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroTitle: e.target.value }))}
+                    placeholder="GIA NHẬP ĐỘI NGŨ"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-black text-[#2b170e] focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-stone-700 block mb-1">
+                    Tiêu đề dòng 2 (Màu nâu nổi bật)
+                  </label>
+                  <input
+                    type="text"
+                    value={localCareersConfig.heroTitleHighlight}
+                    onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroTitleHighlight: e.target.value }))}
+                    placeholder="COFFEE 24/24"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-black text-[#8c5932] focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-stone-700 block mb-1">
+                  Đoạn văn mô tả giới thiệu
+                </label>
+                <textarea
+                  rows={3}
+                  value={localCareersConfig.heroDescription}
+                  onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroDescription: e.target.value }))}
+                  placeholder="Mô tả môi trường làm việc, chế độ và lộ trình..."
+                  className="w-full p-3 rounded-xl bg-white border border-stone-300 text-xs font-medium text-[#2b170e] leading-relaxed focus:outline-none focus:border-amber-600"
+                />
+              </div>
+            </div>
+
+            {/* KHỐI 2: 3 HUY HIỆU QUYỀN LỢI & ĐÃI NGỘ */}
+            <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200/90 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs sm:text-sm font-black text-[#2b170e] uppercase tracking-wide flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-600" />
+                  <span>2. Ba Huy Hiệu Quyền Lợi & Đãi Ngộ (Benefit Pills)</span>
+                </h4>
+
+                <button
+                  type="button"
+                  onClick={() => setLocalCareersConfig(prev => ({ ...prev, showBadges: !prev.showBadges }))}
+                  className={`px-3 py-1 rounded-xl text-xs font-black cursor-pointer transition-all ${
+                    localCareersConfig.showBadges !== false
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-stone-300 text-stone-600'
+                  }`}
+                >
+                  {localCareersConfig.showBadges !== false ? '✓ ĐANG BẬT' : '✕ ĐANG TẮT'}
+                </button>
+              </div>
+
+              {localCareersConfig.showBadges !== false && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {(localCareersConfig.badges || []).map((badge, idx) => (
+                    <div key={idx} className="p-3.5 rounded-xl bg-white border border-stone-200/90 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-800">Quyền lợi #{idx + 1}</span>
+                        <select
+                          value={badge.icon || 'award'}
+                          onChange={(e) => handleUpdateBadge(idx, 'icon', e.target.value)}
+                          className="text-xs font-bold bg-stone-100 px-2 py-1 rounded-lg border border-stone-200 text-stone-700 cursor-pointer"
+                        >
+                          <option value="coffee">☕ Cà phê</option>
+                          <option value="award">🎗️ Thưởng KPI</option>
+                          <option value="shield">🛡️ Bảo hiểm</option>
+                        </select>
+                      </div>
+                      <input
+                        type="text"
+                        value={badge.text}
+                        onChange={(e) => handleUpdateBadge(idx, 'text', e.target.value)}
+                        placeholder={`Nội dung quyền lợi ${idx + 1}...`}
+                        className="w-full px-3 py-2 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-[#2b170e]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* KHỐI 3: 3 HỘP THỐNG KÊ NHANH (TRUST STATISTICS) */}
+            <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200/90 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs sm:text-sm font-black text-[#2b170e] uppercase tracking-wide flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-600" />
+                  <span>3. Ba Hộp Số Liệu Thống Kê Nhanh (Trust Statistics)</span>
+                </h4>
+
+                <button
+                  type="button"
+                  onClick={() => setLocalCareersConfig(prev => ({ ...prev, showStats: !prev.showStats }))}
+                  className={`px-3 py-1 rounded-xl text-xs font-black cursor-pointer transition-all ${
+                    localCareersConfig.showStats !== false
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-stone-300 text-stone-600'
+                  }`}
+                >
+                  {localCareersConfig.showStats !== false ? '✓ ĐANG BẬT' : '✕ ĐANG TẮT'}
+                </button>
+              </div>
+
+              {localCareersConfig.showStats !== false && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {(localCareersConfig.stats || []).map((stat, idx) => (
+                    <div key={idx} className="p-3.5 rounded-xl bg-white border border-stone-200/90 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-800">Hộp số liệu #{idx + 1}</span>
+                        <label className="flex items-center gap-1.5 text-[11px] font-bold text-stone-600 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(stat.highlight)}
+                            onChange={(e) => handleUpdateStat(idx, 'highlight', e.target.checked)}
+                            className="rounded accent-amber-600"
+                          />
+                          <span>Màu cam nổi bật</span>
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-stone-500 block mb-1">Số liệu chính (Value)</label>
+                        <input
+                          type="text"
+                          value={stat.value}
+                          onChange={(e) => handleUpdateStat(idx, 'value', e.target.value)}
+                          placeholder="12+"
+                          className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-sm font-black text-[#2b170e]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-stone-500 block mb-1">Nhãn mô tả (Label)</label>
+                        <input
+                          type="text"
+                          value={stat.label}
+                          onChange={(e) => handleUpdateStat(idx, 'label', e.target.value)}
+                          placeholder="VỊ TRÍ MỞ TUYỂN"
+                          className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-700 uppercase"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* KHỐI 4: KHỐI HOTLINE PHÒNG TUYỂN DỤNG */}
+            <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200/90 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs sm:text-sm font-black text-[#2b170e] uppercase tracking-wide flex items-center gap-2">
+                  <PhoneCall className="w-4 h-4 text-amber-600" />
+                  <span>4. Khối Hotline Phòng Tuyển Dụng (Đáy Phần Giới Thiệu)</span>
+                </h4>
+
+                <button
+                  type="button"
+                  onClick={() => setLocalCareersConfig(prev => ({ ...prev, showHotline: !prev.showHotline }))}
+                  className={`px-3 py-1 rounded-xl text-xs font-black cursor-pointer transition-all ${
+                    localCareersConfig.showHotline !== false
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-stone-300 text-stone-600'
+                  }`}
+                >
+                  {localCareersConfig.showHotline !== false ? '✓ ĐANG BẬT' : '✕ ĐANG TẮT'}
+                </button>
+              </div>
+
+              {localCareersConfig.showHotline !== false && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                      Tiêu đề nhãn hotline
+                    </label>
+                    <input
+                      type="text"
+                      value={localCareersConfig.hotlineLabel}
+                      onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, hotlineLabel: e.target.value }))}
+                      placeholder="Hotline Phòng Tuyển Dụng:"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-bold text-[#2b170e]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                      Nội dung hiển thị (Tên & Số)
+                    </label>
+                    <input
+                      type="text"
+                      value={localCareersConfig.hotlineText}
+                      onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, hotlineText: e.target.value }))}
+                      placeholder="0906 916 816 (Ms. Thư – HR Manager)"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-black text-[#2b170e]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                      Số điện thoại để bấm gọi ngay
+                    </label>
+                    <input
+                      type="tel"
+                      value={localCareersConfig.hotlinePhone}
+                      onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, hotlinePhone: e.target.value }))}
+                      placeholder="0906916816"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-mono font-bold text-[#2b170e]"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* KHỐI 5: FORM ỨNG TUYỂN NHANH ĐẦU TRANG */}
             <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-600/30 flex items-center justify-between gap-4">
               <div>
                 <span className="text-xs sm:text-sm font-black text-[#2b170e] block">
-                  Đưa Form Ứng Tuyển Nhanh Lên Thay Thế Ảnh Banner Đầu Trang (Hero):
+                  5. Đưa Form Ứng Tuyển Nhanh Lên Thay Thế Ảnh Banner Cũ (Cột Phải):
                 </span>
                 <span className="text-xs text-[#7a5843]">
-                  Khi bật, form ứng tuyển kèm nút tải Ảnh thẻ và File CV sẽ xuất hiện ngay tại phần đầu trang khách.
+                  Khi bật, form ứng tuyển kèm nút tải Ảnh thẻ và File CV sẽ xuất hiện ngay tại cột bên phải của Hero đầu trang.
                 </span>
               </div>
               <button
@@ -1304,53 +1695,16 @@ function doGet(e) {
               </button>
             </div>
 
-            {/* Content Customization */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-black text-[#2b170e] uppercase tracking-wider">
-                Tiêu Đề & Giới Thiệu Banner Tuyển Dụng:
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-stone-700 block mb-1">Huy hiệu nhỏ (Badge)</label>
-                  <input
-                    type="text"
-                    value={localCareersConfig.heroBadge}
-                    onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroBadge: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-bold text-[#2b170e]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-stone-700 block mb-1">Tiêu đề chính dòng 1</label>
-                  <input
-                    type="text"
-                    value={localCareersConfig.heroTitle}
-                    onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroTitle: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs font-black text-[#2b170e]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-stone-700 block mb-1">Mô tả giới thiệu cơ hội nghề nghiệp</label>
-                <textarea
-                  rows={3}
-                  value={localCareersConfig.heroDescription}
-                  onChange={(e) => setLocalCareersConfig(prev => ({ ...prev, heroDescription: e.target.value }))}
-                  className="w-full p-3 rounded-xl bg-white border border-stone-300 text-xs font-medium text-[#2b170e] leading-relaxed"
-                />
-              </div>
-            </div>
-
-            <div className="pt-3 flex justify-end">
+            {/* Nút lưu cuối trang */}
+            <div className="pt-2 flex justify-end">
               <button
                 type="button"
                 onClick={handleSaveCareersConfig}
                 disabled={isSavingLayout}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#2b170e] to-[#4a2818] hover:brightness-110 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md cursor-pointer"
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#2b170e] to-[#4a2818] hover:brightness-110 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg cursor-pointer active:scale-95 transition-all"
               >
                 {isSavingLayout ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Save className="w-4 h-4 text-amber-400" />}
-                <span>LƯU CẤU HÌNH BỐ CỤC</span>
+                <span>LƯU CẤU HÌNH GIAO DIỆN HERO</span>
               </button>
             </div>
 

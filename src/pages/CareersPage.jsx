@@ -241,68 +241,94 @@ export default function CareersPage({ navigate }) {
             
             {/* CỘT TRÁI: THÔNG TIN THƯƠNG HIỆU & CHẾ ĐỘ ĐÃI NGỘ */}
             <div className="lg:col-span-6 space-y-5 text-left pt-2">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-[#2b170e] text-xs sm:text-sm font-extrabold uppercase tracking-wider border border-white/90 shadow-2xs">
-                <Sparkles className="w-4 h-4 text-amber-600" />
-                <span>{careersConfig.heroBadge || 'CƠ HỘI NGHỀ NGHIỆP 24/24'}</span>
-              </div>
+              {/* Badge Tiêu Đề Nhỏ */}
+              {careersConfig.heroBadge !== '' && (
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-[#2b170e] text-xs sm:text-sm font-extrabold uppercase tracking-wider border border-white/90 shadow-2xs">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <span>{careersConfig.heroBadge || 'CƠ HỘI NGHỀ NGHIỆP 24/24'}</span>
+                </div>
+              )}
 
+              {/* Tiêu đề chính */}
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2b170e] uppercase leading-[1.25] tracking-tight">
                 {careersConfig.heroTitle || 'Gia Nhập Đội Ngũ'} <br />
-                <span className="text-[#8c5932] inline-block mt-1">
-                  {careersConfig.heroTitleHighlight || 'COFFEE 24/24'}
-                </span>
+                {careersConfig.heroTitleHighlight !== '' && (
+                  <span className="text-[#8c5932] inline-block mt-1">
+                    {careersConfig.heroTitleHighlight || 'COFFEE 24/24'}
+                  </span>
+                )}
               </h1>
 
-              <p className="text-sm sm:text-base text-[#523d2f] font-medium leading-relaxed">
-                {careersConfig.heroDescription || 'COFFEE 24/24 chào đón các nhân tài ở mọi vị trí từ Ban Điều Hành, Văn Phòng đến Khối Cửa Hàng Vận Hành 24/7. Môi trường trẻ trung, chế độ đãi ngộ cạnh tranh và lộ trình thăng tiến rõ ràng.'}
-              </p>
+              {/* Mô tả giới thiệu */}
+              {careersConfig.heroDescription !== '' && (
+                <p className="text-sm sm:text-base text-[#523d2f] font-medium leading-relaxed whitespace-pre-line">
+                  {careersConfig.heroDescription || 'COFFEE 24/24 chào đón các nhân tài ở mọi vị trí từ Ban Điều Hành, Văn Phòng đến Khối Cửa Hàng Vận Hành 24/7. Môi trường trẻ trung, chế độ đãi ngộ cạnh tranh và lộ trình thăng tiến rõ ràng.'}
+                </p>
+              )}
 
-              {/* 3 Huy Hiệu Quyền Lợi */}
-              <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                <span className="text-xs sm:text-sm px-4 py-2 rounded-2xl bg-white/90 text-[#2b170e] font-bold shadow-xs flex items-center gap-2 border border-white">
-                  <Coffee className="w-4 h-4 text-amber-700" />
-                  Cà phê miễn phí mỗi ca
-                </span>
-                <span className="text-xs sm:text-sm px-4 py-2 rounded-2xl bg-white/90 text-[#2b170e] font-bold shadow-xs flex items-center gap-2 border border-white">
-                  <Award className="w-4 h-4 text-amber-700" />
-                  Phụ cấp ca đêm & thưởng KPI
-                </span>
-                <span className="text-xs sm:text-sm px-4 py-2 rounded-2xl bg-white/90 text-[#2b170e] font-bold shadow-xs flex items-center gap-2 border border-white">
-                  <ShieldCheck className="w-4 h-4 text-amber-700" />
-                  BHXH đầy đủ & ESOP quản lý
-                </span>
-              </div>
+              {/* 3 Huy Hiệu Quyền Lợi & Đãi Ngộ */}
+              {careersConfig.showBadges !== false && (
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  {(careersConfig.badges && careersConfig.badges.length > 0 ? careersConfig.badges : [
+                    { text: 'Cà phê miễn phí mỗi ca', icon: 'coffee' },
+                    { text: 'Phụ cấp ca đêm & thưởng KPI', icon: 'award' },
+                    { text: 'BHXH đầy đủ & ESOP quản lý', icon: 'shield' }
+                  ]).map((b, idx) => {
+                    const text = typeof b === 'string' ? b : b.text;
+                    if (!text) return null;
+                    const iconKey = typeof b === 'object' ? b.icon : 'award';
+                    const IconComp = iconKey === 'coffee' ? Coffee : (iconKey === 'shield' ? ShieldCheck : Award);
+                    return (
+                      <span key={idx} className="text-xs sm:text-sm px-4 py-2 rounded-2xl bg-white/90 text-[#2b170e] font-bold shadow-xs flex items-center gap-2 border border-white">
+                        <IconComp className="w-4 h-4 text-amber-700" />
+                        <span>{text}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
-              {/* Quick Trust Statistics */}
-              <div className="grid grid-cols-3 gap-3 pt-3">
-                <div className="p-3.5 rounded-2xl bg-white/80 border border-white shadow-2xs text-center">
-                  <span className="text-lg sm:text-2xl font-black text-[#2b170e] block">12+</span>
-                  <span className="text-[11px] font-bold text-stone-500 uppercase">Vị Trí Mở Tuyển</span>
+              {/* Quick Trust Statistics (Thống kê số liệu tin cậy) */}
+              {careersConfig.showStats !== false && (
+                <div className="grid grid-cols-3 gap-3 pt-3">
+                  {(careersConfig.stats && careersConfig.stats.length > 0 ? careersConfig.stats : [
+                    { value: '12+', label: 'Vị Trí Mở Tuyển', highlight: false },
+                    { value: '24/7', label: 'Môi Trường Năng Động', highlight: false },
+                    { value: '24 Giờ', label: 'Phản Hồi Hồ Sơ', highlight: true }
+                  ]).map((st, idx) => (
+                    <div key={idx} className="p-3.5 rounded-2xl bg-white/80 border border-white shadow-2xs text-center">
+                      <span className={`text-lg sm:text-2xl font-black block ${st.highlight ? 'text-amber-800' : 'text-[#2b170e]'}`}>
+                        {st.value}
+                      </span>
+                      <span className="text-[11px] font-bold text-stone-500 uppercase">
+                        {st.label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <div className="p-3.5 rounded-2xl bg-white/80 border border-white shadow-2xs text-center">
-                  <span className="text-lg sm:text-2xl font-black text-[#2b170e] block">24/7</span>
-                  <span className="text-[11px] font-bold text-stone-500 uppercase">Môi Trường Năng Động</span>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-white/80 border border-white shadow-2xs text-center">
-                  <span className="text-lg sm:text-2xl font-black text-amber-800 block">24 Giờ</span>
-                  <span className="text-[11px] font-bold text-stone-500 uppercase">Phản Hồi Hồ Sơ</span>
-                </div>
-              </div>
+              )}
 
-              {/* Recruitment Hotline Box */}
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-600/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white text-amber-800 flex items-center justify-center font-bold shadow-xs shrink-0">
-                    <PhoneCall className="w-5 h-5" />
+              {/* Recruitment Hotline Box (Hotline Phòng Tuyển Dụng) */}
+              {careersConfig.showHotline !== false && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-600/30 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white text-amber-800 flex items-center justify-center font-bold shadow-xs shrink-0">
+                      <PhoneCall className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-[#7a5843] block">
+                        {careersConfig.hotlineLabel || 'Hotline Phòng Tuyển Dụng:'}
+                      </span>
+                      <a 
+                        href={`tel:${(careersConfig.hotlinePhone || '0906916816').replace(/\s+/g, '')}`} 
+                        className="text-sm sm:text-base font-black text-[#2b170e] hover:text-amber-800 transition-colors"
+                      >
+                        {careersConfig.hotlineText || '0906 916 816 (Ms. Thư – HR Manager)'}
+                      </a>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-[#7a5843] block">Hotline Phòng Tuyển Dụng:</span>
-                    <a href="tel:0906916816" className="text-sm sm:text-base font-black text-[#2b170e] hover:text-amber-800 transition-colors">
-                      0906 916 816 (Ms. Thư - HR Manager)
-                    </a>
-                  </div>
                 </div>
-              </div>
+              )}
 
             </div>
 
