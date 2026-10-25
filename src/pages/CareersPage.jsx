@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Users, 
   DollarSign, 
@@ -27,6 +28,7 @@ import {
   HelpCircle, 
   ExternalLink, 
   ChevronDown,
+  ChevronUp,
   Eye,
   LayoutGrid,
   List
@@ -54,10 +56,13 @@ export default function CareersPage({ navigate }) {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' (danh sách nằm ngang) | 'grid' (dạng lưới)
 
-  // Selected job for detailed article modal
+  // Selected job for detailed article modal & inline expansion
   const [viewingJob, setViewingJob] = useState(null);
+  const [expandedJobId, setExpandedJobId] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleJobsUpdate = () => setJobs(getJobs());
     const handleConfigUpdate = () => setSiteConfig(getSiteConfig());
     window.addEventListener('jobs-updated', handleJobsUpdate);
@@ -79,9 +84,11 @@ export default function CareersPage({ navigate }) {
       if (e.key === 'Escape') setViewingJob(null);
     };
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [viewingJob]);
@@ -664,22 +671,300 @@ export default function CareersPage({ navigate }) {
         </div>
 
         {/* =========================================================================
-            CHẾ ĐỘ 1: BÀI VIẾT HIỂN THỊ THEO DẠNG DANH SÁCH NẰM NGANG (MẶC ĐỊNH)
+            DANH SÁCH BÀI VIẾT: DẠNG DANH SÁCH HOẶC DẠNG LƯỚI + HỖ TRỢ XEM CHI TIẾT TRỰC TIẾP
             ========================================================================= */}
-        {viewMode === 'list' ? (
+        {filteredJobs.length === 0 ? (
+          <div className="p-8 sm:p-12 rounded-[32px] bg-white/80 border border-stone-200 text-center space-y-4 shadow-sm">
+            <Briefcase className="w-12 h-12 text-stone-400 mx-auto" />
+            <h4 className="font-black text-[#2b170e] text-lg sm:text-xl">Chưa có vị trí tuyển dụng phù hợp</h4>
+            <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
+              Hiện tại phòng ban này tạm thời chưa mở tuyển. Bạn có thể nhấn xem tất cả vị trí đang mở hoặc thử tìm kiếm từ khóa khác.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setSelectedDept('all'); setSearchKeyword(''); }}
+              className="px-6 py-2.5 rounded-full bg-[#2b170e] hover:bg-amber-800 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
+            >
+              Xem tất cả ({activeJobs.length}) vị trí đang nhận hồ sơ
+            </button>
+          </div>
+        ) : viewMode === 'list' ? (
           <div className="space-y-4">
-            {filteredJobs.map((job) => (
-              <div 
-                key={job.id}
-                className="rounded-[32px] p-5 sm:p-7 bg-white/85 backdrop-blur-xl border border-white shadow-[0_15px_35px_rgba(60,35,15,0.06)] hover:border-amber-600/40 transition-all duration-300 group hover:-translate-y-0.5"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                  
-                  {/* CỘT TRÁI: THÔNG TIN VỊ TRÍ, BADGES, TIÊU ĐỀ & YÊU CẦU */}
-                  <div className="space-y-2.5 flex-1 min-w-0">
+            {filteredJobs.map((job) => {
+              const isExpanded = expandedJobId === job.id;
+              return (
+                <div 
+                  key={job.id}
+                  className="rounded-[32px] p-5 sm:p-7 bg-white/90 backdrop-blur-xl border border-white shadow-[0_15px_35px_rgba(60,35,15,0.06)] hover:border-amber-600/40 transition-all duration-300 group hover:-translate-y-0.5 space-y-4"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     
-                    {/* Badges Row */}
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    {/* CỘT TRÁI: THÔNG TIN VỊ TRÍ, BADGES, TIÊU ĐỀ & YÊU CẦU */}
+                    <div className="space-y-2.5 flex-1 min-w-0">
+                      
+                      {/* Badges Row */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {job.urgent && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
+                            <Flame className="w-3 h-3" />
+                            Tuyển Gấp
+                          </span>
+                        )}
+
+                        {job.featured && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#2b170e] text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
+                            <Star className="w-3 h-3 fill-[#2b170e]" />
+                            Vị Trí Hot
+                          </span>
+                        )}
+
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-stone-100 text-[#5c3d2e] border border-stone-200">
+                          {job.department}
+                        </span>
+
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-900">
+                          {job.type}
+                        </span>
+                      </div>
+
+                      {/* Job Title */}
+                      <h3 
+                        onClick={() => setViewingJob(job)}
+                        className="text-lg sm:text-xl lg:text-2xl font-black text-[#2b170e] hover:text-amber-800 transition-colors cursor-pointer leading-tight flex items-center gap-2"
+                        title="Bấm để xem chi tiết vị trí tuyển dụng"
+                      >
+                        <span>{job.title}</span>
+                      </h3>
+
+                      {/* Shifts & Locations */}
+                      <div className="flex flex-wrap gap-y-1.5 gap-x-4 text-xs font-semibold text-stone-600">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                          <span>{job.shift}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                          <span>{Array.isArray(job.locations) ? job.locations.join(' | ') : job.locations}</span>
+                        </span>
+                      </div>
+
+                      {/* Description snippet if not expanded */}
+                      {!isExpanded && (
+                        <>
+                          <p className="text-xs sm:text-sm text-[#5c4333] leading-relaxed line-clamp-2 max-w-3xl">
+                            {job.description}
+                          </p>
+
+                          {ensureArray(job.requirements).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
+                              {ensureArray(job.requirements).slice(0, 3).map((req, i) => (
+                                <span key={i} className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-100 text-[#3d2719] font-medium truncate max-w-md">
+                                  ✓ {req}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* CỘT PHẢI: MỨC THU NHẬP NỔI BẬT & NÚT HÀNH ĐỘNG */}
+                    <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-stone-200/80">
+                      
+                      {/* Salary Box */}
+                      <div className="text-left lg:text-right">
+                        <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide block mb-1">
+                          Mức thu nhập:
+                        </span>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-600/25 text-[#8c5932] font-black text-xs sm:text-sm shadow-2xs">
+                          <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
+                          <span>{job.salary}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        {/* Nút 1: Xem Chi Tiết (Mở Popup Modal chuẩn) */}
+                        <button
+                          type="button"
+                          onClick={() => setViewingJob(job)}
+                          className="px-4 py-2.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-[#2b170e] text-xs font-black border border-amber-500/30 flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 shadow-2xs"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-amber-800" />
+                          <span>Xem Chi Tiết</span>
+                        </button>
+
+                        {/* Nút 2: Mở Rộng / Thu Gọn Trực Tiếp Tại Chỗ */}
+                        <button
+                          type="button"
+                          onClick={() => setExpandedJobId(prev => prev === job.id ? null : job.id)}
+                          className={`px-3 py-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shadow-2xs ${
+                            isExpanded 
+                              ? 'bg-amber-100 border-amber-300 text-amber-900 font-black' 
+                              : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-200/90'
+                          }`}
+                          title={isExpanded ? 'Thu gọn bài viết' : 'Xem nhanh nội dung ngay tại đây'}
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-3.5 h-3.5 text-amber-700" />
+                              <span className="hidden sm:inline">Thu gọn</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-3.5 h-3.5 text-amber-700" />
+                              <span className="hidden sm:inline">Xem nhanh</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Nút 3: Ứng Tuyển Ngay */}
+                        <button
+                          type="button"
+                          onClick={() => handleSelectJobToApply(job.id)}
+                          className="px-5 py-2.5 rounded-2xl bg-[#2b170e] hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all whitespace-nowrap active:scale-95"
+                        >
+                          <span>Ứng tuyển ngay</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  {/* PHẦN MỞ RỘNG XEM CHI TIẾT TRỰC TIẾP TRÊN THẺ (INLINE EXPANSION) */}
+                  {isExpanded && (
+                    <div className="pt-5 border-t border-stone-200/80 space-y-5 animate-in fade-in duration-200">
+                      
+                      {/* Meta chips */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-700">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span><strong>Ca làm việc:</strong> {job.shift}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span><strong>Hạn nộp hồ sơ:</strong> {job.deadline || 'Tuyển liên tục'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 sm:col-span-1">
+                          <MapPin className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span><strong>Khu vực:</strong> {Array.isArray(job.locations) ? job.locations.join(' | ') : job.locations}</span>
+                        </div>
+                      </div>
+
+                      {/* Detailed Description */}
+                      <div className="space-y-1.5">
+                        <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                          Mô tả tổng quan công việc:
+                        </h4>
+                        {job.description && /<[a-z][\s\S]*>/i.test(job.description) ? (
+                          <div 
+                            className="rich-text-content text-xs sm:text-sm text-[#4a3528] leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: job.description }}
+                          />
+                        ) : (
+                          <p className="text-xs sm:text-sm text-[#4a3528] leading-relaxed whitespace-pre-line">
+                            {job.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Responsibilities */}
+                      {ensureArray(job.responsibilities).length > 0 && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                            Trách nhiệm & Đầu việc chính:
+                          </h4>
+                          <ul className="space-y-1 text-xs sm:text-sm text-[#4a3528]">
+                            {ensureArray(job.responsibilities).map((res, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-amber-700 font-bold">•</span>
+                                <span>{res}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Requirements */}
+                      {ensureArray(job.requirements).length > 0 && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                            Yêu cầu ứng viên:
+                          </h4>
+                          <ul className="space-y-1 text-xs sm:text-sm text-[#4a3528]">
+                            {ensureArray(job.requirements).map((req, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                                <span>{req}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Benefits */}
+                      {ensureArray(job.benefits).length > 0 && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                            Quyền lợi & Đãi ngộ:
+                          </h4>
+                          <ul className="space-y-1 text-xs sm:text-sm text-[#4a3528]">
+                            {ensureArray(job.benefits).map((ben, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                <span>{ben}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Expanded Card Bottom Actions */}
+                      <div className="pt-3 border-t border-stone-200/80 flex flex-wrap items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedJobId(null)}
+                          className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          <span>Thu Gọn Lại</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSelectJobToApply(job.id)}
+                          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-110 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-95"
+                        >
+                          <Send className="w-4 h-4 text-white" />
+                          <span>ỨNG TUYỂN VỊ TRÍ NÀY NGAY</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* =========================================================================
+              CHẾ ĐỘ 2: DẠNG LƯỚI (GRID VIEW) - HỖ TRỢ XEM CHI TIẾT ĐẦY ĐỦ
+              ========================================================================= */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredJobs.map((job) => {
+              const isExpanded = expandedJobId === job.id;
+              return (
+                <div 
+                  key={job.id}
+                  className="rounded-[32px] p-6 sm:p-7 bg-white/90 backdrop-blur-xl border border-white shadow-[0_15px_35px_rgba(60,35,15,0.06)] flex flex-col justify-between hover:border-amber-600/40 transition-all duration-300 group hover:-translate-y-0.5 space-y-4"
+                >
+                  <div className="space-y-3.5">
+                    
+                    {/* DÒNG 1: BADGES */}
+                    <div className="flex flex-wrap items-center gap-1.5 w-full">
                       {job.urgent && (
                         <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
                           <Flame className="w-3 h-3" />
@@ -703,15 +988,24 @@ export default function CareersPage({ navigate }) {
                       </span>
                     </div>
 
-                    {/* Job Title */}
-                    <h3 
-                      onClick={() => setViewingJob(job)}
-                      className="text-lg sm:text-xl lg:text-2xl font-black text-[#2b170e] group-hover:text-amber-800 transition-colors cursor-pointer leading-tight"
-                    >
-                      {job.title}
-                    </h3>
+                    {/* DÒNG 2: TIÊU ĐỀ */}
+                    <div>
+                      <h3 
+                        onClick={() => setViewingJob(job)}
+                        className="text-lg sm:text-xl font-black text-[#2b170e] hover:text-amber-800 transition-colors cursor-pointer leading-tight"
+                        title="Bấm để xem chi tiết vị trí tuyển dụng"
+                      >
+                        {job.title}
+                      </h3>
+                    </div>
 
-                    {/* Shifts & Locations */}
+                    {/* DÒNG 3: MỨC THU NHẬP */}
+                    <div className="flex items-center gap-2 p-2.5 sm:p-3 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-[#8c5932] font-black text-xs sm:text-sm">
+                      <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
+                      <span className="leading-snug">{job.salary}</span>
+                    </div>
+
+                    {/* DÒNG 4: CA LÀM & ĐỊA ĐIỂM */}
                     <div className="flex flex-wrap gap-y-1.5 gap-x-4 text-xs font-semibold text-stone-600">
                       <span className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
@@ -723,43 +1017,73 @@ export default function CareersPage({ navigate }) {
                       </span>
                     </div>
 
-                    {/* Description snippet */}
-                    <p className="text-xs sm:text-sm text-[#5c4333] leading-relaxed line-clamp-2 max-w-3xl">
+                    {/* DÒNG 5: MÔ TẢ CHI TIẾT */}
+                    <p className={`text-xs sm:text-sm text-[#5c4333] leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}>
                       {job.description}
                     </p>
 
-                    {/* Requirements highlights */}
-                    {ensureArray(job.requirements).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {ensureArray(job.requirements).slice(0, 3).map((req, i) => (
-                          <span key={i} className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-100 text-[#3d2719] font-medium truncate max-w-md">
-                            ✓ {req}
-                          </span>
-                        ))}
+                    {/* DÒNG 6: CHI TIẾT MỞ RỘNG (NẾU MỞ) */}
+                    {isExpanded && (
+                      <div className="space-y-3 pt-3 border-t border-stone-100 text-xs animate-in fade-in">
+                        {ensureArray(job.responsibilities).length > 0 && (
+                          <div className="space-y-1">
+                            <span className="font-bold text-[#2b170e] uppercase block text-[11px]">Trách nhiệm chính:</span>
+                            <ul className="space-y-1 text-stone-600">
+                              {ensureArray(job.responsibilities).map((r, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5">• <span>{r}</span></li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {ensureArray(job.requirements).length > 0 && (
+                          <div className="space-y-1">
+                            <span className="font-bold text-[#2b170e] uppercase block text-[11px]">Yêu cầu:</span>
+                            <ul className="space-y-1 text-stone-600">
+                              {ensureArray(job.requirements).map((r, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5 text-emerald-800">✓ <span>{r}</span></li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {ensureArray(job.benefits).length > 0 && (
+                          <div className="space-y-1">
+                            <span className="font-bold text-[#2b170e] uppercase block text-[11px]">Quyền lợi:</span>
+                            <ul className="space-y-1 text-stone-600">
+                              {ensureArray(job.benefits).map((b, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5 text-amber-800">★ <span>{b}</span></li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
+
+                    {!isExpanded && ensureArray(job.requirements).length > 0 && (
+                      <div className="space-y-1.5 pt-2 border-t border-stone-100">
+                        <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide block">
+                          Yêu cầu tiêu biểu:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ensureArray(job.requirements).slice(0, 2).map((req, i) => (
+                            <span key={i} className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-100 text-[#3d2719] font-medium truncate max-w-xs">
+                              ✓ {req}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   </div>
 
-                  {/* CỘT PHẢI: MỨC THU NHẬP NỔI BẬT & NÚT HÀNH ĐỘNG */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-stone-200/80">
-                    
-                    {/* Salary Box */}
-                    <div className="text-left lg:text-right">
-                      <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide block mb-1">
-                        Mức thu nhập:
-                      </span>
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-600/25 text-[#8c5932] font-black text-xs sm:text-sm shadow-2xs">
-                        <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
-                        <span>{job.salary}</span>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  {/* DÒNG 7: NÚT HÀNH ĐỘNG DƯỚI CÙNG */}
+                  <div className="pt-4 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setViewingJob(job)}
-                        className="px-4 py-2.5 rounded-2xl bg-white hover:bg-stone-100 text-stone-700 text-xs font-bold border border-stone-200/90 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                        className="text-xs font-bold text-amber-900 hover:text-black flex items-center gap-1 cursor-pointer transition-colors p-1"
                       >
                         <Eye className="w-3.5 h-3.5 text-amber-700" />
                         <span>Xem Chi Tiết</span>
@@ -767,277 +1091,204 @@ export default function CareersPage({ navigate }) {
 
                       <button
                         type="button"
-                        onClick={() => handleSelectJobToApply(job.id)}
-                        className="px-5 py-2.5 rounded-2xl bg-[#2b170e] hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all whitespace-nowrap active:scale-95"
+                        onClick={() => setExpandedJobId(prev => prev === job.id ? null : job.id)}
+                        className="text-xs font-bold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer transition-colors p-1"
+                        title={isExpanded ? 'Thu gọn' : 'Xem nhanh tại chỗ'}
                       >
-                        <span>Ứng tuyển ngay</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="w-3.5 h-3.5 text-amber-700" />
+                            <span className="hidden sm:inline">Thu gọn</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3.5 h-3.5 text-amber-700" />
+                            <span className="hidden sm:inline">Nhanh</span>
+                          </>
+                        )}
                       </button>
                     </div>
 
-                  </div>
-
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* =========================================================================
-              CHẾ ĐỘ 2: DẠNG LƯỚI (GRID VIEW) - ĐÃ SỬA LỖI LƯƠNG & BADGES BỊ CO RÚM
-              ========================================================================= */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredJobs.map((job) => (
-              <div 
-                key={job.id}
-                className="rounded-[32px] p-6 sm:p-7 bg-white/85 backdrop-blur-xl border border-white shadow-[0_15px_35px_rgba(60,35,15,0.06)] flex flex-col justify-between hover:border-amber-600/40 transition-all duration-300 group hover:-translate-y-0.5 space-y-4"
-              >
-                <div className="space-y-3.5">
-                  
-                  {/* DÒNG 1: BADGES CHIẾM TRỌN BỀ NGANG, KHÔNG CHUNG DÒNG VỚI LƯƠNG -> KHÔNG BỊ CO RÚM */}
-                  <div className="flex flex-wrap items-center gap-1.5 w-full">
-                    {job.urgent && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
-                        <Flame className="w-3 h-3" />
-                        Tuyển Gấp
-                      </span>
-                    )}
-
-                    {job.featured && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#2b170e] text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
-                        <Star className="w-3 h-3 fill-[#2b170e]" />
-                        Vị Trí Hot
-                      </span>
-                    )}
-
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-stone-100 text-[#5c3d2e] border border-stone-200">
-                      {job.department}
-                    </span>
-
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-900">
-                      {job.type}
-                    </span>
-                  </div>
-
-                  {/* DÒNG 2: TIÊU ĐỀ CÔNG VIỆC */}
-                  <div>
-                    <h3 
-                      onClick={() => setViewingJob(job)}
-                      className="text-lg sm:text-xl font-black text-[#2b170e] group-hover:text-amber-800 transition-colors cursor-pointer leading-tight"
+                    <button
+                      type="button"
+                      onClick={() => handleSelectJobToApply(job.id)}
+                      className="px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                     >
-                      {job.title}
-                    </h3>
+                      <span>Ứng tuyển ngay</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-
-                  {/* DÒNG 3: KHỐI MỨC THU NHẬP NẰM RIÊNG BIỆT - RỘNG RÃI & SANG TRỌNG */}
-                  <div className="flex items-center gap-2 p-2.5 sm:p-3 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-[#8c5932] font-black text-xs sm:text-sm">
-                    <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
-                    <span className="leading-snug">{job.salary}</span>
-                  </div>
-
-                  {/* DÒNG 4: CA LÀM & ĐỊA ĐIỂM */}
-                  <div className="flex flex-wrap gap-y-1.5 gap-x-4 text-xs font-semibold text-stone-600">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                      <span>{job.shift}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                      <span>{Array.isArray(job.locations) ? job.locations.join(' | ') : job.locations}</span>
-                    </span>
-                  </div>
-
-                  {/* DÒNG 5: MÔ TẢ TÓM TẮT */}
-                  <p className="text-xs sm:text-sm text-[#5c4333] leading-relaxed line-clamp-2">
-                    {job.description}
-                  </p>
-
-                  {/* DÒNG 6: YÊU CẦU TIÊU BIỂU */}
-                  {ensureArray(job.requirements).length > 0 && (
-                    <div className="space-y-1.5 pt-2 border-t border-stone-100">
-                      <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide block">
-                        Yêu cầu tiêu biểu:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {ensureArray(job.requirements).slice(0, 2).map((req, i) => (
-                          <span key={i} className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-100 text-[#3d2719] font-medium truncate max-w-xs">
-                            ✓ {req}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                 </div>
-
-                {/* DÒNG 7: NÚT HÀNH ĐỘNG DƯỚI CÙNG */}
-                <div className="pt-4 border-t border-stone-100 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setViewingJob(job)}
-                    className="text-xs font-bold text-stone-600 hover:text-black flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Xem Chi Tiết Bài Viết</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectJobToApply(job.id)}
-                    className="px-4 py-2 rounded-full bg-[#2b170e] hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
-                  >
-                    <span>Ứng tuyển ngay</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
       </section>
 
       {/* =========================================================================
-          MODAL CHI TIẾT BÀI VIẾT TUYỂN DỤNG (XEM TOÀN BỘ THÔNG TIN BÀI VIẾT)
+          MODAL CHI TIẾT BÀI VIẾT TUYỂN DỤNG (CHUẨN HEADLESS DIALOG - KHÔNG BAO GIỜ BỊ CẮT ĐỈNH)
           ========================================================================= */}
-      {viewingJob && (
+      {mounted && typeof document !== 'undefined' && viewingJob && createPortal(
         <div 
           onClick={() => setViewingJob(null)}
-          className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto animate-in fade-in duration-200"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, WebkitOverflowScrolling: 'touch' }}
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[32px] sm:rounded-[36px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl relative my-auto animate-in zoom-in-95 duration-200 border border-stone-200"
+            className="relative w-full max-w-2xl bg-white rounded-[28px] sm:rounded-[36px] shadow-2xl border border-stone-200 flex flex-col my-auto max-h-[88vh] max-h-[88dvh] overflow-hidden text-left animate-in zoom-in-95 duration-200"
           >
-            
-            {/* Close Button */}
-            <button 
-              type="button"
-              onClick={() => setViewingJob(null)}
-              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95"
-              aria-label="Đóng"
-            >
-              ✕
-            </button>
+              
+              {/* 1. HEADER CỐ ĐỊNH Ở ĐỈNH (PINNED HEADER) - KHÔNG BAO GIỜ BỊ MẤT PHẦN TRÊN KHI CUỘN */}
+              <div className="p-5 sm:p-7 pb-4 border-b border-stone-200 relative pr-16 shrink-0 bg-white z-10">
+                {/* Close Button Cố định góc trên */}
+                <button 
+                  type="button"
+                  onClick={() => setViewingJob(null)}
+                  className="absolute top-4 right-4 sm:top-5 sm:right-5 w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 border border-stone-200/80"
+                  aria-label="Đóng"
+                >
+                  <X className="w-5 h-5 text-stone-700" />
+                </button>
 
-            {/* Modal Header */}
-            <div className="space-y-2 pr-8">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-stone-100 text-stone-700">
-                  {viewingJob.department}
-                </span>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-900">
-                  {viewingJob.type}
-                </span>
-                {viewingJob.urgent && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase flex items-center gap-1">
-                    <Flame className="w-3 h-3" />
-                    Tuyển Gấp
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-stone-100 text-stone-700">
+                      {viewingJob.department}
+                    </span>
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 font-semibold">
+                      {viewingJob.type}
+                    </span>
+                    {viewingJob.urgent && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
+                        <Flame className="w-3 h-3" />
+                        Tuyển Gấp
+                      </span>
+                    )}
+                    {viewingJob.featured && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#2b170e] text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs">
+                        <Star className="w-3 h-3 fill-[#2b170e]" />
+                        Vị Trí Hot
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-[#2b170e] leading-tight">
+                    {viewingJob.title}
+                  </h3>
+                  <div className="text-sm sm:text-base font-black text-amber-800 flex items-center gap-1.5">
+                    <DollarSign className="w-4 h-4 text-amber-800 shrink-0" />
+                    <span>{viewingJob.salary}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. NỘI DUNG CUỘN BÊN TRONG (SCROLLABLE BODY) */}
+              <div className="p-5 sm:p-7 overflow-y-auto space-y-5 flex-1 overscroll-contain">
+                {/* Meta tags */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-stone-50 border border-stone-200/80 text-xs text-stone-700">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span><strong>Ca làm:</strong> {viewingJob.shift}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span><strong>Hạn nộp:</strong> {viewingJob.deadline || 'Tuyển liên tục'}</span>
+                  </div>
+                  <div className="sm:col-span-2 flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <span><strong>Địa điểm:</strong> {Array.isArray(viewingJob.locations) ? viewingJob.locations.join(' | ') : viewingJob.locations}</span>
+                  </div>
+                </div>
+
+                {/* Detailed Description */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                    Mô tả công việc:
+                  </h4>
+                  {viewingJob.description && /<[a-z][\s\S]*>/i.test(viewingJob.description) ? (
+                    <div 
+                      className="rich-text-content text-sm text-[#4a3528] leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: viewingJob.description }}
+                    />
+                  ) : (
+                    <p className="text-sm text-[#4a3528] leading-relaxed whitespace-pre-line">
+                      {viewingJob.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Responsibilities */}
+                {ensureArray(viewingJob.responsibilities).length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                      Trách nhiệm chính:
+                    </h4>
+                    <ul className="space-y-1.5 text-sm text-[#4a3528]">
+                      {ensureArray(viewingJob.responsibilities).map((res, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-amber-700 font-bold">•</span>
+                          <span>{res}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Requirements */}
+                {ensureArray(viewingJob.requirements).length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                      Yêu cầu ứng viên:
+                    </h4>
+                    <ul className="space-y-1.5 text-sm text-[#4a3528]">
+                      {ensureArray(viewingJob.requirements).map((req, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{req}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Benefits */}
+                {ensureArray(viewingJob.benefits).length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
+                      Quyền lợi & Đãi ngộ:
+                    </h4>
+                    <ul className="space-y-1.5 text-sm text-[#4a3528]">
+                      {ensureArray(viewingJob.benefits).map((ben, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <span>{ben}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-[#2b170e] leading-tight">
-                {viewingJob.title}
-              </h3>
-              <div className="text-base font-black text-amber-800">
-                💰 Mức thu nhập: {viewingJob.salary}
+
+              {/* 3. FOOTER CỐ ĐỊNH Ở ĐÁY (PINNED FOOTER CTA) */}
+              <div className="p-4 sm:p-5 border-t border-stone-200 bg-stone-50/90 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <span className="text-xs text-stone-500">
+                  Sẵn sàng tham gia đại gia đình COFFEE 24/24?
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSelectJobToApply(viewingJob.id)}
+                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-110 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  <Send className="w-4 h-4 text-white" />
+                  <span>ỨNG TUYỂN VỊ TRÍ NÀY NGAY</span>
+                </button>
               </div>
+
             </div>
-
-            {/* Meta tags */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-stone-50 border border-stone-200/80 text-xs text-stone-700">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-700 shrink-0" />
-                <span><strong>Ca làm:</strong> {viewingJob.shift}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-amber-700 shrink-0" />
-                <span><strong>Hạn nộp:</strong> {viewingJob.deadline || 'Tuyển liên tục'}</span>
-              </div>
-              <div className="sm:col-span-2 flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                <span><strong>Địa điểm:</strong> {Array.isArray(viewingJob.locations) ? viewingJob.locations.join(' | ') : viewingJob.locations}</span>
-              </div>
-            </div>
-
-            {/* Detailed Description */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
-                Mô tả công việc:
-              </h4>
-              <p className="text-sm text-[#4a3528] leading-relaxed">
-                {viewingJob.description}
-              </p>
-            </div>
-
-            {/* Responsibilities */}
-            {ensureArray(viewingJob.responsibilities).length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
-                  Trách nhiệm chính:
-                </h4>
-                <ul className="space-y-1.5 text-sm text-[#4a3528]">
-                  {ensureArray(viewingJob.responsibilities).map((res, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-amber-700 font-bold">•</span>
-                      <span>{res}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Requirements */}
-            {ensureArray(viewingJob.requirements).length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
-                  Yêu cầu ứng viên:
-                </h4>
-                <ul className="space-y-1.5 text-sm text-[#4a3528]">
-                  {ensureArray(viewingJob.requirements).map((req, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{req}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Benefits */}
-            {ensureArray(viewingJob.benefits).length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase text-[#2b170e] tracking-wider">
-                  Quyền lợi & Đãi ngộ:
-                </h4>
-                <ul className="space-y-1.5 text-sm text-[#4a3528]">
-                  {ensureArray(viewingJob.benefits).map((ben, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                      <span>{ben}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Bottom Apply CTA */}
-            <div className="pt-4 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <span className="text-xs text-stone-500">
-                Sẵn sàng tham gia đại gia đình COFFEE 24/24?
-              </span>
-              <button
-                type="button"
-                onClick={() => handleSelectJobToApply(viewingJob.id)}
-                className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-110 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
-              >
-                <Send className="w-4 h-4 text-white" />
-                <span>ỨNG TUYỂN VỊ TRÍ NÀY NGAY</span>
-              </button>
-            </div>
-
-          </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

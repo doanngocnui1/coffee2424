@@ -242,11 +242,12 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
     try {
       const updatedConfig = {
         ...config,
-        careersPage: localCareersConfig
+        careersPage: localCareersConfig,
+        jobs: jobsList
       };
       onSaveConfig(updatedConfig);
       await saveCloudSiteConfig(updatedConfig);
-      triggerAlert('✓ Đã lưu cấu hình Trang Tuyển Dụng & Đồng Bộ Google Cloud thành công!');
+      triggerAlert('✓ Đã lưu cấu hình Tuyển Dụng & Đồng bộ danh sách vị trí lên Supabase Cloud!');
     } catch (err) {
       console.error('Lỗi lưu:', err);
       triggerAlert('⚠️ Lỗi: ' + err.message);
@@ -1719,14 +1720,14 @@ function doGet(e) {
       {editingJob && (
         <div 
           onClick={() => setEditingJob(null)}
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-hidden animate-in fade-in duration-200"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[32px] border border-stone-200 max-w-3xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 space-y-5 shadow-2xl relative my-auto animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-[32px] border border-stone-200 max-w-3xl w-full max-h-[90vh] max-h-[90dvh] flex flex-col shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200"
           >
             
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+            <div className="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-stone-200 shrink-0 bg-white z-10">
               <div>
                 <h3 className="text-lg font-black text-[#2b170e] flex items-center gap-2">
                   <Briefcase className="w-5 h-5 text-amber-700" />
@@ -1739,13 +1740,14 @@ function doGet(e) {
               <button 
                 type="button"
                 onClick={() => setEditingJob(null)}
-                className="p-1.5 rounded-xl text-stone-400 hover:text-stone-700 bg-stone-100 cursor-pointer"
+                className="w-8 h-8 rounded-full text-stone-400 hover:text-stone-700 bg-stone-100 flex items-center justify-center font-bold cursor-pointer transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveJobModal} className="space-y-4">
+            <form onSubmit={handleSaveJobModal} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="p-5 sm:p-7 overflow-y-auto space-y-4 flex-1 overscroll-contain">
               
               {/* Tiêu đề vị trí */}
               <div>
@@ -1933,12 +1935,14 @@ function doGet(e) {
                 </button>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-3">
+              </div>
+
+              {/* Action Buttons Pinned at bottom */}
+              <div className="p-4 sm:p-5 border-t border-stone-200 bg-stone-50/90 flex gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingJob(null)}
-                  className="flex-1 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer transition-colors"
                 >
                   Hủy Bỏ
                 </button>

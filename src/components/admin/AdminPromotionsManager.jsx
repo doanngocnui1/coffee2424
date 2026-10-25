@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG, saveSiteConfig } from '../../data/siteConfig';
 import { uploadImageToSupabase, saveCloudSiteConfig } from '../../lib/supabase';
+import RichTextEditor from './RichTextEditor';
 
 export default function AdminPromotionsManager({ config, onSaveConfig, triggerAlert }) {
   const defaultPromotions = DEFAULT_SITE_CONFIG.promotionsList || [];
@@ -1203,18 +1204,23 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
                             </div>
                           </div>
 
-                          {/* Detail & Conditions (Shown in Click-to-Modal) */}
-                          <div className="space-y-1">
+                          {/* Detail & Conditions (Shown in Click-to-Modal & Card) */}
+                          <div className="space-y-1.5 pt-1">
                             <label className="text-xs font-bold text-[#5c3d2e] flex items-center justify-between">
-                              <span>Nội Dung Chi Tiết Chương Trình (Hiện Trong Popup Khi Nhấn Vào Khung)</span>
-                              <span className="text-[11px] text-[#a0826f] font-normal">Đã lược bỏ khỏi mặt thẻ để thẻ gọn gàng</span>
+                              <span className="flex items-center gap-1.5 font-black text-[#2b170e]">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                                Nội Dung Chi Tiết Chương Trình (Soạn Thảo Văn Bản & Chèn Ảnh)
+                              </span>
+                              <span className="text-[11px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                ✓ Hiển thị lấp đầy mặt thẻ & popup chi tiết
+                              </span>
                             </label>
-                            <textarea
-                              rows={3}
+                            
+                            <RichTextEditor
                               value={promo.description || ''}
-                              onChange={(e) => handleUpdatePromotionField(realIndex, 'description', e.target.value)}
-                              placeholder="Mô tả chi tiết các loại đồ uống, thể lệ giảm giá..."
-                              className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#dfd4c7] text-xs text-[#2b170e] focus:outline-none focus:border-[#8c5932] leading-relaxed"
+                              onChange={(newVal) => handleUpdatePromotionField(realIndex, 'description', newVal)}
+                              placeholder="Nhập nội dung chi tiết chương trình, các loại đồ uống áp dụng, chèn ảnh, căn lề, tiêu đề H1/H2/H3..."
+                              minHeight="200px"
                             />
                           </div>
 

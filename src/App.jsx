@@ -58,6 +58,20 @@ export default function App() {
         } catch (_) {}
       }
 
+      if (Array.isArray(newCloudData?.jobs)) {
+        try {
+          localStorage.setItem('coffee2424_jobs', JSON.stringify(newCloudData.jobs));
+          window.dispatchEvent(new Event('jobs-updated'));
+        } catch (_) {}
+      }
+
+      if (Array.isArray(newCloudData?.articles)) {
+        try {
+          localStorage.setItem('coffee2424_articles', JSON.stringify(newCloudData.articles));
+          window.dispatchEvent(new Event('articles-updated'));
+        } catch (_) {}
+      }
+
       setSiteConfig(prev => {
         const localPromos = prev?.promotionsList || [];
         const cloudPromos = newCloudData?.promotionsList || [];

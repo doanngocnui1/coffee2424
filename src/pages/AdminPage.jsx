@@ -17,6 +17,7 @@ import {
   Layers,
   ArrowLeft,
   RefreshCw,
+  Cloud,
   Layout,
   Megaphone,
   Compass,
@@ -71,7 +72,7 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
-import { INITIAL_ARTICLES } from '../data/articles';
+import { INITIAL_ARTICLES, getArticles, saveArticles } from '../data/articles';
 import { getBranches, saveBranches } from '../data/branches';
 import { 
   getSiteConfig, 
@@ -352,14 +353,7 @@ export default function AdminPage({ navigate }) {
   };
 
   // Articles state
-  const [articles, setArticles] = useState(() => {
-    try {
-      const saved = localStorage.getItem('coffee2424_articles');
-      return saved ? JSON.parse(saved) : INITIAL_ARTICLES;
-    } catch {
-      return INITIAL_ARTICLES;
-    }
-  });
+  const [articles, setArticles] = useState(getArticles);
 
   // Editor modal state for articles
   const [editingArticle, setEditingArticle] = useState(null);
@@ -469,10 +463,9 @@ export default function AdminPage({ navigate }) {
       } : a);
     }
     setArticles(updated);
-    localStorage.setItem('coffee2424_articles', JSON.stringify(updated));
-    window.dispatchEvent(new Event('articles-updated'));
+    saveArticles(updated);
     setEditingArticle(null);
-    triggerAlert('✓ Đã lưu bài viết thành công!');
+    triggerAlert('✓ Đã lưu bài viết & tự động đồng bộ Supabase Cloud!');
   };
 
   const handleTogglePublishArticle = (id) => {
@@ -481,8 +474,7 @@ export default function AdminPage({ navigate }) {
     const newStatus = art.active === false ? true : false;
     const updated = articles.map(a => a.id === id ? { ...a, active: newStatus } : a);
     setArticles(updated);
-    localStorage.setItem('coffee2424_articles', JSON.stringify(updated));
-    window.dispatchEvent(new Event('articles-updated'));
+    saveArticles(updated);
     triggerAlert(`✓ Đã ${newStatus ? 'xuất bản công khai' : 'chuyển sang bản nháp'}: ${art.title}`);
   };
 
@@ -498,8 +490,7 @@ export default function AdminPage({ navigate }) {
     };
     const updated = [duplicated, ...articles];
     setArticles(updated);
-    localStorage.setItem('coffee2424_articles', JSON.stringify(updated));
-    window.dispatchEvent(new Event('articles-updated'));
+    saveArticles(updated);
     triggerAlert(`✓ Đã nhân bản bài viết: ${art.title}`);
   };
 
@@ -507,9 +498,8 @@ export default function AdminPage({ navigate }) {
     if (window.confirm('Bạn có chắc muốn xóa bài viết này không?')) {
       const updated = articles.filter(a => a.id !== id);
       setArticles(updated);
-      localStorage.setItem('coffee2424_articles', JSON.stringify(updated));
-      window.dispatchEvent(new Event('articles-updated'));
-      triggerAlert('Đã xóa bài viết.');
+      saveArticles(updated);
+      triggerAlert('Đã xóa bài viết và cập nhật Supabase Cloud.');
     }
   };
 
@@ -685,6 +675,19 @@ export default function AdminPage({ navigate }) {
     return () => {
       window.removeEventListener('jobs-updated', handleSyncJobs);
       window.removeEventListener('storage', handleSyncJobs);
+    };
+  }, []);
+
+  // Lắng nghe sự kiện đồng bộ dữ liệu bài viết (từ Supabase Cloud hoặc các tab khác)
+  useEffect(() => {
+    const handleSyncArticles = () => {
+      setArticles(getArticles());
+    };
+    window.addEventListener('articles-updated', handleSyncArticles);
+    window.addEventListener('storage', handleSyncArticles);
+    return () => {
+      window.removeEventListener('articles-updated', handleSyncArticles);
+      window.removeEventListener('storage', handleSyncArticles);
     };
   }, []);
 
@@ -4603,6 +4606,22 @@ export default function AdminPage({ navigate }) {
                     <ExternalLink className="w-4 h-4 text-amber-400" />
                     <span>Xem Ngoài Web</span>
                   </a>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await saveArticles(articles);
+                      if (res) {
+                        triggerAlert('✓ Đã đồng bộ toàn bộ bài viết lên Supabase Cloud!');
+                      } else {
+                        triggerAlert('Không thể đồng bộ Supabase Cloud.');
+                      }
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-600/30 transition-colors cursor-pointer"
+                    title="Đẩy toàn bộ danh sách bài viết lên Supabase Cloud ngay lập tức"
+                  >
+                    <Cloud className="w-4 h-4 text-amber-400" />
+                    <span>Đồng Bộ Cloud</span>
+                  </button>
                   <button
                     onClick={() => {
                       setEditingArticle({

@@ -1585,6 +1585,30 @@ export async function syncSiteConfigWithCloud(force = false) {
         } catch (_) {}
       }
 
+      // Tự động đồng bộ danh sách tin tuyển dụng (trạng thái ẩn/hiện, bài viết) từ Supabase Cloud
+      const jobsToSync = (Array.isArray(cloudConfig.jobs) && cloudConfig.jobs.length > 0)
+        ? cloudConfig.jobs
+        : (Array.isArray(mergedConfig.jobs) && mergedConfig.jobs.length > 0 ? mergedConfig.jobs : null);
+
+      if (jobsToSync) {
+        try {
+          localStorage.setItem('coffee2424_jobs', JSON.stringify(jobsToSync));
+          window.dispatchEvent(new Event('jobs-updated'));
+        } catch (_) {}
+      }
+
+      // Tự động đồng bộ danh sách bài viết / Blog từ Supabase Cloud
+      const articlesToSync = (Array.isArray(cloudConfig.articles) && cloudConfig.articles.length > 0)
+        ? cloudConfig.articles
+        : (Array.isArray(mergedConfig.articles) && mergedConfig.articles.length > 0 ? mergedConfig.articles : null);
+
+      if (articlesToSync) {
+        try {
+          localStorage.setItem('coffee2424_articles', JSON.stringify(articlesToSync));
+          window.dispatchEvent(new Event('articles-updated'));
+        } catch (_) {}
+      }
+
       window.dispatchEvent(new Event('site-config-updated'));
       console.info('✓ Đã đồng bộ cấu hình thành công từ Supabase Cloud!');
       return mergedConfig;
@@ -1604,6 +1628,18 @@ export async function pushLocalConfigToCloud() {
     const rawBranches = localStorage.getItem('coffee2424_branches');
     if (rawBranches) {
       currentConfig.branches = JSON.parse(rawBranches);
+    }
+  } catch (_) {}
+  try {
+    const rawJobs = localStorage.getItem('coffee2424_jobs');
+    if (rawJobs) {
+      currentConfig.jobs = JSON.parse(rawJobs);
+    }
+  } catch (_) {}
+  try {
+    const rawArticles = localStorage.getItem('coffee2424_articles');
+    if (rawArticles) {
+      currentConfig.articles = JSON.parse(rawArticles);
     }
   } catch (_) {}
   return await saveCloudSiteConfig(currentConfig);

@@ -30,6 +30,12 @@ import {
 import { PROMOTIONS, PROMOTION_CATEGORIES } from '../data/promotions';
 import { getSiteConfig, DEFAULT_SITE_CONFIG } from '../data/siteConfig';
 
+// Helper kiểm tra xem văn bản có chứa mã HTML hay không
+const isHtmlContent = (str) => {
+  if (!str || typeof str !== 'string') return false;
+  return /<[a-z][\s\S]*>/i.test(str);
+};
+
 export default function PromotionsPage({ navigate }) {
   const [siteConfig, setSiteConfig] = useState(() => getSiteConfig());
 
@@ -443,9 +449,26 @@ export default function PromotionsPage({ navigate }) {
                         </h3>
 
                         {promo.description && (
-                          <p className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed line-clamp-2">
-                            {promo.description}
-                          </p>
+                          <div className="text-xs sm:text-sm text-[#5c3d2e] leading-relaxed pt-1">
+                            {isHtmlContent(promo.description) ? (
+                              <div 
+                                className="rich-text-content line-clamp-6 sm:line-clamp-7 lg:line-clamp-8 overflow-hidden space-y-1.5"
+                                dangerouslySetInnerHTML={{ __html: promo.description }}
+                              />
+                            ) : (
+                              <p className="whitespace-pre-line line-clamp-6 sm:line-clamp-7 lg:line-clamp-8">
+                                {promo.description}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Điều kiện & thể lệ ngắn gọn hiển thị kèm để mặt thẻ đầy đặn, không để trống mảng */}
+                        {promo.condition && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-600/20 text-[#7a5843] text-xs font-semibold mt-1">
+                            <Info className="w-3.5 h-3.5 text-[#8c5932] shrink-0" />
+                            <span className="line-clamp-1">{promo.condition}</span>
+                          </div>
                         )}
                       </div>
 
@@ -960,9 +983,16 @@ export default function PromotionsPage({ navigate }) {
                     <Sparkles className="w-3.5 h-3.5 text-[#8c5932]" />
                     Chi Tiết Chương Trình
                   </h4>
-                  <div className="p-4 rounded-2xl bg-white border border-[#e8ded3] text-sm text-[#4a2e1b] leading-relaxed whitespace-pre-line font-medium shadow-2xs">
-                    {selectedDetailPromo.description || 'Ưu đãi đặc quyền dành riêng cho khách hàng trải nghiệm tại COFFEE 24/24.'}
-                  </div>
+                  {isHtmlContent(selectedDetailPromo.description) ? (
+                    <div 
+                      className="rich-text-content p-5 rounded-2xl bg-white border border-[#e8ded3] text-sm text-[#4a2e1b] leading-relaxed shadow-2xs space-y-2"
+                      dangerouslySetInnerHTML={{ __html: selectedDetailPromo.description }}
+                    />
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-white border border-[#e8ded3] text-sm text-[#4a2e1b] leading-relaxed whitespace-pre-line font-medium shadow-2xs">
+                      {selectedDetailPromo.description || 'Ưu đãi đặc quyền dành riêng cho khách hàng trải nghiệm tại COFFEE 24/24.'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Điều kiện áp dụng */}

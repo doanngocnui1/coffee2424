@@ -255,6 +255,9 @@ export const DEFAULT_JOBS = [
 
 export const JOBS = DEFAULT_JOBS;
 
+import { saveCloudSiteConfig } from '../lib/supabase.js';
+import { getSiteConfig } from './siteConfig.js';
+
 export function getJobs() {
   try {
     const saved = localStorage.getItem('coffee2424_jobs');
@@ -274,6 +277,21 @@ export function saveJobs(jobsList) {
   try {
     localStorage.setItem('coffee2424_jobs', JSON.stringify(jobsList));
     window.dispatchEvent(new Event('jobs-updated'));
+
+    // Tự động đồng bộ lên Supabase Cloud để mọi thiết bị/trình duyệt khác nhận được trạng thái ẩn/hiện ngay
+    if (typeof window !== 'undefined') {
+      try {
+        const cfg = getSiteConfig();
+        saveCloudSiteConfig({ ...cfg, jobs: jobsList }).then(res => {
+          if (res?.success) {
+            console.info('✓ Đã đồng bộ danh sách tuyển dụng lên Supabase Cloud thành công!');
+          }
+        }).catch(err => {
+          console.warn('Auto-sync jobs to Supabase Cloud failed:', err);
+        });
+      } catch (_) {}
+    }
+
     return true;
   } catch (e) {
     console.error('Error saving jobs:', e);

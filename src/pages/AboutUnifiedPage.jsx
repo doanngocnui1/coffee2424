@@ -26,7 +26,7 @@ import {
   ShieldCheck,
   Award
 } from 'lucide-react';
-import { INITIAL_ARTICLES } from '../data/articles';
+import { INITIAL_ARTICLES, getArticles } from '../data/articles';
 import { getBranches } from '../data/branches';
 import { getJobs } from '../data/jobs';
 
@@ -34,18 +34,22 @@ export default function AboutUnifiedPage({ navigate, initialSection = 'story' })
   const [activeTab, setActiveTab] = useState(initialSection);
   const branches = getBranches();
   const [jobs, setJobs] = useState(getJobs);
-
-  // Articles state & Reading modal
-  const [articles] = useState(() => {
-    try {
-      const saved = localStorage.getItem('coffee2424_articles');
-      return saved ? JSON.parse(saved) : INITIAL_ARTICLES;
-    } catch {
-      return INITIAL_ARTICLES;
-    }
-  });
+  const [articles, setArticles] = useState(getArticles);
   const [readingArticle, setReadingArticle] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  useEffect(() => {
+    const handleArticlesUpdate = () => setArticles(getArticles());
+    const handleJobsUpdate = () => setJobs(getJobs());
+    window.addEventListener('articles-updated', handleArticlesUpdate);
+    window.addEventListener('jobs-updated', handleJobsUpdate);
+    window.addEventListener('storage', handleArticlesUpdate);
+    return () => {
+      window.removeEventListener('articles-updated', handleArticlesUpdate);
+      window.removeEventListener('jobs-updated', handleJobsUpdate);
+      window.removeEventListener('storage', handleArticlesUpdate);
+    };
+  }, []);
 
   // Khóa cuộn body và lắng nghe phím ESC để đóng modal đọc bài viết
   useEffect(() => {
@@ -54,9 +58,11 @@ export default function AboutUnifiedPage({ navigate, initialSection = 'story' })
       if (e.key === 'Escape') setReadingArticle(null);
     };
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [readingArticle]);

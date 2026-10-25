@@ -20,25 +20,10 @@ import {
   ChevronRight,
   Filter
 } from 'lucide-react';
-import { INITIAL_ARTICLES } from '../data/articles';
+import { INITIAL_ARTICLES, getArticles } from '../data/articles';
 
 export default function BlogPage({ navigate }) {
-  const [articles, setArticles] = useState(() => {
-    try {
-      const saved = localStorage.getItem('coffee2424_articles');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.length <= 3 && !parsed.some(a => a.slug && (a.slug.includes('sinh-vien') || a.slug.includes('xuyen-dem')))) {
-          localStorage.setItem('coffee2424_articles', JSON.stringify(INITIAL_ARTICLES));
-          return INITIAL_ARTICLES;
-        }
-        return parsed;
-      }
-      return INITIAL_ARTICLES;
-    } catch {
-      return INITIAL_ARTICLES;
-    }
-  });
+  const [articles, setArticles] = useState(getArticles);
 
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,17 +37,10 @@ export default function BlogPage({ navigate }) {
     setMounted(true);
   }, []);
 
-  // Lắng nghe sự kiện cập nhật bài viết từ Admin CMS
+  // Lắng nghe sự kiện cập nhật bài viết từ Admin CMS & Supabase Cloud
   useEffect(() => {
     const handleArticlesUpdate = () => {
-      try {
-        const saved = localStorage.getItem('coffee2424_articles');
-        if (saved) {
-          setArticles(JSON.parse(saved));
-        }
-      } catch (err) {
-        console.error('Lỗi nạp bài viết:', err);
-      }
+      setArticles(getArticles());
     };
     window.addEventListener('articles-updated', handleArticlesUpdate);
     window.addEventListener('storage', handleArticlesUpdate);
@@ -80,9 +58,11 @@ export default function BlogPage({ navigate }) {
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('modal-open');
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [readingArticle]);

@@ -225,3 +225,78 @@ Nhiều người từng nghĩ quán cà phê mở 24/7 chỉ đơn thuần là "
     `
   }
 ];
+
+export const ARTICLES = INITIAL_ARTICLES;
+
+import { saveCloudSiteConfig } from '../lib/supabase.js';
+import { getSiteConfig } from './siteConfig.js';
+
+export function getArticles() {
+  try {
+    const saved = localStorage.getItem('coffee2424_articles');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Error reading articles:', e);
+  }
+  return INITIAL_ARTICLES;
+}
+
+export function saveArticles(articlesList) {
+  try {
+    localStorage.setItem('coffee2424_articles', JSON.stringify(articlesList));
+    window.dispatchEvent(new Event('articles-updated'));
+
+    // Tự động đồng bộ lên Supabase Cloud để mọi thiết bị/trình duyệt khác đều nhận được bài viết ngay lập tức
+    if (typeof window !== 'undefined') {
+      try {
+        const cfg = getSiteConfig();
+        saveCloudSiteConfig({ ...cfg, articles: articlesList }).then(res => {
+          if (res?.success) {
+            console.info('✓ Đã đồng bộ danh sách bài viết lên Supabase Cloud thành công!');
+          }
+        }).catch(err => {
+          console.warn('Auto-sync articles to Supabase Cloud failed:', err);
+        });
+      } catch (_) {}
+    }
+
+    return true;
+  } catch (e) {
+    console.error('Error saving articles:', e);
+    return false;
+  }
+}
+
+export function createArticle(articleData) {
+  const current = getArticles();
+  const nowStr = new Date().toLocaleDateString('vi-VN');
+  const autoSlug = (articleData.title || 'bai-viet-moi')
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, "-");
+
+  const newPost = {
+    ...articleData,
+    id: Date.now(),
+    slug: (articleData.slug && articleData.slug.trim()) ? articleData.slug.trim() : autoSlug,
+    date: articleData.date || nowStr,
+    views: articleData.views || 0,
+    active: articleData.active !== false,
+    featured: Boolean(articleData.featured),
+    author: articleData.author || 'Admin Coffee 24/24',
+    readTime: articleData.readTime || '5 phút đọc',
+    coverImage: articleData.coverImage || '/images/blog_workspace.jpg'
+  };
+
+  const updated = [newPost, ...current];
+  saveArticles(updated);
+  return newPost;
+}
