@@ -272,7 +272,7 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
       showVoucherCode: true,
       showCopyBtn: true,
       showCtaBtn: true,
-      image: DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
+      image: DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promos/promo_summer.webp',
       description: 'Nạp năng lượng và thưởng thức trọn vẹn menu cà phê rang mộc nguyên chất, thức uống pha tươi và món nóng cứu đói 24/7.',
       condition: 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.',
       cta: 'Nhận Ưu Đãi',

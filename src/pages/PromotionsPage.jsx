@@ -64,7 +64,7 @@ export default function PromotionsPage({ navigate }) {
 
   const selectedPromoId = heroConfig?.featuredPromoId;
   const activePromo = (selectedPromoId ? livePromotions.find(p => p.id === selectedPromoId) : null) || livePromotions[0] || null;
-  const heroImage = heroConfig?.customImage || activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png';
+  const heroImage = heroConfig?.customImage || activePromo?.image || DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promos/promo_summer.webp';
   // Bật/tắt toàn bộ thẻ thông tin nổi trên Hero Poster
   const showHeroCard = (heroConfig?.showFloatingCard !== false) && (heroConfig?.showTicketCard !== false) && (heroConfig?.showCard !== false);
 
@@ -235,7 +235,7 @@ export default function PromotionsPage({ navigate }) {
                         src={heroImage} 
                         alt={heroTitle} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promos/promo_summer.webp'; }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#2b170e]/95 via-[#2b170e]/30 to-transparent" />
                       
@@ -393,7 +393,7 @@ export default function PromotionsPage({ navigate }) {
                         src={promo.image} 
                         alt={promo.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promos/promo_summer.webp'; }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
                       
@@ -589,7 +589,7 @@ export default function PromotionsPage({ navigate }) {
                           src={promo.image} 
                           alt={promo.title} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          onError={(e) => { e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png'; }}
+                          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_SITE_CONFIG.promotionsList?.[0]?.image || '/images/promos/promo_summer.webp'; }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
                         
