@@ -13,6 +13,7 @@ import SideBanners from './components/SideBanners';
 import BranchOrderModal from './components/BranchOrderModal';
 import { getSiteConfig, syncSiteConfigWithCloud, updateDocumentFavicon, DEFAULT_SITE_CONFIG } from './data/siteConfig';
 import { subscribeToCloudSiteConfig } from './lib/supabase';
+import { initGlobalTracker, trackPageView } from './lib/tracker';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
@@ -45,6 +46,9 @@ export default function App() {
     window.addEventListener('site-config-updated', handleConfigUpdate);
     window.addEventListener('storage', handleConfigUpdate);
     window.addEventListener('open-branch-order-modal', handleOpenBranchModal);
+
+    // Khởi động hệ thống đo lường hành vi khách hàng toàn cục (Analytics Tracker)
+    const cleanupTracker = initGlobalTracker();
 
     // Tự động kéo cấu hình mới nhất từ Supabase Cloud khi mở trang
     syncSiteConfigWithCloud();
@@ -134,9 +138,18 @@ export default function App() {
       window.removeEventListener('site-config-updated', handleConfigUpdate);
       window.removeEventListener('storage', handleConfigUpdate);
       window.removeEventListener('open-branch-order-modal', handleOpenBranchModal);
+      if (typeof cleanupTracker === 'function') cleanupTracker();
       if (typeof unsubscribeCloud === 'function') unsubscribeCloud();
     };
   }, []);
+
+  // Ghi nhận lượt xem trang (Pageview) và thời gian dừng lại (Dwell time) khi chuyển route
+  useEffect(() => {
+    const endTrack = trackPageView(currentPath);
+    return () => {
+      if (typeof endTrack === 'function') endTrack();
+    };
+  }, [currentPath]);
 
   const [isTransitioning, setIsTransitioning] = useState(false);
 

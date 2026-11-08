@@ -69,7 +69,8 @@ import {
   ListOrdered,
   Minus,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  BarChart3
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
 import { INITIAL_ARTICLES, getArticles, saveArticles } from '../data/articles';
@@ -110,6 +111,7 @@ import AdminHomeSectionsManager from '../components/admin/AdminHomeSectionsManag
 import AdminSystemSettingsManager from '../components/admin/AdminSystemSettingsManager';
 import AdminOrderOnlineManager from '../components/admin/AdminOrderOnlineManager';
 import AdminCareersManager from '../components/admin/AdminCareersManager';
+import AdminAnalyticsManager from '../components/admin/AdminAnalyticsManager';
 
 export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState('sideBanners');
@@ -159,7 +161,7 @@ export default function AdminPage({ navigate }) {
       setOpenGroups(prev => ({ ...prev, branches: true }));
     } else if (activeTab === 'navigation') {
       setOpenGroups(prev => ({ ...prev, navigation: true }));
-    } else if (activeTab === 'users' || activeTab === 'systemSettings') {
+    } else if (activeTab === 'users' || activeTab === 'systemSettings' || activeTab === 'analytics') {
       setOpenGroups(prev => ({ ...prev, users: true }));
     }
   }, [activeTab]);
@@ -242,7 +244,7 @@ export default function AdminPage({ navigate }) {
   // Ensure activeTab is permitted for currentUser
   useEffect(() => {
     if (currentUser && !hasPermission(currentUser, activeTab)) {
-      const allTabs = ['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'careersGoogleSync', 'candidates', 'careersLayout', 'branches', 'users'];
+      const allTabs = ['homeSections', 'orderOnline', 'offerings', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'whatsNew', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'navigation', 'about', 'articles', 'jobs', 'careersGoogleSync', 'candidates', 'careersLayout', 'branches', 'analytics', 'users'];
       const firstAllowed = allTabs.find(tab => hasPermission(currentUser, tab));
       if (firstAllowed) setActiveTab(firstAllowed);
     }
@@ -2550,6 +2552,31 @@ export default function AdminPage({ navigate }) {
                 {/* Sub-items (Sổ xuống) */}
                 {openGroups.users && (
                   <div className="px-2 pb-2.5 pt-1 space-y-1.5 border-t border-amber-900/10 bg-white/40">
+                    {/* Phân Tích & Đo Lường Khách Hàng (Analytics) */}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('analytics'); setMobileSidebarOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between group ${
+                        activeTab === 'analytics'
+                          ? 'active-sidebar-tab bg-gradient-to-r from-[#2b170e] to-[#1a0e08] text-white shadow-md font-bold'
+                          : 'text-[#422c1e] hover:text-[#180d08] hover:bg-white/80 border border-transparent hover:border-white/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <BarChart3 className={`w-4 h-4 shrink-0 ${activeTab === 'analytics' ? 'text-amber-300' : 'text-[#8c5932]'}`} />
+                        <div className="truncate">
+                          <div className="flex items-center gap-1.5">
+                            <span className="sidebar-item-title text-xs sm:text-[13.5px] font-bold block truncate leading-tight">Phân Tích & Đo Lường Khách</span>
+                            <span className="text-[10px] bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider shrink-0 shadow-2xs">Realtime</span>
+                          </div>
+                          <span className={`sidebar-item-subtitle text-[11px] font-medium block truncate mt-0.5 ${activeTab === 'analytics' ? 'text-stone-300' : 'text-[#7a5843]'}`}>
+                            Lượt xem, hành vi & gợi ý SEO
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${activeTab === 'analytics' ? 'translate-x-0.5 text-amber-300' : 'text-stone-400 group-hover:translate-x-0.5'}`} />
+                    </button>
+
                     {/* Cài Đặt Hệ Thống & Logo */}
                     <button
                       type="button"
@@ -2706,6 +2733,7 @@ export default function AdminPage({ navigate }) {
                 {activeTab === 'candidates' && <><span>👥</span> Danh Sách Hồ Sơ Ứng Viên</>}
                 {activeTab === 'careersLayout' && <><span>🎨</span> Bố Cục Giao Diện Tuyển Dụng</>}
                 {activeTab === 'branches' && <><span>📍</span> Hotline & 2 Chi Nhánh</>}
+                {activeTab === 'analytics' && <><span>📊</span> Phân Tích Dữ Liệu & Đo Lường Khách Hàng</>}
                 {activeTab === 'users' && <><span>🛡️</span> Tài Khoản & Phân Quyền</>}
               </span>
             </div>
@@ -5703,6 +5731,13 @@ export default function AdminPage({ navigate }) {
               setConfig(updatedConfig);
               saveSiteConfig(updatedConfig);
             }}
+            triggerAlert={triggerAlert}
+          />
+        )}
+
+        {/* TAB: PHÂN TÍCH DỮ LIỆU & ĐO LƯỜNG LƯỢT KHÁCH HÀNG THỰC TẾ (REALTIME) */}
+        {activeTab === 'analytics' && (
+          <AdminAnalyticsManager
             triggerAlert={triggerAlert}
           />
         )}

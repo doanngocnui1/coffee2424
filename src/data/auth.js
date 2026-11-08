@@ -28,6 +28,7 @@ export const ALL_PERMISSIONS = [
   { id: 'articles', label: 'Bài Viết & Tối Ưu SEO', group: 'Nội Dung', desc: 'Viết, sửa, xóa bài viết cẩm nang & Google SEO' },
   { id: 'jobs', label: 'Tuyển Dụng Nhân Sự', group: 'Nội Dung', desc: 'Bật/tắt và quản lý 12 vị trí tuyển dụng' },
   { id: 'branches', label: 'Hotline & 2 Chi Nhánh', group: 'Nội Dung', desc: 'Cập nhật hotline, thông tin 413PHI & 96D5' },
+  { id: 'analytics', label: 'Phân Tích & Đo Lường Khách', group: 'Hệ Thống', desc: 'Đo lường thời gian thực, hành vi khách hàng & gợi ý SEO' },
   { id: 'users', label: 'Quản Lý Tài Khoản & Phân Quyền', group: 'Hệ Thống', desc: 'Tạo tài khoản mới, phân quyền truy cập' }
 ];
 
@@ -40,7 +41,7 @@ export const ROLE_PRESETS = {
   marketing: {
     role: 'marketing',
     roleName: 'Biên Tập & Marketing',
-    permissions: ['homeSections', 'orderOnline', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles']
+    permissions: ['homeSections', 'orderOnline', 'heroSlide', 'glassBg', 'newDishes', 'promotions', 'offerings', 'spaceAmenities', 'sideBanners', 'bannerSections', 'theme', 'systemSettings', 'reviews', 'socialZalo', 'about', 'articles', 'analytics']
   },
   hr: {
     role: 'hr',

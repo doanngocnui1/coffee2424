@@ -205,3 +205,19 @@ create policy "Authenticated media delete" on storage.objects
   for delete
   to authenticated
   using (bucket_id = 'coffee2424-media');
+
+-- =========================================================================
+-- PHẦN 5: CHÍNH SÁCH ĐO LƯỜNG TRUY CẬP REALTIME (ANALYTICS 100% TỪ SỐ 0)
+-- =========================================================================
+-- Cho phép ghi nhận hành vi lướt web tự động của khách vào riêng bản ghi 'analytics'
+drop policy if exists "Allow guest analytics insert" on public.site_config;
+create policy "Allow guest analytics insert" on public.site_config
+  for insert
+  with check (id = 'analytics');
+
+drop policy if exists "Allow guest analytics update" on public.site_config;
+create policy "Allow guest analytics update" on public.site_config
+  for update
+  using (id = 'analytics')
+  with check (id = 'analytics');
+
