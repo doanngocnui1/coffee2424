@@ -209,15 +209,15 @@ export default function HomePage({ navigate, onSelectBranch }) {
   const dishesCarousel = useInfiniteAutoSlide({
     items: newDishesItems,
     visibleCount,
-    interval: 2000,
-    holdDelay: 5000
+    interval: 3500,
+    holdDelay: 6000
   });
 
   const promosCarousel = useInfiniteAutoSlide({
     items: promotionsItems,
     visibleCount,
-    interval: 2000,
-    holdDelay: 5000
+    interval: 4000,
+    holdDelay: 6000
   });
 
   const fallbackOffering = {

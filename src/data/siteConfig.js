@@ -296,135 +296,89 @@ export const DEFAULT_SITE_CONFIG = {
   },
   promotionsList: [
     {
+      id: 'promo-1792768722198',
+      tag: 'Hội Viên',
+      badge: 'HỘI VIÊN ⭐',
+      title: 'Tích điểm hội viên',
+      subtitle: 'Khung giờ vàng & ưu đãi • 24/24',
+      discount: 'GIẢM TỚI 15%',
+      discountValue: 'Giảm tới 15%',
+      code: '',
+      validUntil: '',
+      category: 'all',
+      showVoucherCode: false,
+      showCopyBtn: false,
+      showCtaBtn: false,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792768754241_q8nvw83.png',
+      description: 'UỐNG CÀ PHÊ MỖI NGÀY – TÍCH ĐIỂM NGAY, NHẬN ƯU ĐÃI ĐẾN 15%!\nDành riêng cho những tín đồ cà phê và khách hàng thân thiết của Coffee 2424, chương trình Tích Điểm Hội Viên đã chính thức khởi động trở lại! Mỗi ly nước bạn thưởng thức đều mang về những điểm số tích lũy để đổi lấy đặc quyền giảm giá cực sốc trên toàn hệ thống.\n\n🎁 BẢNG ĐẶC QUYỀN HỘI VIÊN COFFEE 24/24\nChỉ cần tích lũy đủ điểm, bạn sẽ nhận được mức giảm giá trực tiếp trên tổng hóa đơn cho những lần ghé thăm tiếp theo:\n\nMốc 300 Điểm: Giảm ngay 5% trên tổng hóa đơn.\n\nMốc 600 Điểm: Giảm ngay 10% trên tổng hóa đơn.\n\nMốc 900 Điểm: Giảm tối đa 15% trên tổng hóa đơn.\n\n📲 CÁCH THỨC TÍCH ĐIỂM CỰC KỲ ĐƠN GIẢN\nKhông cần cài đặt ứng dụng phức tạp, không lo quên mang thẻ cứng! Bạn chỉ cần đọc SĐT trước khi thanh toán.\n\n👉 Ghé ngay chi nhánh Coffee 2424 gần nhất để bắt đầu tích điểm hội viên ngay hôm nay!',
+      condition: 'Áp dụng tất cả chi nhánh',
+      cta: 'Xem Chi Tiết',
+      link: '/khuyenmai'
+    },
+    {
       id: 'promo-1',
-      tag: 'GIỜ VÀNG',
+      tag: 'Giờ vàng đồng giá',
       badge: 'HOT DEAL 🔥',
-      title: 'GIẢM 40% TẤT CẢ ĐỒ UỐNG',
+      title: 'Cà phê sữa - Cà phê đá',
       subtitle: 'Khung giờ vàng từ 16:00 - 19:00 hàng ngày',
-      discount: 'GIẢM 40%',
+      discount: 'CHỈ 25.000đ',
       discountValue: 'Đồng giá 25K',
-      code: 'HAPPY40',
+      code: '',
       validUntil: '16:00 - 19:00 Mỗi Ngày',
       category: 'drinks',
       usedPercent: 86,
       remainingCount: 28,
-      showVoucherCode: true,
-      showCopyBtn: true,
-      showCtaBtn: true,
-      image: '/images/promos/promo_summer.webp',
-      description: 'Nạp năng lượng chiều muộn cùng ưu đãi giảm giá 40% cho toàn bộ Cà Phê Mộc, Cold Brew Cam Vàng, Trà Đào Cam Sả và Trà Sữa Ô Long.',
+      showVoucherCode: false,
+      showCopyBtn: false,
+      showCtaBtn: false,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
+      description: 'Nạp năng lượng giờ vàng cùng ưu đãi đồng giá 25K cho Cà Phê Mộc, Cà phê sữa đá pha phin thơm nồng đặc trưng 24/24.',
       condition: 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.',
-      cta: 'Nhận Ưu Đãi',
-      link: '/khuyenmai'
+      cta: 'Đặt Món Ngay',
+      link: '/dathang'
     },
     {
       id: 'promo-2',
-      tag: 'CÚ ĐÊM',
+      tag: 'Combo cú đêm',
       badge: 'CÚ ĐÊM TIẾT KIỆM 🌙',
-      title: 'COMBO CÀ PHÊ & CROISSANT 69K',
+      title: 'Combo cà phê + Mỳ ly',
       subtitle: 'Tiếp sức chạy deadline & học nhóm xuyên đêm',
-      discount: 'CHỈ 69K',
+      discount: 'Giá hời',
       discountValue: 'Tiết kiệm 35K',
       code: 'COMBO69K',
       validUntil: '22:00 - 06:00 Sáng Hôm Sau',
       category: 'night',
       usedPercent: 92,
       remainingCount: 15,
-      showVoucherCode: true,
-      showCopyBtn: true,
-      showCtaBtn: true,
-      image: '/images/promos/promo_member.webp',
-      description: '1 Ly Cà Phê Sữa Đá / Đen Phin truyền thống + 1 Bánh Croissant nướng bơ Pháp ngàn lớp nóng giòn rụm với mức giá trợ giá chỉ 69K (giá gốc 104K).',
+      showVoucherCode: false,
+      showCopyBtn: false,
+      showCtaBtn: false,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406324015_rce3jj8.png',
+      description: 'Tiếp sức chạy deadline & học nhóm xuyên đêm với combo cà phê đậm đà + mỳ ly ấm bụng phục vụ 24/7.',
       condition: 'Dành riêng cho khách ngồi học bài, làm việc xuyên đêm hoặc giao hàng đêm.',
-      cta: 'Đặt Combo Cú Đêm',
+      cta: 'Xem Chi Tiết',
       link: '/khuyenmai'
     },
     {
       id: 'promo-3',
-      tag: 'BẾP ĐÊM',
+      tag: 'Combo sáng',
       badge: 'BEST COMBO ĐÊM 🍳',
-      title: 'COMBO CỨU ĐÓI ĐÊM: MÌ XÀO BÒ + CÀ PHÊ 79K',
+      title: 'Combo cà phê + ăn sáng',
       subtitle: 'Nóng hổi, no bụng, bừng tỉnh năng lượng 2h sáng',
-      discount: 'CHỈ 79K',
+      discount: 'Giá hời',
       discountValue: 'Tiết kiệm 40K',
       code: 'CUUDOI79',
       validUntil: 'Cả ngày & đêm 24/24',
       category: 'combo',
       usedPercent: 78,
       remainingCount: 35,
-      showVoucherCode: true,
-      showCopyBtn: true,
-      showCtaBtn: true,
-      image: '/images/promos/promo_night_combo.webp',
-      description: 'Dĩa Mì xào thịt bò mềm ngọt, rau cải giòn mướt kèm trứng ốp la lòng đào vàng ươm bốc khói + 1 Ly Cà phê sữa phin đậm đà. Đủ năng lượng cày đồ án đến sáng.',
+      showVoucherCode: false,
+      showCopyBtn: false,
+      showCtaBtn: false,
+      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406330432_gtr3gbp.png',
+      description: 'Bữa ăn sáng nóng hổi kèm ly cà phê sữa phin thơm ngậy, sẵn sàng năng lượng cho ngày mới.',
       condition: 'Phục vụ nóng hổi tại chỗ 24/24 tại 413 Phan Huy Ích và 96 D5.',
-      cta: 'Đặt Combo Đêm',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-4',
-      tag: 'BẠN MỚI',
-      badge: 'QUÀ TẶNG BẠN MỚI 🎁',
-      title: 'VOUCHER 40K CHO THÀNH VIÊN MỚI',
-      subtitle: 'Áp dụng cho đơn hàng trực tuyến đầu tiên',
-      discount: 'TẶNG 40K',
-      discountValue: 'Giảm 40.000đ',
-      code: 'WELCOME24',
-      validUntil: 'Áp dụng đơn từ 80.000đ',
-      category: 'all',
-      usedPercent: 65,
-      remainingCount: 120,
-      showVoucherCode: true,
-      showCopyBtn: true,
-      showCtaBtn: true,
-      image: '/images/promo_banner.jpg',
-      description: 'Chào mừng bạn đến với cộng đồng làm việc & thưởng thức cà phê COFFEE 24/24. Nhập mã nhận ngay ưu đãi 40.000đ giảm trực tiếp vào hóa đơn.',
-      condition: 'Áp dụng 01 lần cho mỗi số điện thoại khách hàng mới đặt qua web.',
-      cta: 'Nhận Voucher 40K',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-5',
-      tag: 'TEAM UP',
-      badge: 'HỌP NHÓM TIẾT KIỆM 🎮',
-      title: 'HỌP NHÓM & GAME THỦ: MUA 3 TẶNG 1',
-      subtitle: 'Thứ Tư & Cuối Tuần - Càng đông càng vui',
-      discount: 'TẶNG 1 LY',
-      discountValue: 'Miễn phí 100%',
-      code: 'TEAMWORK3',
-      validUntil: 'Thứ Tư, Thứ Bảy & Chủ Nhật',
-      category: 'student',
-      usedPercent: 88,
-      remainingCount: 22,
-      showVoucherCode: true,
-      showCopyBtn: true,
-      showCtaBtn: true,
-      image: '/images/dishes/dish_matcha.webp',
-      description: 'Đi học nhóm, bàn đồ án hoặc quẩy game cùng đồng đội: Khi order từ 3 ly đồ uống bất kỳ, COFFEE 24/24 tặng ngay 1 ly cùng loại. Bao wifi 500Mbps và ổ điện cắm sạc tẹt ga.',
-      condition: 'Áp dụng cho đồ uống cùng nhóm hoặc có giá trị tương đương.',
-      cta: 'Rủ Bạn Đến Quán',
-      link: '/khuyenmai'
-    },
-    {
-      id: 'promo-6',
-      tag: 'GIAO ĐÊM',
-      badge: 'SHIP TẬN CỬA 🚀',
-      title: 'FREESHIP ĐÊM KHUYA BÁN KÍNH 3KM',
-      subtitle: 'Giao hàng hỏa tốc trong 25 phút từ 20:00 - 04:00',
-      discount: 'FREESHIP 0Đ',
-      discountValue: 'Tiết kiệm 25K',
-      code: 'SHIP0D',
-      validUntil: '20:00 - 04:00 Sáng',
-      category: 'night',
-      usedPercent: 74,
-      remainingCount: 45,
-      showVoucherCode: true,
-      showCopyBtn: true,
-      showCtaBtn: true,
-      image: '/images/dishes/dish_croissant.webp',
-      description: 'Ngại ra đường đêm lạnh? Đặt ngay trên website, shipper quán giao tận bàn làm việc / phòng trọ / căn hộ quanh Phú Nhuận & D5 Bình Thạnh nóng giòn nguyên vị.',
-      condition: 'Áp dụng cho đơn hàng từ 100.000đ trong bán kính 3km từ 2 chi nhánh.',
-      cta: 'Đặt Giao Đêm',
+      cta: 'Xem Chi Tiết',
       link: '/khuyenmai'
     }
   ],
@@ -1104,13 +1058,22 @@ export function getSiteConfig() {
       : (DEFAULT_SITE_CONFIG.newDishesList || []);
 
     const resolvedPromotions = (Array.isArray(parsed.promotionsList) && parsed.promotionsList.length > 0)
-      ? parsed.promotionsList.map(item => {
-          const matchDefault = DEFAULT_SITE_CONFIG.promotionsList.find(d => d.id === item.id) || {};
-          return {
-            ...matchDefault,
-            ...item
-          };
-        })
+      ? parsed.promotionsList
+          .filter(item => !['promo-4', 'promo-5', 'promo-6'].includes(item.id))
+          .map(item => {
+            const matchDefault = DEFAULT_SITE_CONFIG.promotionsList.find(d => d.id === item.id) || {};
+            const mergedItem = {
+              ...matchDefault,
+              ...item
+            };
+            // Tự động làm sạch dữ liệu mẫu cũ "GIẢM 40%" nếu còn tồn đọng trong LocalStorage của trình duyệt
+            if (mergedItem.id === 'promo-1' && (mergedItem.title === 'GIẢM 40% TẤT CẢ ĐỒ UỐNG' || mergedItem.discount === 'GIẢM 40%')) {
+              mergedItem.title = matchDefault.title || 'Cà phê sữa - Cà phê đá';
+              mergedItem.discount = matchDefault.discount || 'CHỈ 25.000đ';
+              mergedItem.tag = matchDefault.tag || 'Giờ vàng đồng giá';
+            }
+            return mergedItem;
+          })
       : (DEFAULT_SITE_CONFIG.promotionsList || []);
 
     // Restore custom space amenities photos and titles from dedicated keys if stored
@@ -1445,37 +1408,28 @@ export async function syncSiteConfigWithCloud(force = false) {
           ...(cloudConfig.promotionsSection || {})
         },
         promotionsList: (() => {
+          const cloudList = Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0
+            ? cloudConfig.promotionsList
+            : null;
           const currentList = Array.isArray(currentConfig.promotionsList) && currentConfig.promotionsList.length > 0
             ? currentConfig.promotionsList
             : [];
-          const cloudList = Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0
-            ? cloudConfig.promotionsList
-            : [];
 
-          if (currentList.length === 0) return cloudList.length > 0 ? cloudList : DEFAULT_SITE_CONFIG.promotionsList;
-          if (cloudList.length === 0) return currentList;
+          if (!cloudList) {
+            return currentList.length > 0 ? currentList : DEFAULT_SITE_CONFIG.promotionsList;
+          }
 
-          // Hợp nhất dữ liệu: Ưu tiên giữ nguyên mọi cấu hình tùy chỉnh và các nút bật/tắt (showVoucherCode, showCopyBtn, showCtaBtn) ở Local
-          const merged = currentList.map(localItem => {
-            const cloudMatch = cloudList.find(c => c.id === localItem.id);
-            if (!cloudMatch) return localItem;
+          // Lấy đúng danh sách theo Cloud làm chuẩn (khi Admin xóa hoặc thêm thì phản ánh chính xác)
+          return cloudList.map(cloudItem => {
+            const localMatch = currentList.find(c => c.id === cloudItem.id) || {};
             return {
-              ...cloudMatch,
-              ...localItem,
-              showVoucherCode: localItem.showVoucherCode !== undefined ? localItem.showVoucherCode : cloudMatch.showVoucherCode,
-              showCopyBtn: localItem.showCopyBtn !== undefined ? localItem.showCopyBtn : cloudMatch.showCopyBtn,
-              showCtaBtn: localItem.showCtaBtn !== undefined ? localItem.showCtaBtn : cloudMatch.showCtaBtn
+              ...localMatch,
+              ...cloudItem,
+              showVoucherCode: cloudItem.showVoucherCode !== undefined ? cloudItem.showVoucherCode : (localMatch.showVoucherCode !== undefined ? localMatch.showVoucherCode : true),
+              showCopyBtn: cloudItem.showCopyBtn !== undefined ? cloudItem.showCopyBtn : (localMatch.showCopyBtn !== undefined ? localMatch.showCopyBtn : true),
+              showCtaBtn: cloudItem.showCtaBtn !== undefined ? cloudItem.showCtaBtn : (localMatch.showCtaBtn !== undefined ? localMatch.showCtaBtn : true)
             };
           });
-
-          // Bổ sung các ưu đãi mới từ cloud nếu chưa có trong danh sách local
-          cloudList.forEach(cloudItem => {
-            if (!merged.some(m => m.id === cloudItem.id)) {
-              merged.push(cloudItem);
-            }
-          });
-
-          return merged;
         })(),
         careersPage: {
           ...DEFAULT_SITE_CONFIG.careersPage,

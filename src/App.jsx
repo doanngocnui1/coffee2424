@@ -73,18 +73,31 @@ export default function App() {
       }
 
       setSiteConfig(prev => {
-        const localPromos = prev?.promotionsList || [];
-        const cloudPromos = newCloudData?.promotionsList || [];
-        const safePromos = localPromos.map(localP => {
-          const cloudP = cloudPromos.find(c => c.id === localP.id);
-          return cloudP ? { 
-            ...cloudP, 
-            ...localP,
-            showVoucherCode: localP.showVoucherCode !== undefined ? localP.showVoucherCode : cloudP.showVoucherCode,
-            showCopyBtn: localP.showCopyBtn !== undefined ? localP.showCopyBtn : cloudP.showCopyBtn,
-            showCtaBtn: localP.showCtaBtn !== undefined ? localP.showCtaBtn : cloudP.showCtaBtn
-          } : localP;
-        });
+        const cloudPromos = Array.isArray(newCloudData?.promotionsList) && newCloudData.promotionsList.length > 0
+          ? newCloudData.promotionsList
+          : null;
+
+        let safePromos = prev?.promotionsList || [];
+        if (cloudPromos) {
+          // Lấy chính xác danh sách từ Cloud làm chuẩn (khi Admin xóa hoặc thêm thì đồng bộ chuẩn)
+          safePromos = cloudPromos.map(cloudP => {
+            const localP = (prev?.promotionsList || []).find(l => l.id === cloudP.id) || {};
+            return {
+              ...localP,
+              ...cloudP,
+              showVoucherCode: cloudP.showVoucherCode !== undefined ? cloudP.showVoucherCode : (localP.showVoucherCode !== undefined ? localP.showVoucherCode : true),
+              showCopyBtn: cloudP.showCopyBtn !== undefined ? cloudP.showCopyBtn : (localP.showCopyBtn !== undefined ? localP.showCopyBtn : true),
+              showCtaBtn: cloudP.showCtaBtn !== undefined ? cloudP.showCtaBtn : (localP.showCtaBtn !== undefined ? localP.showCtaBtn : true)
+            };
+          });
+
+          // Cập nhật ngay vào localStorage để khi reload trang giữ nguyên danh sách mới
+          try {
+            const stored = JSON.parse(localStorage.getItem('coffee2424_site_config') || '{}');
+            stored.promotionsList = safePromos;
+            localStorage.setItem('coffee2424_site_config', JSON.stringify(stored));
+          } catch (_) {}
+        }
 
         const localSpace = prev?.spaceAmenities;
         const cloudSpace = newCloudData?.spaceAmenities;
