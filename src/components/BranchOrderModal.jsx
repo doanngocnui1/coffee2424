@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { getBranches } from '../data/branches';
 import { getSiteConfig } from '../data/siteConfig';
+import { trackClick } from '../lib/tracker';
 
 export default function BranchOrderModal({ isOpen, onClose, navigate }) {
   const [branches, setBranches] = useState(getBranches);
@@ -54,6 +55,10 @@ export default function BranchOrderModal({ isOpen, onClose, navigate }) {
   const openMode = orderOnline.openMode || 'new_tab';
 
   const handleSelectBranch = (branch) => {
+    try {
+      trackClick(`Đặt món KiotViet: ${branch.name || branch.code || 'Chi Nhánh'}`, 'order');
+    } catch (_) {}
+
     // Menu URL theo từng chi nhánh:
     // D5: https://coffee2424.web-store.online/menu/363827
     // Phan Huy Ích: https://coffee2424.web-store.online/menu/363688

@@ -224,15 +224,49 @@ export async function fetchCloudSiteConfig() {
 
 /**
  * Lưu cấu hình toàn trang lên Supabase Cloud
+ * Tự động bảo toàn các danh sách độc lập (articles, jobs, branches) không bao giờ bị ghi đè mất
  */
 export async function saveCloudSiteConfig(config) {
   if (!isSupabaseConfigured) return { success: false, error: 'Chưa cấu hình Supabase' };
   try {
+    // 1. Bảo vệ các trường quan trọng: articles, jobs, branches nếu config đầu vào bị thiếu
+    let existingArticles = null;
+    let existingJobs = null;
+    let existingBranches = null;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const rawArt = localStorage.getItem('coffee2424_articles');
+        if (rawArt) existingArticles = JSON.parse(rawArt);
+      } catch (_) {}
+      try {
+        const rawJobs = localStorage.getItem('coffee2424_jobs');
+        if (rawJobs) existingJobs = JSON.parse(rawJobs);
+      } catch (_) {}
+      try {
+        const rawBranches = localStorage.getItem('coffee2424_branches');
+        if (rawBranches) existingBranches = JSON.parse(rawBranches);
+      } catch (_) {}
+    }
+
+    const safeConfig = {
+      ...config,
+      articles: (Array.isArray(config?.articles) && config.articles.length > 0)
+        ? config.articles
+        : (existingArticles || config?.articles || []),
+      jobs: (Array.isArray(config?.jobs) && config.jobs.length > 0)
+        ? config.jobs
+        : (existingJobs || config?.jobs || []),
+      branches: (Array.isArray(config?.branches) && config.branches.length > 0)
+        ? config.branches
+        : (existingBranches || config?.branches || [])
+    };
+
     const { error } = await supabase
       .from('site_config')
       .upsert({
         id: 'main',
-        data: config,
+        data: safeConfig,
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 

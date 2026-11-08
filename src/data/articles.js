@@ -246,7 +246,7 @@ export function getArticles() {
   return INITIAL_ARTICLES;
 }
 
-export function saveArticles(articlesList) {
+export async function saveArticles(articlesList) {
   try {
     localStorage.setItem('coffee2424_articles', JSON.stringify(articlesList));
     window.dispatchEvent(new Event('articles-updated'));
@@ -255,14 +255,13 @@ export function saveArticles(articlesList) {
     if (typeof window !== 'undefined') {
       try {
         const cfg = getSiteConfig();
-        saveCloudSiteConfig({ ...cfg, articles: articlesList }).then(res => {
-          if (res?.success) {
-            console.info('✓ Đã đồng bộ danh sách bài viết lên Supabase Cloud thành công!');
-          }
-        }).catch(err => {
-          console.warn('Auto-sync articles to Supabase Cloud failed:', err);
-        });
-      } catch (_) {}
+        const res = await saveCloudSiteConfig({ ...cfg, articles: articlesList });
+        if (res?.success) {
+          console.info('✓ Đã đồng bộ danh sách bài viết lên Supabase Cloud thành công!');
+        }
+      } catch (err) {
+        console.warn('Auto-sync articles to Supabase Cloud failed:', err);
+      }
     }
 
     return true;

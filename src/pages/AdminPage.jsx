@@ -423,7 +423,7 @@ export default function AdminPage({ navigate }) {
   }, [editingArticle, editingJob, editingAccount, isReviewModalOpen]);
 
   // Save articles helper
-  const handleSaveArticle = (e) => {
+  const handleSaveArticle = async (e) => {
     e.preventDefault();
     if (!editingArticle.title || !editingArticle.title.trim()) {
       alert('Vui lòng nhập tiêu đề bài viết!');
@@ -465,22 +465,22 @@ export default function AdminPage({ navigate }) {
       } : a);
     }
     setArticles(updated);
-    saveArticles(updated);
+    await saveArticles(updated);
     setEditingArticle(null);
     triggerAlert('✓ Đã lưu bài viết & tự động đồng bộ Supabase Cloud!');
   };
 
-  const handleTogglePublishArticle = (id) => {
+  const handleTogglePublishArticle = async (id) => {
     const art = articles.find(a => a.id === id);
     if (!art) return;
     const newStatus = art.active === false ? true : false;
     const updated = articles.map(a => a.id === id ? { ...a, active: newStatus } : a);
     setArticles(updated);
-    saveArticles(updated);
+    await saveArticles(updated);
     triggerAlert(`✓ Đã ${newStatus ? 'xuất bản công khai' : 'chuyển sang bản nháp'}: ${art.title}`);
   };
 
-  const handleDuplicateArticle = (art) => {
+  const handleDuplicateArticle = async (art) => {
     const duplicated = {
       ...art,
       id: Date.now(),
@@ -492,15 +492,15 @@ export default function AdminPage({ navigate }) {
     };
     const updated = [duplicated, ...articles];
     setArticles(updated);
-    saveArticles(updated);
+    await saveArticles(updated);
     triggerAlert(`✓ Đã nhân bản bài viết: ${art.title}`);
   };
 
-  const handleDeleteArticle = (id) => {
+  const handleDeleteArticle = async (id) => {
     if (window.confirm('Bạn có chắc muốn xóa bài viết này không?')) {
       const updated = articles.filter(a => a.id !== id);
       setArticles(updated);
-      saveArticles(updated);
+      await saveArticles(updated);
       triggerAlert('Đã xóa bài viết và cập nhật Supabase Cloud.');
     }
   };

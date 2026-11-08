@@ -1346,8 +1346,23 @@ export function saveSiteConfig(newConfig) {
     updateDocumentFavicon(brandLogo || '/images/logo.jpg');
     window.dispatchEvent(new Event('site-config-updated'));
 
+    // Đính kèm các danh sách độc lập (articles, jobs, branches) từ LocalStorage để bảo toàn 100% dữ liệu
+    const cloudPayload = { ...newConfig };
+    try {
+      const rawArt = localStorage.getItem('coffee2424_articles');
+      if (rawArt && !cloudPayload.articles) cloudPayload.articles = JSON.parse(rawArt);
+    } catch (_) {}
+    try {
+      const rawJobs = localStorage.getItem('coffee2424_jobs');
+      if (rawJobs && !cloudPayload.jobs) cloudPayload.jobs = JSON.parse(rawJobs);
+    } catch (_) {}
+    try {
+      const rawBranches = localStorage.getItem('coffee2424_branches');
+      if (rawBranches && !cloudPayload.branches) cloudPayload.branches = JSON.parse(rawBranches);
+    } catch (_) {}
+
     // Tự động đồng bộ lên Supabase Cloud để dữ liệu không bị mất khi reload
-    saveCloudSiteConfig(newConfig).catch(err => {
+    saveCloudSiteConfig(cloudPayload).catch(err => {
       console.warn('Không thể đồng bộ Supabase Cloud:', err);
     });
 

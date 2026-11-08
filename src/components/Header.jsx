@@ -136,6 +136,7 @@ export default function Header({ currentPath, navigate }) {
                 <button
                   key={link.id || link.path}
                   onClick={() => handleNav(link.path)}
+                  data-track={`Menu: ${link.label}`}
                   className={`relative px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer whitespace-nowrap flex flex-col items-center group ${
                     isActive 
                       ? 'text-[#2b170e] font-black bg-white/70 shadow-xs' 
