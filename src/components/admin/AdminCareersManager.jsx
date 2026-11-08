@@ -136,7 +136,7 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
     });
   };
   const [isSavingLayout, setIsSavingLayout] = useState(false);
-  const [isSavingJobs, setIsSavingJobs] = useState(false);
+  const [isSavingJobModal, setIsSavingJobModal] = useState(false);
 
   // Sync state
   useEffect(() => {
@@ -150,35 +150,11 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
     };
   }, []);
 
-  // Hàm lưu toàn bộ danh sách tuyển dụng và đồng bộ tức thì lên Supabase Cloud
-  const handleSaveAllJobs = async (customList = null) => {
-    const listToSave = customList || jobsList;
-    setIsSavingJobs(true);
-    try {
-      saveJobs(listToSave);
-      const updatedConfig = {
-        ...config,
-        jobs: listToSave
-      };
-      onSaveConfig?.(updatedConfig);
-      const cloudRes = await saveCloudSiteConfig(updatedConfig);
-      setIsSavingJobs(false);
-      if (cloudRes?.success) {
-        triggerAlert('✓ ĐÃ ĐỒNG BỘ TOÀN BỘ VỊ TRÍ TUYỂN DỤNG LÊN SUPABASE CLOUD! Mọi thiết bị khác đã cập nhật ngay.');
-      } else {
-        triggerAlert('✓ Đã lưu danh sách vị trí trên máy này!');
-      }
-    } catch (err) {
-      setIsSavingJobs(false);
-      triggerAlert('✓ Đã lưu danh sách vị trí trên máy này!');
-    }
-  };
-
   // Escape key listener & body scroll lock for editingJob modal
   useEffect(() => {
     if (!editingJob) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setEditingJob(null);
+      if (e.key === 'Escape' && !isSavingJobModal) setEditingJob(null);
     };
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
@@ -186,9 +162,9 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [editingJob]);
+  }, [editingJob, isSavingJobModal]);
 
-  // Handlers for Jobs
+  // Handlers for Jobs: Tự động lưu thẳng lên Supabase Cloud ngay khi thao tác
   const handleToggleJob = async (id) => {
     const job = jobsList.find(j => j.id === id);
     if (!job) return;
@@ -196,16 +172,32 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
     updateJob(id, { active: newActive });
     const updated = jobsList.map(j => j.id === id ? { ...j, active: newActive } : j);
     setJobsList(updated);
-    triggerAlert(`Đã ${newActive ? 'bật mở tuyển' : 'tạm dừng tuyển'}: ${job.title}. Đang đồng bộ Cloud...`);
-    await handleSaveAllJobs(updated);
+
+    // Tự động đồng bộ lên Supabase Cloud ngay lập tức
+    try {
+      const updatedConfig = { ...config, jobs: updated };
+      onSaveConfig?.(updatedConfig);
+      await saveCloudSiteConfig(updatedConfig);
+      triggerAlert(`✓ Đã ${newActive ? 'bật mở tuyển' : 'tạm dừng tuyển'}: ${job.title} (Đã tự động lưu lên Cloud)`);
+    } catch (_) {
+      triggerAlert(`✓ Đã ${newActive ? 'bật mở tuyển' : 'tạm dừng tuyển'}: ${job.title}`);
+    }
   };
 
   const handleToggleAllJobs = async (status) => {
     const updated = jobsList.map(j => ({ ...j, active: status }));
     saveJobs(updated);
     setJobsList(updated);
-    triggerAlert(`Đã ${status ? 'bật mở tuyển' : 'tạm dừng tuyển'} tất cả ${updated.length} vị trí! Đang đồng bộ Cloud...`);
-    await handleSaveAllJobs(updated);
+
+    // Tự động đồng bộ lên Supabase Cloud ngay lập tức
+    try {
+      const updatedConfig = { ...config, jobs: updated };
+      onSaveConfig?.(updatedConfig);
+      await saveCloudSiteConfig(updatedConfig);
+      triggerAlert(`✓ Đã ${status ? 'bật mở tuyển' : 'tạm dừng tuyển'} tất cả ${updated.length} vị trí (Đã tự động lưu lên Cloud)!`);
+    } catch (_) {
+      triggerAlert(`✓ Đã ${status ? 'bật mở tuyển' : 'tạm dừng tuyển'} tất cả ${updated.length} vị trí!`);
+    }
   };
 
   const handleDeleteJob = async (id, title) => {
@@ -213,8 +205,16 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
       deleteJob(id);
       const updated = jobsList.filter(j => j.id !== id);
       setJobsList(updated);
-      triggerAlert(`Đã xóa vị trí: ${title}. Đang đồng bộ Cloud...`);
-      await handleSaveAllJobs(updated);
+
+      // Tự động đồng bộ xóa trên Supabase Cloud ngay lập tức
+      try {
+        const updatedConfig = { ...config, jobs: updated };
+        onSaveConfig?.(updatedConfig);
+        await saveCloudSiteConfig(updatedConfig);
+        triggerAlert(`✓ Đã xóa vị trí: ${title} (Đã tự động đồng bộ Cloud)`);
+      } catch (_) {
+        triggerAlert(`✓ Đã xóa vị trí: ${title}`);
+      }
     }
   };
 
@@ -251,6 +251,7 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
     });
   };
 
+  // Mặc định lưu bài viết là TỰ ĐỘNG LƯU VÀO SUPABASE CLOUD ngay lập tức
   const handleSaveJobModal = async (e) => {
     e.preventDefault();
     if (!editingJob.title.trim()) {
@@ -258,19 +259,63 @@ export default function AdminCareersManager({ config, onSaveConfig, triggerAlert
       return;
     }
 
-    let updatedList;
-    if (isNewJob) {
-      const newJob = createJob(editingJob);
-      updatedList = [newJob, ...jobsList.filter(j => j.id !== newJob.id)];
-      triggerAlert(`✓ Đã thêm vị trí tuyển dụng mới: ${editingJob.title}. Đang đồng bộ Cloud...`);
-    } else {
-      updateJob(editingJob.id, editingJob);
-      updatedList = jobsList.map(j => j.id === editingJob.id ? { ...j, ...editingJob } : j);
-      triggerAlert(`✓ Đã cập nhật bài viết tuyển dụng: ${editingJob.title}. Đang đồng bộ Cloud...`);
+    setIsSavingJobModal(true);
+    try {
+      let updatedList;
+      if (isNewJob) {
+        const slug = (editingJob.title || 'vi-tri-moi')
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[đĐ]/g, "d")
+          .replace(/[^a-z0-9 ]/g, "")
+          .replace(/\s+/g, "-");
+
+        const newJob = {
+          id: slug + '-' + Date.now().toString(36),
+          title: editingJob.title,
+          department: editingJob.department || 'Khối Cửa Hàng Vận Hành',
+          type: editingJob.type || 'Toàn thời gian (Full-time)',
+          salary: editingJob.salary || 'Thương lượng hấp dẫn',
+          shift: editingJob.shift || 'Linh hoạt theo ca',
+          locations: Array.isArray(editingJob.locations) ? editingJob.locations : ['Hệ thống chi nhánh Coffee 24/24'],
+          description: editingJob.description || '',
+          responsibilities: Array.isArray(editingJob.responsibilities) ? editingJob.responsibilities : [],
+          requirements: Array.isArray(editingJob.requirements) ? editingJob.requirements : ['Nhiệt tình, trách nhiệm và yêu thích ngành F&B'],
+          benefits: Array.isArray(editingJob.benefits) ? editingJob.benefits : ['Cà phê miễn phí mỗi ca', 'Chế độ đãi ngộ cạnh tranh'],
+          deadline: editingJob.deadline || 'Tuyển liên tục',
+          urgent: Boolean(editingJob.urgent),
+          featured: Boolean(editingJob.featured),
+          image: editingJob.image || '',
+          active: editingJob.active !== false
+        };
+        updatedList = [newJob, ...jobsList.filter(j => j.id !== newJob.id)];
+      } else {
+        updatedList = jobsList.map(j => j.id === editingJob.id ? { ...j, ...editingJob } : j);
+      }
+
+      setJobsList(updatedList);
+      saveJobs(updatedList);
+
+      // TỰ ĐỘNG ĐẨY TRỰC TIẾP LÊN SUPABASE CLOUD VÀ PHÁT SỰ KIỆN CHO TOÀN BỘ TRANG WEB
+      const updatedConfig = {
+        ...config,
+        jobs: updatedList
+      };
+      onSaveConfig?.(updatedConfig);
+      const cloudRes = await saveCloudSiteConfig(updatedConfig);
+
+      setIsSavingJobModal(false);
+      setEditingJob(null);
+      if (cloudRes?.success) {
+        triggerAlert(`✓ Đã lưu bài viết "${editingJob.title}" và tự động đồng bộ lên Supabase Cloud thành công! Mọi thiết bị khác đã cập nhật ngay.`);
+      } else {
+        triggerAlert(`✓ Đã lưu bài viết "${editingJob.title}" thành công!`);
+      }
+    } catch (err) {
+      setIsSavingJobModal(false);
+      triggerAlert('⚠️ Lỗi khi lưu: ' + err.message);
     }
-    setJobsList(updatedList);
-    setEditingJob(null);
-    await handleSaveAllJobs(updatedList);
   };
 
   // Layout save handler
@@ -803,26 +848,6 @@ function doGet(e) {
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>+ THÊM BÀI VIẾT TUYỂN DỤNG</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isSavingJobs}
-                onClick={() => handleSaveAllJobs()}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:brightness-110 text-white text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-60 transition-all active:scale-95"
-                title="Lưu toàn bộ danh sách tuyển dụng và đồng bộ tức thì lên Supabase Cloud"
-              >
-                {isSavingJobs ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>ĐANG ĐỒNG BỘ...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 stroke-[3]" />
-                    <span>LƯU & ĐỒNG BỘ CLOUD</span>
-                  </>
-                )}
               </button>
 
               <button
@@ -2005,9 +2030,17 @@ function doGet(e) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-110 text-white font-black text-xs shadow-md cursor-pointer transition-all"
+                  disabled={isSavingJobModal}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-110 text-white font-black text-xs shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {isNewJob ? 'XUẤT BẢN VỊ TRÍ MỚI' : 'LƯU THAY ĐỔI'}
+                  {isSavingJobModal ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
+                      <span>ĐANG LƯU VÀO CLOUD...</span>
+                    </>
+                  ) : (
+                    <span>{isNewJob ? 'XUẤT BẢN VỊ TRÍ MỚI' : 'LƯU THAY ĐỔI'}</span>
+                  )}
                 </button>
               </div>
 
