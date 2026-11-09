@@ -282,17 +282,24 @@ export async function flushAnalyticsToCloud() {
 
     currentAnalytics.updated_at = new Date().toISOString();
 
+    // 2.1. Luôn lưu bản sao vào localStorage để dữ liệu được bảo toàn ngay cả khi ngoại tuyến
+    try {
+      localStorage.setItem('coffee2424_analytics_cache', JSON.stringify(currentAnalytics));
+    } catch (_) {}
+
     // 3. Đẩy lên Supabase Cloud
-    await supabase.from('site_config').upsert({
-      id: 'analytics',
-      data: currentAnalytics,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    if (isSupabaseConfigured) {
+      await supabase.from('site_config').upsert({
+        id: 'analytics',
+        data: currentAnalytics,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    }
 
   } catch (err) {
     console.warn('Lỗi đồng bộ analytics lên Supabase:', err);
-    // Hoàn lại batch vào hàng đợi nếu lỗi
-    eventQueue = [...batch, ...eventQueue];
+    // Giới hạn hàng đợi tối đa 20 sự kiện để không gây nghẽn bộ nhớ
+    eventQueue = [...batch, ...eventQueue].slice(0, 20);
   } finally {
     isSyncing = false;
   }

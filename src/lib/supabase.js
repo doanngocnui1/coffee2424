@@ -199,101 +199,86 @@ export async function uploadImageToSupabase(file, folder = 'general', options = 
 }
 
 /**
- * Lấy cấu hình toàn trang từ bảng site_config trên Supabase
+ * LẤY DỮ LIỆU ĐỘC LẬP TỪ BẢNG site_config THEO ID RIÊNG BIỆT
+ * (ví dụ: 'articles', 'promotions', 'jobs', 'branches', 'main')
  */
-export async function fetchCloudSiteConfig() {
+export async function fetchCloudItem(id) {
   if (!isSupabaseConfigured) return null;
   try {
     const { data, error } = await supabase
       .from('site_config')
       .select('data, updated_at')
-      .eq('id', 'main')
+      .eq('id', id)
       .maybeSingle();
 
-    if (error) {
-      console.warn('Lỗi khi tải cấu hình từ Supabase (có thể bảng chưa được tạo):', error.message);
-      return null;
-    }
-
-    return data?.data || null;
+    if (error || !data) return null;
+    return data.data;
   } catch (err) {
-    console.warn('Không thể kết nối Supabase:', err);
+    console.warn(`Lỗi khi tải mục [${id}] từ Supabase:`, err);
     return null;
   }
 }
 
 /**
- * Lưu cấu hình toàn trang lên Supabase Cloud
- * Tự động bảo toàn các danh sách độc lập (articles, jobs, branches) không bao giờ bị ghi đè mất
+ * LƯU ĐỘC LẬP TỪNG MỤC LÊN BẢNG site_config THEO ID RIÊNG BIỆT
+ * TÁCH BIỆT 100%:
+ * - Sửa bài viết -> chỉ lưu dòng 'articles'
+ * - Sửa khuyến mãi/quảng cáo -> chỉ lưu dòng 'promotions'
+ * - Sửa tuyển dụng -> chỉ lưu dòng 'jobs'
+ * - Sửa chi nhánh -> chỉ lưu dòng 'branches'
+ * - Sửa giao diện/banner -> chỉ lưu dòng 'main'
+ * Tuyệt đối không bao giờ ghi đè lẫn nhau!
  */
-export async function saveCloudSiteConfig(config) {
+export async function saveCloudItem(id, itemData) {
   if (!isSupabaseConfigured) return { success: false, error: 'Chưa cấu hình Supabase' };
   try {
-    // 1. Bảo vệ các trường quan trọng: articles, jobs, branches nếu config đầu vào bị thiếu
-    let existingArticles = null;
-    let existingJobs = null;
-    let existingBranches = null;
-
-    if (typeof window !== 'undefined') {
-      try {
-        const rawArt = localStorage.getItem('coffee2424_articles');
-        if (rawArt) existingArticles = JSON.parse(rawArt);
-      } catch (_) {}
-      try {
-        const rawJobs = localStorage.getItem('coffee2424_jobs');
-        if (rawJobs) existingJobs = JSON.parse(rawJobs);
-      } catch (_) {}
-      try {
-        const rawBranches = localStorage.getItem('coffee2424_branches');
-        if (rawBranches) existingBranches = JSON.parse(rawBranches);
-      } catch (_) {}
-    }
-
-    const safeConfig = {
-      ...config,
-      articles: (Array.isArray(config?.articles) && config.articles.length > 0)
-        ? config.articles
-        : (existingArticles || config?.articles || []),
-      jobs: (Array.isArray(config?.jobs) && config.jobs.length > 0)
-        ? config.jobs
-        : (existingJobs || config?.jobs || []),
-      branches: (Array.isArray(config?.branches) && config.branches.length > 0)
-        ? config.branches
-        : (existingBranches || config?.branches || [])
-    };
-
     const { error } = await supabase
       .from('site_config')
       .upsert({
-        id: 'main',
-        data: safeConfig,
+        id: id,
+        data: itemData,
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
     if (error) {
-      console.error('Lỗi khi lưu cấu hình lên Supabase:', error.message);
+      console.error(`Lỗi khi lưu mục [${id}] lên Supabase:`, error.message);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (err) {
-    console.error('Lỗi ngoại lệ khi lưu Supabase:', err);
+    console.error(`Lỗi ngoại lệ khi lưu mục [${id}]:`, err);
     return { success: false, error: err.message };
   }
 }
 
 /**
- * Lắng nghe thay đổi Realtime từ Supabase
+ * Lấy cấu hình toàn trang từ bảng site_config trên Supabase
+ */
+export async function fetchCloudSiteConfig() {
+  return await fetchCloudItem('main');
+}
+
+/**
+ * Lưu cấu hình chung toàn trang lên Supabase Cloud (chỉ dòng 'main')
+ */
+export async function saveCloudSiteConfig(config) {
+  return await saveCloudItem('main', config);
+}
+
+/**
+ * Lắng nghe thay đổi Realtime từ Supabase cho toàn bộ các module
  */
 export function subscribeToCloudSiteConfig(onUpdate) {
   if (!isSupabaseConfigured) return () => {};
 
   try {
     const channel = supabase
-      .channel('public:site_config')
+      .channel('public:site_config_isolated')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, (payload) => {
-        if (payload?.new?.data && typeof onUpdate === 'function') {
-          onUpdate(payload.new.data);
+        if (payload?.new && typeof onUpdate === 'function') {
+          // Trả về cả dữ liệu payload và id phân biệt của dòng ('articles', 'promotions', 'jobs', 'branches', 'main')
+          onUpdate(payload.new.data, payload.new.id);
         }
       })
       .subscribe();

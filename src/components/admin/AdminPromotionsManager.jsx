@@ -42,7 +42,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG, saveSiteConfig } from '../../data/siteConfig';
-import { uploadImageToSupabase, saveCloudSiteConfig } from '../../lib/supabase';
+import { uploadImageToSupabase, saveCloudSiteConfig, saveCloudItem } from '../../lib/supabase';
 import RichTextEditor from './RichTextEditor';
 
 export default function AdminPromotionsManager({ config, onSaveConfig, triggerAlert }) {
@@ -641,14 +641,23 @@ export default function AdminPromotionsManager({ config, onSaveConfig, triggerAl
     saveSiteConfig(updatedConfig);
     window.dispatchEvent(new Event('site-config-updated'));
 
-    // Đồng bộ Supabase Cloud
+    // TÁCH BIỆT 100%: Chỉ lưu / ghi đè riêng khuyến mãi vào dòng 'promotions' trên Supabase Cloud
+    // Tuyệt đối không đụng đến bài viết, tuyển dụng hay chi nhánh!
     try {
-      const cloudRes = await saveCloudSiteConfig(updatedConfig);
+      const promoPayload = {
+        promotionsList: promotions,
+        promotionsSection: sectionConfig,
+        promotionsPageConfig: pageConfig
+      };
+      const [cloudItemRes] = await Promise.all([
+        saveCloudItem('promotions', promoPayload),
+        saveCloudSiteConfig(updatedConfig)
+      ]);
       setIsSaving(false);
-      if (cloudRes && cloudRes.success) {
-        triggerAlert?.('✓ ĐÃ ĐỒNG BỘ SUPABASE CLOUD THÀNH CÔNG! Điện thoại và máy tính khác đã cập nhật ngay.');
+      if (cloudItemRes && cloudItemRes.success) {
+        triggerAlert?.('✓ ĐÃ LƯU ĐỘC LẬP KHUYẾN MÃI LÊN SUPABASE CLOUD! Điện thoại và máy tính khác đã cập nhật ngay.');
       } else {
-        triggerAlert?.('✓ Đã lưu cấu hình Khuyến Mãi thành công (Đã cập nhật trên máy này)!');
+        triggerAlert?.('✓ Đã lưu cấu hình Khuyến Mãi thành công!');
       }
     } catch (_) {
       setIsSaving(false);

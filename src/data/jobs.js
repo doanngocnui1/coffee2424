@@ -255,8 +255,7 @@ export const DEFAULT_JOBS = [
 
 export const JOBS = DEFAULT_JOBS;
 
-import { saveCloudSiteConfig } from '../lib/supabase.js';
-import { getSiteConfig } from './siteConfig.js';
+import { saveCloudItem, fetchCloudItem } from '../lib/supabase.js';
 
 export function getJobs() {
   try {
@@ -273,23 +272,24 @@ export function getJobs() {
   return DEFAULT_JOBS;
 }
 
-export function saveJobs(jobsList) {
+/**
+ * TÁCH BIỆT 100%: Chỉ lưu / ghi đè danh sách tuyển dụng vào dòng 'jobs' trên Supabase Cloud
+ * Tuyệt đối không đụng đến bài viết, khuyến mãi hay giao diện!
+ */
+export async function saveJobs(jobsList) {
   try {
     localStorage.setItem('coffee2424_jobs', JSON.stringify(jobsList));
     window.dispatchEvent(new Event('jobs-updated'));
 
-    // Tự động đồng bộ lên Supabase Cloud để mọi thiết bị/trình duyệt khác nhận được trạng thái ẩn/hiện ngay
     if (typeof window !== 'undefined') {
       try {
-        const cfg = getSiteConfig();
-        saveCloudSiteConfig({ ...cfg, jobs: jobsList }).then(res => {
-          if (res?.success) {
-            console.info('✓ Đã đồng bộ danh sách tuyển dụng lên Supabase Cloud thành công!');
-          }
-        }).catch(err => {
-          console.warn('Auto-sync jobs to Supabase Cloud failed:', err);
-        });
-      } catch (_) {}
+        const res = await saveCloudItem('jobs', jobsList);
+        if (res?.success) {
+          console.info('✓ Đã lưu độc lập tuyển dụng lên Supabase Cloud (id: jobs)!');
+        }
+      } catch (err) {
+        console.warn('Lỗi lưu tuyển dụng lên Cloud:', err);
+      }
     }
 
     return true;
@@ -297,6 +297,23 @@ export function saveJobs(jobsList) {
     console.error('Error saving jobs:', e);
     return false;
   }
+}
+
+/**
+ * Đồng bộ riêng tuyển dụng từ dòng 'jobs'
+ */
+export async function syncJobsWithCloud() {
+  try {
+    const cloudJobs = await fetchCloudItem('jobs');
+    if (Array.isArray(cloudJobs) && cloudJobs.length > 0) {
+      localStorage.setItem('coffee2424_jobs', JSON.stringify(cloudJobs));
+      window.dispatchEvent(new Event('jobs-updated'));
+      return cloudJobs;
+    }
+  } catch (err) {
+    console.warn('Lỗi đồng bộ tuyển dụng từ Supabase:', err);
+  }
+  return null;
 }
 
 export function createJob(jobData) {

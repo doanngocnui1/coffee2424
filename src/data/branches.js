@@ -1,5 +1,4 @@
-import { saveCloudSiteConfig } from '../lib/supabase.js';
-import { getSiteConfig } from './siteConfig.js';
+import { saveCloudItem, fetchCloudItem } from '../lib/supabase.js';
 
 export const DEFAULT_BRANCHES = [
   {
@@ -89,19 +88,24 @@ export function getBranches() {
   return DEFAULT_BRANCHES;
 }
 
-export function saveBranches(branches) {
+/**
+ * TÁCH BIỆT 100%: Chỉ lưu / ghi đè danh sách chi nhánh vào dòng 'branches' trên Supabase Cloud
+ * Tuyệt đối không đụng đến bài viết, khuyến mãi hay giao diện!
+ */
+export async function saveBranches(branches) {
   try {
     localStorage.setItem('coffee2424_branches', JSON.stringify(branches));
     window.dispatchEvent(new Event('branches-updated'));
 
-    // Tự động đồng bộ lên Supabase Cloud để mọi thiết bị/trình duyệt khác nhận được ngay
     if (typeof window !== 'undefined') {
       try {
-        const cfg = getSiteConfig();
-        saveCloudSiteConfig({ ...cfg, branches }).catch(err => {
-          console.warn('Auto-sync branches to cloud failed:', err);
-        });
-      } catch (_) {}
+        const res = await saveCloudItem('branches', branches);
+        if (res?.success) {
+          console.info('✓ Đã lưu độc lập chi nhánh lên Supabase Cloud (id: branches)!');
+        }
+      } catch (err) {
+        console.warn('Lỗi lưu chi nhánh lên Cloud:', err);
+      }
     }
 
     return true;
@@ -109,6 +113,23 @@ export function saveBranches(branches) {
     console.error('Error saving branches to storage:', e);
     return false;
   }
+}
+
+/**
+ * Đồng bộ riêng chi nhánh từ dòng 'branches'
+ */
+export async function syncBranchesWithCloud() {
+  try {
+    const cloudBranches = await fetchCloudItem('branches');
+    if (Array.isArray(cloudBranches) && cloudBranches.length > 0) {
+      localStorage.setItem('coffee2424_branches', JSON.stringify(cloudBranches));
+      window.dispatchEvent(new Event('branches-updated'));
+      return cloudBranches;
+    }
+  } catch (err) {
+    console.warn('Lỗi đồng bộ chi nhánh từ Supabase:', err);
+  }
+  return null;
 }
 
 export function createBranch(newBranchData) {

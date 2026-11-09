@@ -1,4 +1,4 @@
-import { saveCloudSiteConfig, fetchCloudSiteConfig, isLocalhost } from '../lib/supabase.js';
+import { saveCloudSiteConfig, fetchCloudSiteConfig, fetchCloudItem, saveCloudItem, isLocalhost } from '../lib/supabase.js';
 
 export const STORAGE_KEY = 'coffee2424_site_config';
 
@@ -1379,12 +1379,57 @@ export function saveSiteConfig(newConfig) {
  */
 export async function syncSiteConfigWithCloud(force = false) {
   try {
-    const cloudConfig = await fetchCloudSiteConfig();
+    const [cloudConfig, cloudArticles, cloudPromos, cloudJobs, cloudBranches] = await Promise.all([
+      fetchCloudSiteConfig(),
+      fetchCloudItem('articles'),
+      fetchCloudItem('promotions'),
+      fetchCloudItem('jobs'),
+      fetchCloudItem('branches')
+    ]);
+
+    // 1. Đồng bộ độc lập BÀI VIẾT (Tách biệt 100%, ưu tiên row 'articles')
+    const finalArticles = (Array.isArray(cloudArticles) && cloudArticles.length > 0)
+      ? cloudArticles
+      : (Array.isArray(cloudConfig?.articles) && cloudConfig.articles.length > 0 ? cloudConfig.articles : null);
+    if (finalArticles) {
+      try {
+        localStorage.setItem('coffee2424_articles', JSON.stringify(finalArticles));
+        window.dispatchEvent(new Event('articles-updated'));
+      } catch (_) {}
+    }
+
+    // 2. Đồng bộ độc lập TUYỂN DỤNG (Tách biệt 100%, ưu tiên row 'jobs')
+    const finalJobs = (Array.isArray(cloudJobs) && cloudJobs.length > 0)
+      ? cloudJobs
+      : (Array.isArray(cloudConfig?.jobs) && cloudConfig.jobs.length > 0 ? cloudConfig.jobs : null);
+    if (finalJobs) {
+      try {
+        localStorage.setItem('coffee2424_jobs', JSON.stringify(finalJobs));
+        window.dispatchEvent(new Event('jobs-updated'));
+      } catch (_) {}
+    }
+
+    // 3. Đồng bộ độc lập CHI NHÁNH (Tách biệt 100%, ưu tiên row 'branches')
+    const finalBranches = (Array.isArray(cloudBranches) && cloudBranches.length > 0)
+      ? cloudBranches
+      : (Array.isArray(cloudConfig?.branches) && cloudConfig.branches.length > 0 ? cloudConfig.branches : null);
+    if (finalBranches) {
+      try {
+        localStorage.setItem('coffee2424_branches', JSON.stringify(finalBranches));
+        window.dispatchEvent(new Event('branches-updated'));
+      } catch (_) {}
+    }
+
     if (cloudConfig && typeof cloudConfig === 'object') {
       const currentConfig = getSiteConfig();
       const mergedConfig = { 
         ...currentConfig, 
         ...cloudConfig,
+        promotionsList: (cloudPromos && Array.isArray(cloudPromos.promotionsList) && cloudPromos.promotionsList.length > 0)
+          ? cloudPromos.promotionsList
+          : (Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0 ? cloudConfig.promotionsList : (currentConfig.promotionsList || DEFAULT_SITE_CONFIG.promotionsList)),
+        promotionsSection: cloudPromos?.promotionsSection || cloudConfig.promotionsSection || currentConfig.promotionsSection,
+        promotionsPageConfig: cloudPromos?.promotionsPageConfig || cloudConfig.promotionsPageConfig || currentConfig.promotionsPageConfig,
         homeSections: (() => {
           const rawSections = (Array.isArray(cloudConfig.homeSections) && cloudConfig.homeSections.length > 0)
             ? cloudConfig.homeSections

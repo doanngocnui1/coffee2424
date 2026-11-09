@@ -228,8 +228,7 @@ Nhiều người từng nghĩ quán cà phê mở 24/7 chỉ đơn thuần là "
 
 export const ARTICLES = INITIAL_ARTICLES;
 
-import { saveCloudSiteConfig } from '../lib/supabase.js';
-import { getSiteConfig } from './siteConfig.js';
+import { saveCloudItem, fetchCloudItem } from '../lib/supabase.js';
 
 export function getArticles() {
   try {
@@ -246,21 +245,24 @@ export function getArticles() {
   return INITIAL_ARTICLES;
 }
 
+/**
+ * TÁCH BIỆT 100%: Chỉ lưu / ghi đè danh sách bài viết vào dòng 'articles' trên Supabase Cloud
+ * Tuyệt đối không đụng đến khuyến mãi, banner hay các mục khác!
+ */
 export async function saveArticles(articlesList) {
   try {
     localStorage.setItem('coffee2424_articles', JSON.stringify(articlesList));
     window.dispatchEvent(new Event('articles-updated'));
 
-    // Tự động đồng bộ lên Supabase Cloud để mọi thiết bị/trình duyệt khác đều nhận được bài viết ngay lập tức
+    // Chỉ đẩy riêng danh sách bài viết lên Supabase dòng 'articles'
     if (typeof window !== 'undefined') {
       try {
-        const cfg = getSiteConfig();
-        const res = await saveCloudSiteConfig({ ...cfg, articles: articlesList });
+        const res = await saveCloudItem('articles', articlesList);
         if (res?.success) {
-          console.info('✓ Đã đồng bộ danh sách bài viết lên Supabase Cloud thành công!');
+          console.info('✓ Đã lưu độc lập bài viết lên Supabase Cloud (id: articles)!');
         }
       } catch (err) {
-        console.warn('Auto-sync articles to Supabase Cloud failed:', err);
+        console.warn('Lỗi lưu bài viết lên Cloud:', err);
       }
     }
 
@@ -269,6 +271,23 @@ export async function saveArticles(articlesList) {
     console.error('Error saving articles:', e);
     return false;
   }
+}
+
+/**
+ * Đồng bộ riêng danh sách bài viết từ Supabase Cloud dòng 'articles'
+ */
+export async function syncArticlesWithCloud() {
+  try {
+    const cloudArticles = await fetchCloudItem('articles');
+    if (Array.isArray(cloudArticles) && cloudArticles.length > 0) {
+      localStorage.setItem('coffee2424_articles', JSON.stringify(cloudArticles));
+      window.dispatchEvent(new Event('articles-updated'));
+      return cloudArticles;
+    }
+  } catch (err) {
+    console.warn('Lỗi đồng bộ bài viết từ Supabase:', err);
+  }
+  return null;
 }
 
 export function createArticle(articleData) {

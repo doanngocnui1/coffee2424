@@ -53,84 +53,127 @@ export default function App() {
     // Tự động kéo cấu hình mới nhất từ Supabase Cloud khi mở trang
     syncSiteConfigWithCloud();
 
-    // Lắng nghe cập nhật Realtime từ Supabase (khi có ai sửa từ máy khác)
-    const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData) => {
-      if (Array.isArray(newCloudData?.branches) && newCloudData.branches.length > 0) {
+    // Lắng nghe cập nhật Realtime từ Supabase (TÁCH BIỆT 100% THEO TỪNG MODULE)
+    const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData, rowId) => {
+      // 1. Nếu thay đổi riêng BÀI VIẾT (rowId: 'articles')
+      if (rowId === 'articles' && Array.isArray(newCloudData)) {
         try {
-          localStorage.setItem('coffee2424_branches', JSON.stringify(newCloudData.branches));
-          window.dispatchEvent(new Event('branches-updated'));
-        } catch (_) {}
-      }
-
-      if (Array.isArray(newCloudData?.jobs)) {
-        try {
-          localStorage.setItem('coffee2424_jobs', JSON.stringify(newCloudData.jobs));
-          window.dispatchEvent(new Event('jobs-updated'));
-        } catch (_) {}
-      }
-
-      if (Array.isArray(newCloudData?.articles)) {
-        try {
-          localStorage.setItem('coffee2424_articles', JSON.stringify(newCloudData.articles));
+          localStorage.setItem('coffee2424_articles', JSON.stringify(newCloudData));
           window.dispatchEvent(new Event('articles-updated'));
         } catch (_) {}
+        return;
       }
 
-      setSiteConfig(prev => {
-        const cloudPromos = Array.isArray(newCloudData?.promotionsList) && newCloudData.promotionsList.length > 0
-          ? newCloudData.promotionsList
-          : null;
+      // 2. Nếu thay đổi riêng KHUYẾN MÃI (rowId: 'promotions')
+      if (rowId === 'promotions') {
+        const promoList = Array.isArray(newCloudData?.promotionsList) ? newCloudData.promotionsList : (Array.isArray(newCloudData) ? newCloudData : null);
+        if (promoList) {
+          setSiteConfig(prev => ({
+            ...prev,
+            promotionsList: promoList,
+            promotionsSection: newCloudData?.promotionsSection || prev?.promotionsSection,
+            promotionsPageConfig: newCloudData?.promotionsPageConfig || prev?.promotionsPageConfig
+          }));
+          window.dispatchEvent(new Event('site-config-updated'));
+        }
+        return;
+      }
 
-        let safePromos = prev?.promotionsList || [];
-        if (cloudPromos) {
-          // Lấy chính xác danh sách từ Cloud làm chuẩn (khi Admin xóa hoặc thêm thì đồng bộ chuẩn)
-          safePromos = cloudPromos.map(cloudP => {
-            const localP = (prev?.promotionsList || []).find(l => l.id === cloudP.id) || {};
-            return {
-              ...localP,
-              ...cloudP,
-              showVoucherCode: cloudP.showVoucherCode !== undefined ? cloudP.showVoucherCode : (localP.showVoucherCode !== undefined ? localP.showVoucherCode : true),
-              showCopyBtn: cloudP.showCopyBtn !== undefined ? cloudP.showCopyBtn : (localP.showCopyBtn !== undefined ? localP.showCopyBtn : true),
-              showCtaBtn: cloudP.showCtaBtn !== undefined ? cloudP.showCtaBtn : (localP.showCtaBtn !== undefined ? localP.showCtaBtn : true)
-            };
-          });
+      // 3. Nếu thay đổi riêng TUYỂN DỤNG (rowId: 'jobs')
+      if (rowId === 'jobs' && Array.isArray(newCloudData)) {
+        try {
+          localStorage.setItem('coffee2424_jobs', JSON.stringify(newCloudData));
+          window.dispatchEvent(new Event('jobs-updated'));
+        } catch (_) {}
+        return;
+      }
 
-          // Cập nhật ngay vào localStorage để khi reload trang giữ nguyên danh sách mới
+      // 4. Nếu thay đổi riêng CHI NHÁNH (rowId: 'branches')
+      if (rowId === 'branches' && Array.isArray(newCloudData)) {
+        try {
+          localStorage.setItem('coffee2424_branches', JSON.stringify(newCloudData));
+          window.dispatchEvent(new Event('branches-updated'));
+        } catch (_) {}
+        return;
+      }
+
+      // 5. Nếu thay đổi CẤU HÌNH GIAO DIỆN CHUNG (rowId: 'main')
+      if (rowId === 'main' || !rowId) {
+        if (Array.isArray(newCloudData?.branches) && newCloudData.branches.length > 0) {
           try {
-            const stored = JSON.parse(localStorage.getItem('coffee2424_site_config') || '{}');
-            stored.promotionsList = safePromos;
-            localStorage.setItem('coffee2424_site_config', JSON.stringify(stored));
+            localStorage.setItem('coffee2424_branches', JSON.stringify(newCloudData.branches));
+            window.dispatchEvent(new Event('branches-updated'));
           } catch (_) {}
         }
 
-        const localSpace = prev?.spaceAmenities;
-        const cloudSpace = newCloudData?.spaceAmenities;
-        let safeSpace = localSpace || cloudSpace;
-        if (localSpace && cloudSpace) {
-          const mergedPhotos = (localSpace.photos || []).map((p, idx) => {
-            const dedicatedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
-            const dedicatedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
-            if (dedicatedImg) return { ...p, image: dedicatedImg, title: dedicatedTitle || p.title };
-            const defaultPhoto = DEFAULT_SITE_CONFIG.spaceAmenities?.photos?.[idx];
-            if (p.image && p.image !== defaultPhoto?.image) return p;
-            return cloudSpace.photos?.[idx] || p;
-          });
-          safeSpace = {
-            ...cloudSpace,
-            ...localSpace,
-            photos: mergedPhotos
-          };
+        if (Array.isArray(newCloudData?.jobs)) {
+          try {
+            localStorage.setItem('coffee2424_jobs', JSON.stringify(newCloudData.jobs));
+            window.dispatchEvent(new Event('jobs-updated'));
+          } catch (_) {}
         }
 
-        const merged = { 
-          ...prev, 
-          ...newCloudData,
-          promotionsList: safePromos.length > 0 ? safePromos : (newCloudData?.promotionsList || prev?.promotionsList),
-          spaceAmenities: safeSpace
-        };
-        if (merged.logo) updateDocumentFavicon(merged.logo);
-        return merged;
-      });
+        if (Array.isArray(newCloudData?.articles)) {
+          try {
+            localStorage.setItem('coffee2424_articles', JSON.stringify(newCloudData.articles));
+            window.dispatchEvent(new Event('articles-updated'));
+          } catch (_) {}
+        }
+
+        setSiteConfig(prev => {
+          const cloudPromos = Array.isArray(newCloudData?.promotionsList) && newCloudData.promotionsList.length > 0
+            ? newCloudData.promotionsList
+            : null;
+
+          let safePromos = prev?.promotionsList || [];
+          if (cloudPromos) {
+            safePromos = cloudPromos.map(cloudP => {
+              const localP = (prev?.promotionsList || []).find(l => l.id === cloudP.id) || {};
+              return {
+                ...localP,
+                ...cloudP,
+                showVoucherCode: cloudP.showVoucherCode !== undefined ? cloudP.showVoucherCode : (localP.showVoucherCode !== undefined ? localP.showVoucherCode : true),
+                showCopyBtn: cloudP.showCopyBtn !== undefined ? cloudP.showCopyBtn : (localP.showCopyBtn !== undefined ? localP.showCopyBtn : true),
+                showCtaBtn: cloudP.showCtaBtn !== undefined ? cloudP.showCtaBtn : (localP.showCtaBtn !== undefined ? localP.showCtaBtn : true)
+              };
+            });
+
+            try {
+              const stored = JSON.parse(localStorage.getItem('coffee2424_site_config') || '{}');
+              stored.promotionsList = safePromos;
+              localStorage.setItem('coffee2424_site_config', JSON.stringify(stored));
+            } catch (_) {}
+          }
+
+          const localSpace = prev?.spaceAmenities;
+          const cloudSpace = newCloudData?.spaceAmenities;
+          let safeSpace = localSpace || cloudSpace;
+          if (localSpace && cloudSpace) {
+            const mergedPhotos = (localSpace.photos || []).map((p, idx) => {
+              const dedicatedImg = localStorage.getItem(`coffee2424_space_photo_${idx}`);
+              const dedicatedTitle = localStorage.getItem(`coffee2424_space_title_${idx}`);
+              if (dedicatedImg) return { ...p, image: dedicatedImg, title: dedicatedTitle || p.title };
+              const defaultPhoto = DEFAULT_SITE_CONFIG.spaceAmenities?.photos?.[idx];
+              if (p.image && p.image !== defaultPhoto?.image) return p;
+              return cloudSpace.photos?.[idx] || p;
+            });
+            safeSpace = {
+              ...cloudSpace,
+              ...localSpace,
+              photos: mergedPhotos
+            };
+          }
+
+          const merged = { 
+            ...prev, 
+            ...newCloudData,
+            promotionsList: safePromos.length > 0 ? safePromos : (newCloudData?.promotionsList || prev?.promotionsList),
+            spaceAmenities: safeSpace
+          };
+          if (merged.logo) updateDocumentFavicon(merged.logo);
+          return merged;
+        });
+      }
     });
 
     return () => {
