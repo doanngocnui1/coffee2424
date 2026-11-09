@@ -55,6 +55,45 @@ export default function App() {
 
     // Lắng nghe cập nhật Realtime từ Supabase (TÁCH BIỆT 100% THEO TỪNG MODULE)
     const unsubscribeCloud = subscribeToCloudSiteConfig((newCloudData, rowId) => {
+      // 0. Nếu thay đổi riêng LOGO & THƯƠNG HIỆU (rowId: 'logo')
+      if (rowId === 'logo' && newCloudData) {
+        if (newCloudData.logo) {
+          try {
+            localStorage.setItem('coffee2424_brand_logo_img', newCloudData.logo);
+            updateDocumentFavicon(newCloudData.logo);
+          } catch (_) {}
+        }
+        setSiteConfig(prev => ({
+          ...prev,
+          logo: newCloudData.logo || prev.logo,
+          favicon: newCloudData.favicon || newCloudData.logo || prev.favicon,
+          brandName: newCloudData.brandName || prev.brandName,
+          slogan: newCloudData.slogan || prev.slogan,
+          heroHeadline: newCloudData.heroHeadline !== undefined ? newCloudData.heroHeadline : prev.heroHeadline,
+          heroSubheadline: newCloudData.heroSubheadline !== undefined ? newCloudData.heroSubheadline : prev.heroSubheadline,
+          announcementBar: newCloudData.announcementBar || prev.announcementBar
+        }));
+        return;
+      }
+
+      // 0.1. Nếu thay đổi riêng ẢNH BÌA HERO (rowId: 'heroBanner')
+      if (rowId === 'heroBanner' && newCloudData) {
+        if (newCloudData.mediaUrl) {
+          try {
+            localStorage.setItem('coffee2424_hero_banner_media', newCloudData.mediaUrl);
+            localStorage.setItem('coffee2424_hero_banner', JSON.stringify(newCloudData));
+          } catch (_) {}
+        }
+        setSiteConfig(prev => ({
+          ...prev,
+          heroBanner16x9: {
+            ...prev.heroBanner16x9,
+            ...newCloudData
+          }
+        }));
+        return;
+      }
+
       // 1. Nếu thay đổi riêng BÀI VIẾT (rowId: 'articles')
       if (rowId === 'articles' && Array.isArray(newCloudData)) {
         try {

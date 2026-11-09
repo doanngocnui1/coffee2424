@@ -28,10 +28,10 @@ export const DEFAULT_SITE_CONFIG = {
     branch413PhiUrl: 'https://coffee2424.web-store.online/menu/363688',
     branch96D5Url: 'https://coffee2424.web-store.online/menu/363827'
   },
-  // 1. Ảnh Bìa / GIF / Video Hero 16:9 & Thiết Kế Trực Quan (Canvas Studio)
+  // 1. Ảnh Bìa / GIF / Video Hero 16:9 & Thiết Kế Trực Quan (Canvas Studio) - Xóa ảnh mẫu quầy bar cũ để không gây chậm trễ
   heroBanner16x9: {
     type: 'auto', // 'auto' | 'image' | 'gif' | 'video'
-    mediaUrl: '/images/hero_banner.jpg',
+    mediaUrl: '',
     link: '/dathang',
     alt: 'COFFEE 24/24 - Không Gian Cà Phê 24/7',
     fixedBackground: false,
@@ -1016,16 +1016,14 @@ export function getSiteConfig() {
       ...DEFAULT_SITE_CONFIG.heroBanner16x9,
       ...(parsed.heroBanner16x9 || {})
     };
-    if (customHeroBannerMedia && (heroBannerConfig.mediaUrl === '__STORED_HERO_MEDIA__' || !heroBannerConfig.mediaUrl)) {
+    // Luôn ưu tiên ảnh thật người dùng đã tải lên, tuyệt đối không dùng ảnh mẫu
+    if (customHeroBannerMedia && customHeroBannerMedia !== '__STORED_HERO_MEDIA__') {
       heroBannerConfig.mediaUrl = customHeroBannerMedia;
     }
 
     // Restore custom logo if stored in dedicated key
     const customLogo = localStorage.getItem('coffee2424_brand_logo_img');
-    let resolvedLogo = parsed.logo || DEFAULT_SITE_CONFIG.logo || '/images/logo.jpg';
-    if (customLogo && (resolvedLogo === '__STORED_LOGO__' || !resolvedLogo || resolvedLogo === '/images/logo.jpg')) {
-      resolvedLogo = customLogo;
-    }
+    let resolvedLogo = customLogo || parsed.logo || DEFAULT_SITE_CONFIG.logo || '/images/logo.jpg';
     updateDocumentFavicon(resolvedLogo);
 
     const orderOnlineConfig = {
@@ -1346,20 +1344,15 @@ export function saveSiteConfig(newConfig) {
     updateDocumentFavicon(brandLogo || '/images/logo.jpg');
     window.dispatchEvent(new Event('site-config-updated'));
 
-    // Đính kèm các danh sách độc lập (articles, jobs, branches) từ LocalStorage để bảo toàn 100% dữ liệu
+    // TÁCH BIỆT 100%: Dòng 'main' chỉ lưu các cài đặt chung của trang (Page Builder, Giới thiệu, Liên hệ...)
+    // Tuyệt đối không đính kèm articles, jobs, branches, promotions, heroBanner, logo để không bao giờ ghi đè chéo!
     const cloudPayload = { ...newConfig };
-    try {
-      const rawArt = localStorage.getItem('coffee2424_articles');
-      if (rawArt && !cloudPayload.articles) cloudPayload.articles = JSON.parse(rawArt);
-    } catch (_) {}
-    try {
-      const rawJobs = localStorage.getItem('coffee2424_jobs');
-      if (rawJobs && !cloudPayload.jobs) cloudPayload.jobs = JSON.parse(rawJobs);
-    } catch (_) {}
-    try {
-      const rawBranches = localStorage.getItem('coffee2424_branches');
-      if (rawBranches && !cloudPayload.branches) cloudPayload.branches = JSON.parse(rawBranches);
-    } catch (_) {}
+    delete cloudPayload.articles;
+    delete cloudPayload.jobs;
+    delete cloudPayload.branches;
+    delete cloudPayload.promotionsList;
+    delete cloudPayload.heroBanner16x9;
+    delete cloudPayload.logo;
 
     // Tự động đồng bộ lên Supabase Cloud để dữ liệu không bị mất khi reload
     saveCloudSiteConfig(cloudPayload).catch(err => {
@@ -1379,43 +1372,61 @@ export function saveSiteConfig(newConfig) {
  */
 export async function syncSiteConfigWithCloud(force = false) {
   try {
-    const [cloudConfig, cloudArticles, cloudPromos, cloudJobs, cloudBranches] = await Promise.all([
+    const [cloudConfig, cloudArticles, cloudPromos, cloudJobs, cloudBranches, cloudLogo, cloudHeroBanner] = await Promise.all([
       fetchCloudSiteConfig(),
       fetchCloudItem('articles'),
       fetchCloudItem('promotions'),
       fetchCloudItem('jobs'),
-      fetchCloudItem('branches')
+      fetchCloudItem('branches'),
+      fetchCloudItem('logo'),
+      fetchCloudItem('heroBanner')
     ]);
 
-    // 1. Đồng bộ độc lập BÀI VIẾT (Tách biệt 100%, ưu tiên row 'articles')
-    const finalArticles = (Array.isArray(cloudArticles) && cloudArticles.length > 0)
-      ? cloudArticles
-      : (Array.isArray(cloudConfig?.articles) && cloudConfig.articles.length > 0 ? cloudConfig.articles : null);
-    if (finalArticles) {
+    // 0. Đồng bộ độc lập ẢNH BÌA HERO (Tách biệt 100%, ưu tiên row 'heroBanner')
+    const finalHeroMedia = cloudHeroBanner?.mediaUrl || cloudConfig?.heroBanner16x9?.mediaUrl;
+    if (finalHeroMedia && finalHeroMedia !== '/images/hero_banner.jpg') {
       try {
-        localStorage.setItem('coffee2424_articles', JSON.stringify(finalArticles));
+        localStorage.setItem('coffee2424_hero_banner_media', finalHeroMedia);
+        if (cloudHeroBanner) {
+          localStorage.setItem('coffee2424_hero_banner', JSON.stringify(cloudHeroBanner));
+        }
+        window.dispatchEvent(new Event('hero-banner-updated'));
+      } catch (_) {}
+    }
+
+    // 0.1. Đồng bộ độc lập LOGO & THƯƠNG HIỆU (Tách biệt 100%, ưu tiên row 'logo')
+    const finalLogo = cloudLogo?.logo || cloudConfig?.logo;
+    if (finalLogo) {
+      try {
+        localStorage.setItem('coffee2424_brand_logo_img', finalLogo);
+        if (cloudLogo) {
+          localStorage.setItem('coffee2424_logo_config', JSON.stringify(cloudLogo));
+        }
+        updateDocumentFavicon(finalLogo);
+        window.dispatchEvent(new Event('logo-updated'));
+      } catch (_) {}
+    }
+
+    // 1. Đồng bộ độc lập BÀI VIẾT (Tách biệt 100%, CHỈ lấy từ row 'articles' độc lập)
+    if (Array.isArray(cloudArticles) && cloudArticles.length > 0) {
+      try {
+        localStorage.setItem('coffee2424_articles', JSON.stringify(cloudArticles));
         window.dispatchEvent(new Event('articles-updated'));
       } catch (_) {}
     }
 
-    // 2. Đồng bộ độc lập TUYỂN DỤNG (Tách biệt 100%, ưu tiên row 'jobs')
-    const finalJobs = (Array.isArray(cloudJobs) && cloudJobs.length > 0)
-      ? cloudJobs
-      : (Array.isArray(cloudConfig?.jobs) && cloudConfig.jobs.length > 0 ? cloudConfig.jobs : null);
-    if (finalJobs) {
+    // 2. Đồng bộ độc lập TUYỂN DỤNG (Tách biệt 100%, CHỈ lấy từ row 'jobs' độc lập)
+    if (Array.isArray(cloudJobs) && cloudJobs.length > 0) {
       try {
-        localStorage.setItem('coffee2424_jobs', JSON.stringify(finalJobs));
+        localStorage.setItem('coffee2424_jobs', JSON.stringify(cloudJobs));
         window.dispatchEvent(new Event('jobs-updated'));
       } catch (_) {}
     }
 
-    // 3. Đồng bộ độc lập CHI NHÁNH (Tách biệt 100%, ưu tiên row 'branches')
-    const finalBranches = (Array.isArray(cloudBranches) && cloudBranches.length > 0)
-      ? cloudBranches
-      : (Array.isArray(cloudConfig?.branches) && cloudConfig.branches.length > 0 ? cloudConfig.branches : null);
-    if (finalBranches) {
+    // 3. Đồng bộ độc lập CHI NHÁNH (Tách biệt 100%, CHỈ lấy từ row 'branches' độc lập)
+    if (Array.isArray(cloudBranches) && cloudBranches.length > 0) {
       try {
-        localStorage.setItem('coffee2424_branches', JSON.stringify(finalBranches));
+        localStorage.setItem('coffee2424_branches', JSON.stringify(cloudBranches));
         window.dispatchEvent(new Event('branches-updated'));
       } catch (_) {}
     }
@@ -1425,6 +1436,13 @@ export async function syncSiteConfigWithCloud(force = false) {
       const mergedConfig = { 
         ...currentConfig, 
         ...cloudConfig,
+        logo: finalLogo || cloudConfig.logo || currentConfig.logo,
+        favicon: finalLogo || cloudConfig.favicon || currentConfig.favicon,
+        heroBanner16x9: cloudHeroBanner || {
+          ...currentConfig.heroBanner16x9,
+          ...(cloudConfig.heroBanner16x9 || {}),
+          mediaUrl: finalHeroMedia || currentConfig.heroBanner16x9?.mediaUrl || ''
+        },
         promotionsList: (cloudPromos && Array.isArray(cloudPromos.promotionsList) && cloudPromos.promotionsList.length > 0)
           ? cloudPromos.promotionsList
           : (Array.isArray(cloudConfig.promotionsList) && cloudConfig.promotionsList.length > 0 ? cloudConfig.promotionsList : (currentConfig.promotionsList || DEFAULT_SITE_CONFIG.promotionsList)),

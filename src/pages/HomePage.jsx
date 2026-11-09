@@ -230,7 +230,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
     icon: Coffee,
     highlights: ['100% Robusta & Arabica Cầu Đất', 'Rang mộc nguyên chất'],
     story: 'Chúng tôi tuyển chọn 100% hạt Robusta Đắk Lắk và Arabica Cầu Đất thơm nồng nàn.',
-    image: '/images/hero_banner.jpg',
+    image: '/images/journey_espresso.jpg',
     ctaText: 'Xem Chi Tiết Món & Đặt Ngay',
     ctaLink: '/dathang'
   };
@@ -242,8 +242,10 @@ export default function HomePage({ navigate, onSelectBranch }) {
   const activeOffering = (ALL_STORY_OFFERINGS && ALL_STORY_OFFERINGS[safeOfferingIndex]) || fallbackOffering;
   const ActiveIcon = activeOffering?.icon || Coffee;
 
-  // 16:9 Hero Media detection (Image, GIF, Video)
-  const heroMedia = siteConfig.heroBanner16x9?.mediaUrl || siteConfig.heroSection?.items?.[0]?.image || '/images/hero_banner.jpg';
+  // 16:9 Hero Media detection (Image, GIF, Video) - Xóa bỏ toàn bộ ảnh mẫu fallback, ưu tiên ảnh thật của người dùng
+  const heroMedia = siteConfig.heroBanner16x9?.mediaUrl || 
+                    (typeof window !== 'undefined' ? localStorage.getItem('coffee2424_hero_banner_media') : '') || 
+                    '';
   const isHeroVideo = (() => {
     if (siteConfig.heroBanner16x9?.type === 'video') return true;
     if (!heroMedia || typeof heroMedia !== 'string') return false;
@@ -437,7 +439,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                   }}
                   className={`relative w-full ${mobileAspectClass} md:h-auto md:min-h-0 md:aspect-[16/9] overflow-hidden bg-stone-900 group cursor-pointer shadow-[0_20px_60px_rgba(43,23,14,0.18)]`}
                 >
-                  {isHeroVideo ? (
+                  {isHeroVideo && heroMedia ? (
                     <video
                       src={heroMedia}
                       autoPlay
@@ -447,7 +449,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                       style={heroFilterStyle}
                       className={`w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ${isFixedBg ? 'fixed top-0 left-0 w-full h-full pointer-events-none -z-10 object-cover object-center' : ''}`}
                     />
-                  ) : isFixedBg ? (
+                  ) : isFixedBg && heroMedia ? (
                     <div 
                       role="img"
                       aria-label={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
@@ -461,7 +463,7 @@ export default function HomePage({ navigate, onSelectBranch }) {
                       }}
                       className="w-full h-full group-hover:scale-102 transition-transform duration-700"
                     />
-                  ) : (
+                  ) : heroMedia ? (
                     <img 
                       src={heroMedia} 
                       alt={siteConfig.heroBanner16x9?.alt || 'COFFEE 24/24'}
@@ -471,6 +473,13 @@ export default function HomePage({ navigate, onSelectBranch }) {
                       style={heroFilterStyle}
                       className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700" 
                     />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#1c120c] via-[#241710] to-[#140b07] flex items-center justify-center">
+                      <div className="text-center p-6 text-stone-500">
+                        <div className="w-8 h-8 mx-auto mb-2 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
+                        <span className="text-xs font-semibold tracking-wider uppercase text-amber-500/60">COFFEE 24/24</span>
+                      </div>
+                    </div>
                   )}
 
                   {/* Dark Overlay Tint if configured */}
@@ -1232,6 +1241,8 @@ export default function HomePage({ navigate, onSelectBranch }) {
                   key={activeOffering.id}
                   src={activeOffering.image} 
                   alt={activeOffering.title} 
+                  loading="lazy"
+                  decoding="async" 
                   className="w-full h-full aspect-square object-cover transition-all duration-700 ease-out transform group-hover:scale-105 animate-in fade-in zoom-in-95"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />

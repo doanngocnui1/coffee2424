@@ -37,7 +37,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { DEFAULT_SITE_CONFIG } from '../../data/siteConfig';
-import { uploadImageToSupabase } from '../../lib/supabase';
+import { uploadImageToSupabase, saveCloudItem } from '../../lib/supabase';
 import { 
   FONT_FAMILIES, 
   SHADOW_PRESETS, 
@@ -544,13 +544,26 @@ export default function AdminHeroSlideManager({ config, onSaveConfig, triggerAle
       layers
     };
 
+    // TÁCH BIỆT 100%: Chỉ lưu / ghi đè dòng 'heroBanner' trên Supabase Cloud
+    // Tuyệt đối không chạm đến logo, khuyến mãi hay bài viết!
+    try {
+      saveCloudItem('heroBanner', updatedBanner);
+      if (mediaUrl) {
+        localStorage.setItem('coffee2424_hero_banner_media', mediaUrl);
+      }
+      localStorage.setItem('coffee2424_hero_banner', JSON.stringify(updatedBanner));
+      window.dispatchEvent(new Event('hero-banner-updated'));
+    } catch (err) {
+      console.warn('Lỗi lưu hero banner lên Cloud:', err);
+    }
+
     const newConfig = {
       ...config,
       heroBanner16x9: updatedBanner
     };
 
     onSaveConfig(newConfig);
-    triggerAlert('✓ ĐÃ LƯU THIẾT KẾ BANNER TRANG CHỦ THÀNH CÔNG! Cài đặt độ tối ảnh nền, cố định ảnh nền và các lớp chữ/sticker đã được cập nhật trực tiếp trên trang chủ.');
+    triggerAlert('✓ ĐÃ LƯU ĐỘC LẬP ẢNH BÌA HERO LÊN CLOUD (id: heroBanner)! Không ảnh hưởng đến các mục khác.');
   };
 
   // Reset to default

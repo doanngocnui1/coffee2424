@@ -21,7 +21,7 @@ import {
   ShoppingBag,
   ArrowUpRight
 } from 'lucide-react';
-import { uploadImageToSupabase, isSupabaseConfigured } from '../../lib/supabase';
+import { uploadImageToSupabase, isSupabaseConfigured, saveCloudItem } from '../../lib/supabase';
 import { updateDocumentFavicon } from '../../data/siteConfig';
 
 export default function AdminSystemSettingsManager({ config, onSaveConfig, triggerAlert }) {
@@ -116,11 +116,10 @@ export default function AdminSystemSettingsManager({ config, onSaveConfig, trigg
   };
 
   // Lưu toàn bộ cài đặt hệ thống & logo
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e?.preventDefault();
 
-    const updatedConfig = {
-      ...config,
+    const logoData = {
       logo: logo || '/images/logo.jpg',
       favicon: logo || '/images/logo.jpg',
       brandName: brandName.trim() || 'COFFEE 24/24',
@@ -130,12 +129,27 @@ export default function AdminSystemSettingsManager({ config, onSaveConfig, trigg
       announcementBar
     };
 
+    // 1. TÁCH BIỆT 100%: Chỉ lưu / ghi đè duy nhất vào dòng 'logo' trên Supabase Cloud
+    // Tuyệt đối không chạm đến khuyến mãi, banner, bài viết hay món mới!
+    try {
+      await saveCloudItem('logo', logoData);
+      localStorage.setItem('coffee2424_logo_config', JSON.stringify(logoData));
+      window.dispatchEvent(new Event('logo-updated'));
+    } catch (err) {
+      console.warn('Lỗi lưu logo lên Cloud:', err);
+    }
+
+    const updatedConfig = {
+      ...config,
+      ...logoData
+    };
+
     if (typeof onSaveConfig === 'function') {
       onSaveConfig(updatedConfig);
     }
 
     updateDocumentFavicon(logo || '/images/logo.jpg');
-    triggerAlert?.('✓ Đã lưu logo và cài đặt hệ thống thành công! Toàn bộ website đã được đồng bộ.');
+    triggerAlert?.('✓ ĐÃ LƯU ĐỘC LẬP LOGO & THƯƠNG HIỆU LÊN CLOUD (id: logo)! Tuyệt đối không ảnh hưởng đến các mục khác.');
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
