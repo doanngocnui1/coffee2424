@@ -73,7 +73,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import SocialFollowSection, { BrandIcons } from '../components/SocialFollowSection';
-import { INITIAL_ARTICLES, getArticles, saveArticles } from '../data/articles';
+import { INITIAL_ARTICLES, getArticles, saveArticles, deleteArticle, syncArticlesWithCloud } from '../data/articles';
 import { getBranches, saveBranches } from '../data/branches';
 import { 
   getSiteConfig, 
@@ -497,11 +497,10 @@ export default function AdminPage({ navigate }) {
   };
 
   const handleDeleteArticle = async (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa bài viết này không?')) {
-      const updated = articles.filter(a => a.id !== id);
-      setArticles(updated);
-      await saveArticles(updated);
-      triggerAlert('Đã xóa bài viết và cập nhật Supabase Cloud.');
+    if (window.confirm('Bạn có chắc muốn xóa bài viết này không? Bài viết sẽ bị xóa vĩnh viễn và không bao giờ xuất hiện lại.')) {
+      await deleteArticle(id);
+      setArticles(getArticles());
+      triggerAlert('✓ Đã xóa vĩnh viễn bài viết và cập nhật Supabase Cloud.');
     }
   };
 

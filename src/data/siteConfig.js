@@ -309,7 +309,7 @@ export const DEFAULT_SITE_CONFIG = {
       showVoucherCode: false,
       showCopyBtn: false,
       showCtaBtn: false,
-      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792768754241_q8nvw83.png',
+      image: '/images/promos/promo_loyalty.webp',
       description: 'UỐNG CÀ PHÊ MỖI NGÀY – TÍCH ĐIỂM NGAY, NHẬN ƯU ĐÃI ĐẾN 15%!\nDành riêng cho những tín đồ cà phê và khách hàng thân thiết của Coffee 2424, chương trình Tích Điểm Hội Viên đã chính thức khởi động trở lại! Mỗi ly nước bạn thưởng thức đều mang về những điểm số tích lũy để đổi lấy đặc quyền giảm giá cực sốc trên toàn hệ thống.\n\n🎁 BẢNG ĐẶC QUYỀN HỘI VIÊN COFFEE 24/24\nChỉ cần tích lũy đủ điểm, bạn sẽ nhận được mức giảm giá trực tiếp trên tổng hóa đơn cho những lần ghé thăm tiếp theo:\n\nMốc 300 Điểm: Giảm ngay 5% trên tổng hóa đơn.\n\nMốc 600 Điểm: Giảm ngay 10% trên tổng hóa đơn.\n\nMốc 900 Điểm: Giảm tối đa 15% trên tổng hóa đơn.\n\n📲 CÁCH THỨC TÍCH ĐIỂM CỰC KỲ ĐƠN GIẢN\nKhông cần cài đặt ứng dụng phức tạp, không lo quên mang thẻ cứng! Bạn chỉ cần đọc SĐT trước khi thanh toán.\n\n👉 Ghé ngay chi nhánh Coffee 2424 gần nhất để bắt đầu tích điểm hội viên ngay hôm nay!',
       condition: 'Áp dụng tất cả chi nhánh',
       cta: 'Xem Chi Tiết',
@@ -331,7 +331,7 @@ export const DEFAULT_SITE_CONFIG = {
       showVoucherCode: false,
       showCopyBtn: false,
       showCtaBtn: false,
-      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406318618_erer5hh.png',
+      image: '/images/promos/promo_member.webp',
       description: 'Nạp năng lượng giờ vàng cùng ưu đãi đồng giá 25K cho Cà Phê Mộc, Cà phê sữa đá pha phin thơm nồng đặc trưng 24/24.',
       condition: 'Áp dụng trên toàn hệ thống 2 chi nhánh 413PHI & 96D5 hoặc đặt món online.',
       cta: 'Đặt Món Ngay',
@@ -353,7 +353,7 @@ export const DEFAULT_SITE_CONFIG = {
       showVoucherCode: false,
       showCopyBtn: false,
       showCtaBtn: false,
-      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406324015_rce3jj8.png',
+      image: '/images/promos/promo_night_combo.webp',
       description: 'Tiếp sức chạy deadline & học nhóm xuyên đêm với combo cà phê đậm đà + mỳ ly ấm bụng phục vụ 24/7.',
       condition: 'Dành riêng cho khách ngồi học bài, làm việc xuyên đêm hoặc giao hàng đêm.',
       cta: 'Xem Chi Tiết',
@@ -375,7 +375,7 @@ export const DEFAULT_SITE_CONFIG = {
       showVoucherCode: false,
       showCopyBtn: false,
       showCtaBtn: false,
-      image: 'https://ilyxybkcndjcnzrtjjiq.supabase.co/storage/v1/object/public/coffee2424-media/promos/1792406330432_gtr3gbp.png',
+      image: '/images/promos/promo_summer.webp',
       description: 'Bữa ăn sáng nóng hổi kèm ly cà phê sữa phin thơm ngậy, sẵn sàng năng lượng cho ngày mới.',
       condition: 'Phục vụ nóng hổi tại chỗ 24/24 tại 413 Phan Huy Ích và 96 D5.',
       cta: 'Xem Chi Tiết',
@@ -1408,17 +1408,43 @@ export async function syncSiteConfigWithCloud(force = false) {
     }
 
     // 1. Đồng bộ độc lập BÀI VIẾT (Tách biệt 100%, CHỈ lấy từ row 'articles' độc lập)
-    if (Array.isArray(cloudArticles) && cloudArticles.length > 0) {
+    if (cloudArticles) {
       try {
-        localStorage.setItem('coffee2424_articles', JSON.stringify(cloudArticles));
+        let incomingList = [];
+        const localDeleted = new Set(JSON.parse(localStorage.getItem('coffee2424_deleted_articles') || '[]'));
+        if (Array.isArray(cloudArticles)) {
+          incomingList = cloudArticles;
+        } else if (Array.isArray(cloudArticles.list)) {
+          incomingList = cloudArticles.list;
+          if (Array.isArray(cloudArticles.deletedIds)) {
+            cloudArticles.deletedIds.forEach(id => localDeleted.add(String(id)));
+            localStorage.setItem('coffee2424_deleted_articles', JSON.stringify(Array.from(localDeleted)));
+          }
+        }
+        const filtered = incomingList.filter(a => a && !localDeleted.has(String(a.id)));
+        localStorage.setItem('coffee2424_articles', JSON.stringify(filtered));
+        localStorage.setItem('coffee2424_articles_synced', 'true');
         window.dispatchEvent(new Event('articles-updated'));
       } catch (_) {}
     }
 
     // 2. Đồng bộ độc lập TUYỂN DỤNG (Tách biệt 100%, CHỈ lấy từ row 'jobs' độc lập)
-    if (Array.isArray(cloudJobs) && cloudJobs.length > 0) {
+    if (cloudJobs) {
       try {
-        localStorage.setItem('coffee2424_jobs', JSON.stringify(cloudJobs));
+        let incomingList = [];
+        const localDeleted = new Set(JSON.parse(localStorage.getItem('coffee2424_deleted_jobs') || '[]'));
+        if (Array.isArray(cloudJobs)) {
+          incomingList = cloudJobs;
+        } else if (Array.isArray(cloudJobs.list)) {
+          incomingList = cloudJobs.list;
+          if (Array.isArray(cloudJobs.deletedIds)) {
+            cloudJobs.deletedIds.forEach(id => localDeleted.add(String(id)));
+            localStorage.setItem('coffee2424_deleted_jobs', JSON.stringify(Array.from(localDeleted)));
+          }
+        }
+        const filtered = incomingList.filter(j => j && !localDeleted.has(String(j.id)));
+        localStorage.setItem('coffee2424_jobs', JSON.stringify(filtered));
+        localStorage.setItem('coffee2424_jobs_synced', 'true');
         window.dispatchEvent(new Event('jobs-updated'));
       } catch (_) {}
     }

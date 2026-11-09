@@ -95,9 +95,23 @@ export default function App() {
       }
 
       // 1. Nếu thay đổi riêng BÀI VIẾT (rowId: 'articles')
-      if (rowId === 'articles' && Array.isArray(newCloudData)) {
+      if (rowId === 'articles' && newCloudData) {
         try {
-          localStorage.setItem('coffee2424_articles', JSON.stringify(newCloudData));
+          let incomingList = [];
+          if (Array.isArray(newCloudData)) {
+            incomingList = newCloudData;
+          } else if (Array.isArray(newCloudData.list)) {
+            incomingList = newCloudData.list;
+            if (Array.isArray(newCloudData.deletedIds)) {
+              const currentDeleted = new Set(JSON.parse(localStorage.getItem('coffee2424_deleted_articles') || '[]'));
+              newCloudData.deletedIds.forEach(id => currentDeleted.add(String(id)));
+              localStorage.setItem('coffee2424_deleted_articles', JSON.stringify(Array.from(currentDeleted)));
+            }
+          }
+          const deletedIds = new Set(JSON.parse(localStorage.getItem('coffee2424_deleted_articles') || '[]'));
+          const clean = incomingList.filter(a => a && !deletedIds.has(String(a.id)));
+          localStorage.setItem('coffee2424_articles', JSON.stringify(clean));
+          localStorage.setItem('coffee2424_articles_synced', 'true');
           window.dispatchEvent(new Event('articles-updated'));
         } catch (_) {}
         return;
@@ -119,9 +133,23 @@ export default function App() {
       }
 
       // 3. Nếu thay đổi riêng TUYỂN DỤNG (rowId: 'jobs')
-      if (rowId === 'jobs' && Array.isArray(newCloudData)) {
+      if (rowId === 'jobs' && newCloudData) {
         try {
-          localStorage.setItem('coffee2424_jobs', JSON.stringify(newCloudData));
+          let incomingList = [];
+          if (Array.isArray(newCloudData)) {
+            incomingList = newCloudData;
+          } else if (Array.isArray(newCloudData.list)) {
+            incomingList = newCloudData.list;
+            if (Array.isArray(newCloudData.deletedIds)) {
+              const currentDeleted = new Set(JSON.parse(localStorage.getItem('coffee2424_deleted_jobs') || '[]'));
+              newCloudData.deletedIds.forEach(id => currentDeleted.add(String(id)));
+              localStorage.setItem('coffee2424_deleted_jobs', JSON.stringify(Array.from(currentDeleted)));
+            }
+          }
+          const deletedIds = new Set(JSON.parse(localStorage.getItem('coffee2424_deleted_jobs') || '[]'));
+          const clean = incomingList.filter(j => j && !deletedIds.has(String(j.id)));
+          localStorage.setItem('coffee2424_jobs', JSON.stringify(clean));
+          localStorage.setItem('coffee2424_jobs_synced', 'true');
           window.dispatchEvent(new Event('jobs-updated'));
         } catch (_) {}
         return;

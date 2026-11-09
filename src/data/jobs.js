@@ -257,33 +257,73 @@ export const JOBS = DEFAULT_JOBS;
 
 import { saveCloudItem, fetchCloudItem } from '../lib/supabase.js';
 
-export function getJobs() {
+const DELETED_JOBS_KEY = 'coffee2424_deleted_jobs';
+const SYNCED_JOBS_KEY = 'coffee2424_jobs_synced';
+const STORAGE_JOBS_KEY = 'coffee2424_jobs';
+
+export function getDeletedJobIds() {
   try {
-    const saved = localStorage.getItem('coffee2424_jobs');
-    if (saved) {
+    const raw = localStorage.getItem(DELETED_JOBS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr.map(String));
+    }
+  } catch (_) {}
+  return new Set();
+}
+
+export function recordDeletedJobId(id) {
+  if (!id) return;
+  try {
+    const current = getDeletedJobIds();
+    current.add(String(id));
+    localStorage.setItem(DELETED_JOBS_KEY, JSON.stringify(Array.from(current)));
+  } catch (_) {}
+}
+
+export function getJobs() {
+  const deletedIds = getDeletedJobIds();
+  try {
+    const saved = localStorage.getItem(STORAGE_JOBS_KEY);
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        // Lọc sạch 100% các tin tuyển dụng đã bị xóa, tuyệt đối không cho phép tồn tại
+        return parsed.filter(j => j && !deletedIds.has(String(j.id)));
       }
+    }
+    if (localStorage.getItem(SYNCED_JOBS_KEY) === 'true') {
+      return [];
     }
   } catch (e) {
     console.error('Error reading jobs:', e);
   }
-  return DEFAULT_JOBS;
+  return DEFAULT_JOBS.filter(j => j && !deletedIds.has(String(j.id)));
 }
 
 /**
  * TÁCH BIỆT 100%: Chỉ lưu / ghi đè danh sách tuyển dụng vào dòng 'jobs' trên Supabase Cloud
- * Tuyệt đối không đụng đến bài viết, khuyến mãi hay giao diện!
+ * Đảm bảo: Tin mới up lên KHÔNG BAO GIỜ MẤT, tin cũ đã xóa KHÔNG BAO GIỜ TỒN TẠI
  */
 export async function saveJobs(jobsList) {
   try {
-    localStorage.setItem('coffee2424_jobs', JSON.stringify(jobsList));
+    const deletedIds = getDeletedJobIds();
+    const cleanList = Array.isArray(jobsList)
+      ? jobsList.filter(j => j && !deletedIds.has(String(j.id)))
+      : [];
+
+    localStorage.setItem(STORAGE_JOBS_KEY, JSON.stringify(cleanList));
+    localStorage.setItem(SYNCED_JOBS_KEY, 'true');
     window.dispatchEvent(new Event('jobs-updated'));
 
     if (typeof window !== 'undefined') {
       try {
-        const res = await saveCloudItem('jobs', jobsList);
+        const payload = {
+          list: cleanList,
+          deletedIds: Array.from(deletedIds),
+          updatedAt: new Date().toISOString()
+        };
+        const res = await saveCloudItem('jobs', payload);
         if (res?.success) {
           console.info('✓ Đã lưu độc lập tuyển dụng lên Supabase Cloud (id: jobs)!');
         }
@@ -300,15 +340,54 @@ export async function saveJobs(jobsList) {
 }
 
 /**
- * Đồng bộ riêng tuyển dụng từ dòng 'jobs'
+ * Đồng bộ riêng tuyển dụng từ dòng 'jobs' trên Supabase Cloud
  */
 export async function syncJobsWithCloud() {
   try {
-    const cloudJobs = await fetchCloudItem('jobs');
-    if (Array.isArray(cloudJobs) && cloudJobs.length > 0) {
-      localStorage.setItem('coffee2424_jobs', JSON.stringify(cloudJobs));
+    const cloudData = await fetchCloudItem('jobs');
+    const localDeleted = getDeletedJobIds();
+
+    if (cloudData) {
+      let incomingList = [];
+      if (Array.isArray(cloudData)) {
+        incomingList = cloudData;
+      } else if (cloudData && typeof cloudData === 'object' && Array.isArray(cloudData.list)) {
+        incomingList = cloudData.list;
+        if (Array.isArray(cloudData.deletedIds)) {
+          cloudData.deletedIds.forEach(id => localDeleted.add(String(id)));
+          localStorage.setItem(DELETED_JOBS_KEY, JSON.stringify(Array.from(localDeleted)));
+        }
+      }
+
+      // Lọc sạch 100% các tin nằm trong danh sách đã xóa
+      const filteredList = incomingList.filter(j => j && !localDeleted.has(String(j.id)));
+
+      // Smart Merge: Giữ lại tin tuyển dụng local mới chưa có trên Cloud
+      const localJobs = getJobs();
+      const incomingIds = new Set(filteredList.map(j => String(j.id)));
+      const unsavedLocalJobs = localJobs.filter(local =>
+        local &&
+        !incomingIds.has(String(local.id)) &&
+        !localDeleted.has(String(local.id))
+      );
+
+      const mergedList = [...unsavedLocalJobs, ...filteredList];
+
+      localStorage.setItem(STORAGE_JOBS_KEY, JSON.stringify(mergedList));
+      localStorage.setItem(SYNCED_JOBS_KEY, 'true');
       window.dispatchEvent(new Event('jobs-updated'));
-      return cloudJobs;
+
+      if (unsavedLocalJobs.length > 0) {
+        saveJobs(mergedList).catch(() => {});
+      }
+
+      return mergedList;
+    } else {
+      // Supabase chưa có dòng 'jobs': Khởi tạo ngay dòng 'jobs' từ danh sách hiện tại
+      const current = getJobs();
+      if (current.length > 0) {
+        saveJobs(current).catch(() => {});
+      }
     }
   } catch (err) {
     console.warn('Lỗi đồng bộ tuyển dụng từ Supabase:', err);
@@ -362,8 +441,10 @@ export function updateJob(id, jobData) {
 }
 
 export function deleteJob(id) {
+  if (!id) return false;
+  recordDeletedJobId(id);
   const current = getJobs();
-  const filtered = current.filter(j => j.id !== id);
+  const filtered = current.filter(j => String(j.id) !== String(id));
   saveJobs(filtered);
   return true;
 }

@@ -230,34 +230,77 @@ export const ARTICLES = INITIAL_ARTICLES;
 
 import { saveCloudItem, fetchCloudItem } from '../lib/supabase.js';
 
-export function getArticles() {
+const DELETED_KEY = 'coffee2424_deleted_articles';
+const SYNCED_KEY = 'coffee2424_articles_synced';
+const STORAGE_KEY = 'coffee2424_articles';
+
+export function getDeletedArticleIds() {
   try {
-    const saved = localStorage.getItem('coffee2424_articles');
-    if (saved) {
+    const raw = localStorage.getItem(DELETED_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr.map(String));
+    }
+  } catch (_) {}
+  return new Set();
+}
+
+export function recordDeletedArticleId(id) {
+  if (!id) return;
+  try {
+    const current = getDeletedArticleIds();
+    current.add(String(id));
+    localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(current)));
+  } catch (_) {}
+}
+
+export function getArticles() {
+  const deletedIds = getDeletedArticleIds();
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        // Lọc sạch 100% các bài viết đã bị xóa, tuyệt đối không cho phép tồn tại
+        return parsed.filter(a => a && !deletedIds.has(String(a.id)));
       }
+    }
+    // Nếu đã từng sync với Cloud mà local rỗng thì tôn trọng trạng thái rỗng
+    if (localStorage.getItem(SYNCED_KEY) === 'true') {
+      return [];
     }
   } catch (e) {
     console.error('Error reading articles:', e);
   }
-  return INITIAL_ARTICLES;
+  // Fallback lần đầu tiên mở app khi chưa có mạng, lọc qua danh sách đã xóa
+  return INITIAL_ARTICLES.filter(a => a && !deletedIds.has(String(a.id)));
 }
 
 /**
  * TÁCH BIỆT 100%: Chỉ lưu / ghi đè danh sách bài viết vào dòng 'articles' trên Supabase Cloud
- * Tuyệt đối không đụng đến khuyến mãi, banner hay các mục khác!
+ * Đảm bảo: Bài viết mới up lên KHÔNG BAO GIỜ MẤT, bài cũ đã xóa KHÔNG BAO GIỜ TỒN TẠI
  */
 export async function saveArticles(articlesList) {
   try {
-    localStorage.setItem('coffee2424_articles', JSON.stringify(articlesList));
+    const deletedIds = getDeletedArticleIds();
+    // Lọc sạch các bài có ID đã bị xóa
+    const cleanList = Array.isArray(articlesList) 
+      ? articlesList.filter(a => a && !deletedIds.has(String(a.id)))
+      : [];
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanList));
+    localStorage.setItem(SYNCED_KEY, 'true');
     window.dispatchEvent(new Event('articles-updated'));
 
-    // Chỉ đẩy riêng danh sách bài viết lên Supabase dòng 'articles'
+    // Đẩy độc lập lên Supabase dòng 'articles'
     if (typeof window !== 'undefined') {
       try {
-        const res = await saveCloudItem('articles', articlesList);
+        const payload = {
+          list: cleanList,
+          deletedIds: Array.from(deletedIds),
+          updatedAt: new Date().toISOString()
+        };
+        const res = await saveCloudItem('articles', payload);
         if (res?.success) {
           console.info('✓ Đã lưu độc lập bài viết lên Supabase Cloud (id: articles)!');
         }
@@ -274,15 +317,69 @@ export async function saveArticles(articlesList) {
 }
 
 /**
+ * Xóa vĩnh viễn 1 bài viết theo ID
+ * Đưa ID vào danh sách cấm vĩnh viễn và đồng bộ ngay lập tức lên Cloud
+ */
+export async function deleteArticle(id) {
+  if (!id) return false;
+  recordDeletedArticleId(id);
+  const current = getArticles();
+  const updated = current.filter(a => String(a.id) !== String(id));
+  return await saveArticles(updated);
+}
+
+/**
  * Đồng bộ riêng danh sách bài viết từ Supabase Cloud dòng 'articles'
  */
 export async function syncArticlesWithCloud() {
   try {
-    const cloudArticles = await fetchCloudItem('articles');
-    if (Array.isArray(cloudArticles) && cloudArticles.length > 0) {
-      localStorage.setItem('coffee2424_articles', JSON.stringify(cloudArticles));
+    const cloudData = await fetchCloudItem('articles');
+    const localDeleted = getDeletedArticleIds();
+
+    if (cloudData) {
+      let incomingList = [];
+      if (Array.isArray(cloudData)) {
+        incomingList = cloudData;
+      } else if (cloudData && typeof cloudData === 'object' && Array.isArray(cloudData.list)) {
+        incomingList = cloudData.list;
+        if (Array.isArray(cloudData.deletedIds)) {
+          cloudData.deletedIds.forEach(id => localDeleted.add(String(id)));
+          localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(localDeleted)));
+        }
+      }
+
+      // Lọc sạch 100% các bài viết nằm trong danh sách đã xóa
+      const filteredList = incomingList.filter(a => a && !localDeleted.has(String(a.id)));
+
+      // HỢP NHẤT AN TOÀN (Smart Merge): Nếu máy hiện tại đang có bài viết mới chưa có trên cloud
+      // thì bảo toàn bài viết đó, không để cloud đè mất
+      const localArticles = getArticles();
+      const incomingIds = new Set(filteredList.map(a => String(a.id)));
+      const unsavedLocalPosts = localArticles.filter(local => 
+        local && 
+        !incomingIds.has(String(local.id)) && 
+        !localDeleted.has(String(local.id)) &&
+        typeof local.id === 'number' && local.id > 1700000000000 // bài tạo mới dạng Date.now()
+      );
+
+      const mergedList = [...unsavedLocalPosts, ...filteredList];
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedList));
+      localStorage.setItem(SYNCED_KEY, 'true');
       window.dispatchEvent(new Event('articles-updated'));
-      return cloudArticles;
+
+      // Nếu có bài viết local mới cần đẩy ngược lên để cập nhật Cloud
+      if (unsavedLocalPosts.length > 0) {
+        saveArticles(mergedList).catch(() => {});
+      }
+
+      return mergedList;
+    } else {
+      // Supabase chưa có dòng 'articles': Khởi tạo ngay dòng 'articles' từ bài viết hiện tại
+      const current = getArticles();
+      if (current.length > 0) {
+        saveArticles(current).catch(() => {});
+      }
     }
   } catch (err) {
     console.warn('Lỗi đồng bộ bài viết từ Supabase:', err);
