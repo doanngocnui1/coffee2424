@@ -20,7 +20,7 @@ import {
   ChevronRight,
   Filter
 } from 'lucide-react';
-import { INITIAL_ARTICLES, getArticles } from '../data/articles';
+import { INITIAL_ARTICLES, getArticles, syncArticlesWithCloud } from '../data/articles';
 
 export default function BlogPage({ navigate }) {
   const [articles, setArticles] = useState(getArticles);
@@ -39,6 +39,11 @@ export default function BlogPage({ navigate }) {
 
   // Lắng nghe sự kiện cập nhật bài viết từ Admin CMS & Supabase Cloud
   useEffect(() => {
+    // Tự động kéo bài viết mới nhất từ Cloud khi vào trang Blog
+    syncArticlesWithCloud().then(cloudList => {
+      if (cloudList) setArticles(cloudList);
+    }).catch(() => {});
+
     const handleArticlesUpdate = () => {
       setArticles(getArticles());
     };

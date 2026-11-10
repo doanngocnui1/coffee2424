@@ -33,7 +33,7 @@ import {
   LayoutGrid,
   List
 } from 'lucide-react';
-import { getJobs } from '../data/jobs';
+import { getJobs, syncJobsWithCloud } from '../data/jobs';
 import { getBranches } from '../data/branches';
 import { getSiteConfig } from '../data/siteConfig';
 import { sendApplicationToGoogle } from '../data/candidates';
@@ -63,6 +63,9 @@ export default function CareersPage({ navigate }) {
 
   useEffect(() => {
     setMounted(true);
+    // Tự động kéo dữ liệu tuyển dụng mới nhất từ Cloud
+    syncJobsWithCloud().then(res => { if (res) setJobs(res); }).catch(() => {});
+
     const handleJobsUpdate = () => setJobs(getJobs());
     const handleConfigUpdate = () => setSiteConfig(getSiteConfig());
     window.addEventListener('jobs-updated', handleJobsUpdate);

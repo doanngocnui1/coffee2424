@@ -351,25 +351,51 @@ export async function syncArticlesWithCloud() {
       // Lọc sạch 100% các bài viết nằm trong danh sách đã xóa
       const filteredList = incomingList.filter(a => a && !localDeleted.has(String(a.id)));
 
-      // HỢP NHẤT AN TOÀN (Smart Merge): Nếu máy hiện tại đang có bài viết mới chưa có trên cloud
-      // thì bảo toàn bài viết đó, không để cloud đè mất
+      // HỢP NHẤT THÔNG MINH THEO TIMESTAMP:
+      // So sánh từng bài viết giữa Local và Cloud theo updatedAt:
+      // Bản nào mới hơn (updatedAt lớn hơn) THÌ PHẢI ĐƯỢC GIỮ LẠI, tuyệt đối không để bản cũ đè bản mới!
       const localArticles = getArticles();
-      const incomingIds = new Set(filteredList.map(a => String(a.id)));
-      const unsavedLocalPosts = localArticles.filter(local => 
-        local && 
-        !incomingIds.has(String(local.id)) && 
-        !localDeleted.has(String(local.id)) &&
-        typeof local.id === 'number' && local.id > 1700000000000 // bài tạo mới dạng Date.now()
-      );
+      const mergedMap = new Map();
+      let hasLocalNewer = false;
 
-      const mergedList = [...unsavedLocalPosts, ...filteredList];
+      // 1. Đưa các bài từ Cloud vào Map trước
+      filteredList.forEach(cloudArt => {
+        if (cloudArt && cloudArt.id) {
+          mergedMap.set(String(cloudArt.id), cloudArt);
+        }
+      });
+
+      // 2. Đối chiếu với Local:
+      localArticles.forEach(localArt => {
+        if (!localArt || !localArt.id) return;
+        const idStr = String(localArt.id);
+        if (localDeleted.has(idStr)) return;
+
+        const cloudArt = mergedMap.get(idStr);
+        if (!cloudArt) {
+          // Bài viết mới tạo trên local chưa có trên cloud -> Giữ lại!
+          mergedMap.set(idStr, localArt);
+          hasLocalNewer = true;
+        } else {
+          // Cả 2 cùng có bài viết này: So sánh thời điểm cập nhật
+          const localTime = Number(localArt.updatedAt) || 0;
+          const cloudTime = Number(cloudArt.updatedAt) || 0;
+          if (localTime > cloudTime) {
+            // Local vừa mới sửa xong (mới hơn cloud) -> GIỮ BẢN SỬA LOCAL!
+            mergedMap.set(idStr, localArt);
+            hasLocalNewer = true;
+          }
+        }
+      });
+
+      const mergedList = Array.from(mergedMap.values());
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedList));
       localStorage.setItem(SYNCED_KEY, 'true');
       window.dispatchEvent(new Event('articles-updated'));
 
-      // Nếu có bài viết local mới cần đẩy ngược lên để cập nhật Cloud
-      if (unsavedLocalPosts.length > 0) {
+      // Nếu local có bản sửa mới hơn bản cloud -> Tự động đẩy ngay lên Cloud để Cloud đồng bộ!
+      if (hasLocalNewer) {
         saveArticles(mergedList).catch(() => {});
       }
 

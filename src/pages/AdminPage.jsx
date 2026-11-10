@@ -424,8 +424,8 @@ export default function AdminPage({ navigate }) {
 
   // Save articles helper
   const handleSaveArticle = async (e) => {
-    e.preventDefault();
-    if (!editingArticle.title || !editingArticle.title.trim()) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editingArticle || !editingArticle.title || !editingArticle.title.trim()) {
       alert('Vui lòng nhập tiêu đề bài viết!');
       return;
     }
@@ -440,11 +440,12 @@ export default function AdminPage({ navigate }) {
       .replace(/\s+/g, "-");
 
     const finalSlug = (editingArticle.slug && editingArticle.slug.trim()) ? editingArticle.slug.trim() : autoSlug;
+    const nowTime = Date.now();
 
     if (isNewPost) {
       const newPost = {
         ...editingArticle,
-        id: Date.now(),
+        id: nowTime,
         slug: finalSlug,
         date: editingArticle.date || nowStr,
         views: editingArticle.views || 0,
@@ -452,43 +453,56 @@ export default function AdminPage({ navigate }) {
         featured: Boolean(editingArticle.featured),
         author: editingArticle.author || 'Admin Coffee 24/24',
         readTime: editingArticle.readTime || '5 phút đọc',
-        coverImage: editingArticle.coverImage || '/images/blog_workspace.jpg'
+        coverImage: editingArticle.coverImage || '/images/blog_workspace.jpg',
+        updatedAt: nowTime
       };
       updated = [newPost, ...articles];
     } else {
-      updated = articles.map(a => a.id === editingArticle.id ? {
-        ...a,
-        ...editingArticle,
-        slug: finalSlug,
-        active: editingArticle.active !== false,
-        featured: Boolean(editingArticle.featured)
-      } : a);
+      const targetIdStr = String(editingArticle.id);
+      const idx = articles.findIndex(a => String(a.id) === targetIdStr);
+      if (idx !== -1) {
+        updated = [...articles];
+        updated[idx] = {
+          ...articles[idx],
+          ...editingArticle,
+          id: articles[idx].id,
+          slug: finalSlug,
+          active: editingArticle.active !== false,
+          featured: Boolean(editingArticle.featured),
+          updatedAt: nowTime
+        };
+      } else {
+        updated = [{ ...editingArticle, updatedAt: nowTime }, ...articles];
+      }
     }
     setArticles(updated);
     await saveArticles(updated);
     setEditingArticle(null);
-    triggerAlert('✓ Đã lưu bài viết & tự động đồng bộ Supabase Cloud!');
+    triggerAlert('✓ Đã cập nhật thành công bài viết & đồng bộ lên Cloud!');
   };
 
   const handleTogglePublishArticle = async (id) => {
-    const art = articles.find(a => a.id === id);
+    const art = articles.find(a => String(a.id) === String(id));
     if (!art) return;
     const newStatus = art.active === false ? true : false;
-    const updated = articles.map(a => a.id === id ? { ...a, active: newStatus } : a);
+    const nowTime = Date.now();
+    const updated = articles.map(a => String(a.id) === String(id) ? { ...a, active: newStatus, updatedAt: nowTime } : a);
     setArticles(updated);
     await saveArticles(updated);
     triggerAlert(`✓ Đã ${newStatus ? 'xuất bản công khai' : 'chuyển sang bản nháp'}: ${art.title}`);
   };
 
   const handleDuplicateArticle = async (art) => {
+    const nowTime = Date.now();
     const duplicated = {
       ...art,
-      id: Date.now(),
+      id: nowTime,
       title: `${art.title} (Bản sao)`,
-      slug: `${art.slug || 'bai-viet'}-copy-${Date.now().toString().slice(-4)}`,
+      slug: `${art.slug || 'bai-viet'}-copy-${nowTime.toString().slice(-4)}`,
       date: new Date().toLocaleDateString('vi-VN'),
       views: 0,
-      active: false
+      active: false,
+      updatedAt: nowTime
     };
     const updated = [duplicated, ...articles];
     setArticles(updated);
@@ -507,21 +521,61 @@ export default function AdminPage({ navigate }) {
   const handleUploadArticleCover = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP, GIF).');
+      return;
+    }
     setIsUploadingArticleCover(true);
+    let finalUrl = null;
     try {
-      const publicUrl = await uploadImageToSupabase(file, 'articles');
+      finalUrl = await uploadImageToSupabase(file, 'articles');
+    } catch (err) {
+      console.warn('Lỗi tải ảnh lên Supabase Storage:', err);
+    }
+
+    // Fallback nếu không có internet hoặc storage lỗi: nén ảnh qua canvas WebP cực nét nhẹ
+    if (!finalUrl) {
+      try {
+        finalUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let w = img.width;
+              let h = img.height;
+              const maxW = 1200;
+              if (w > maxW) {
+                h = Math.round(h * (maxW / w));
+                w = maxW;
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL('image/webp', 0.85));
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      } catch (fallbackErr) {
+        console.error('Lỗi nén ảnh fallback:', fallbackErr);
+      }
+    }
+
+    if (finalUrl) {
       setEditingArticle(prev => ({
         ...prev,
-        coverImage: publicUrl
+        coverImage: finalUrl,
+        updatedAt: Date.now()
       }));
-      triggerAlert('✓ Đã tải ảnh bìa bài viết lên thành công!');
-    } catch (err) {
-      console.error('Lỗi tải ảnh:', err);
-      triggerAlert('⚠️ Lỗi tải ảnh: ' + err.message);
-    } finally {
-      setIsUploadingArticleCover(false);
-      e.target.value = '';
+      triggerAlert('✓ Đã cập nhật ảnh bìa mới cho bài viết! Hãy bấm "LƯU THAY ĐỔI" để lưu bài.');
+    } else {
+      triggerAlert('⚠️ Không thể đọc file ảnh. Vui lòng thử lại!');
     }
+    setIsUploadingArticleCover(false);
+    e.target.value = '';
   };
 
   const insertMarkdownSyntax = (prefix, suffix = '', placeholder = '') => {
