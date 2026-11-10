@@ -45,47 +45,69 @@ export const DEFAULT_BRANCHES = [
 
 export const BRANCHES = DEFAULT_BRANCHES;
 
-export function getBranches() {
+const DELETED_BRANCHES_KEY = 'coffee2424_deleted_branches';
+const SYNCED_BRANCHES_KEY = 'coffee2424_branches_synced';
+const STORAGE_BRANCHES_KEY = 'coffee2424_branches';
+
+export function getDeletedBranchIds() {
   try {
-    const saved = localStorage.getItem('coffee2424_branches');
-    if (saved) {
+    const raw = localStorage.getItem(DELETED_BRANCHES_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr.map(String));
+    }
+  } catch (_) {}
+  return new Set();
+}
+
+export function recordDeletedBranchId(id) {
+  if (!id) return;
+  try {
+    const current = getDeletedBranchIds();
+    current.add(String(id));
+    localStorage.setItem(DELETED_BRANCHES_KEY, JSON.stringify(Array.from(current)));
+  } catch (_) {}
+}
+
+export function getBranches() {
+  const deletedIds = getDeletedBranchIds();
+  try {
+    const saved = localStorage.getItem(STORAGE_BRANCHES_KEY);
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Đồng bộ link KiotViet chuẩn & tự động nâng cấp ảnh mockup cũ sang ảnh thực tế
-        return parsed.map(b => {
-          if (b.id === 'cn-96d5') {
-            if (!b.menuUrl || b.menuUrl.includes('web-store.online') === false) {
-              b.menuUrl = 'https://coffee2424.web-store.online/menu/363827';
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter(b => b && !deletedIds.has(String(b.id)))
+          .map(b => {
+            if (b.id === 'cn-96d5') {
+              if (!b.menuUrl || b.menuUrl.includes('web-store.online') === false) {
+                b.menuUrl = 'https://coffee2424.web-store.online/menu/363827';
+              }
+              if (!b.image || b.image === '/images/branch_rooftop.jpg') {
+                b.image = '/images/branch_96d5.webp';
+              }
             }
-            // Tự động thay thế nếu trình duyệt cũ còn lưu ảnh mockup
-            if (!b.image || b.image === '/images/branch_rooftop.jpg') {
-              b.image = '/images/branch_96d5.webp';
+            if (b.id === 'cn-413phi') {
+              if (!b.menuUrl || b.menuUrl.includes('web-store.online') === false) {
+                b.menuUrl = 'https://coffee2424.web-store.online/menu/363688';
+              }
+              if (!b.image || b.image === '/images/branch_downtown.jpg') {
+                b.image = '/images/branch_413phi.webp';
+              }
             }
-          }
-          if (b.id === 'cn-413phi') {
-            if (!b.menuUrl || b.menuUrl.includes('web-store.online') === false) {
-              b.menuUrl = 'https://coffee2424.web-store.online/menu/363688';
-            }
-            // Tự động thay thế nếu trình duyệt cũ còn lưu ảnh mockup
-            if (!b.image || b.image === '/images/branch_downtown.jpg') {
-              b.image = '/images/branch_413phi.webp';
-            }
-          }
-          // Chuẩn hóa khung hình
-          if (!b.aspectRatio) {
-            b.aspectRatio = '3/4';
-          }
-          if (!b.imagePosition) {
-            b.imagePosition = 'center';
-          }
-          return b;
-        });
+            if (!b.aspectRatio) b.aspectRatio = '3/4';
+            if (!b.imagePosition) b.imagePosition = 'center';
+            return b;
+          });
       }
+    }
+    if (localStorage.getItem(SYNCED_BRANCHES_KEY) === 'true') {
+      return [];
     }
   } catch (e) {
     console.error('Error reading branches from storage:', e);
   }
-  return DEFAULT_BRANCHES;
+  return DEFAULT_BRANCHES.filter(b => b && !deletedIds.has(String(b.id)));
 }
 
 /**
@@ -94,12 +116,23 @@ export function getBranches() {
  */
 export async function saveBranches(branches) {
   try {
-    localStorage.setItem('coffee2424_branches', JSON.stringify(branches));
+    const deletedIds = getDeletedBranchIds();
+    const cleanList = Array.isArray(branches)
+      ? branches.filter(b => b && !deletedIds.has(String(b.id)))
+      : [];
+
+    localStorage.setItem(STORAGE_BRANCHES_KEY, JSON.stringify(cleanList));
+    localStorage.setItem(SYNCED_BRANCHES_KEY, 'true');
     window.dispatchEvent(new Event('branches-updated'));
 
     if (typeof window !== 'undefined') {
       try {
-        const res = await saveCloudItem('branches', branches);
+        const payload = {
+          list: cleanList,
+          deletedIds: Array.from(deletedIds),
+          updatedAt: new Date().toISOString()
+        };
+        const res = await saveCloudItem('branches', payload);
         if (res?.success) {
           console.info('✓ Đã lưu độc lập chi nhánh lên Supabase Cloud (id: branches)!');
         }
@@ -116,15 +149,65 @@ export async function saveBranches(branches) {
 }
 
 /**
- * Đồng bộ riêng chi nhánh từ dòng 'branches'
+ * Đồng bộ riêng chi nhánh từ dòng 'branches' với cơ chế Timestamp thông minh
  */
 export async function syncBranchesWithCloud() {
   try {
-    const cloudBranches = await fetchCloudItem('branches');
-    if (Array.isArray(cloudBranches) && cloudBranches.length > 0) {
-      localStorage.setItem('coffee2424_branches', JSON.stringify(cloudBranches));
+    const cloudData = await fetchCloudItem('branches');
+    const localDeleted = getDeletedBranchIds();
+
+    if (cloudData) {
+      let incomingList = [];
+      if (Array.isArray(cloudData)) {
+        incomingList = cloudData;
+      } else if (cloudData && typeof cloudData === 'object' && Array.isArray(cloudData.list)) {
+        incomingList = cloudData.list;
+        if (Array.isArray(cloudData.deletedIds)) {
+          cloudData.deletedIds.forEach(id => localDeleted.add(String(id)));
+          localStorage.setItem(DELETED_BRANCHES_KEY, JSON.stringify(Array.from(localDeleted)));
+        }
+      }
+
+      const filteredList = incomingList.filter(b => b && !localDeleted.has(String(b.id)));
+      const localBranches = getBranches();
+      const mergedMap = new Map();
+      let hasLocalNewer = false;
+
+      filteredList.forEach(cloudBranch => {
+        if (cloudBranch && cloudBranch.id) {
+          mergedMap.set(String(cloudBranch.id), cloudBranch);
+        }
+      });
+
+      localBranches.forEach(localBranch => {
+        if (!localBranch || !localBranch.id) return;
+        const idStr = String(localBranch.id);
+        if (localDeleted.has(idStr)) return;
+
+        const cloudBranch = mergedMap.get(idStr);
+        if (!cloudBranch) {
+          mergedMap.set(idStr, localBranch);
+          hasLocalNewer = true;
+        } else {
+          const localTime = Number(localBranch.updatedAt) || 0;
+          const cloudTime = Number(cloudBranch.updatedAt) || 0;
+          if (localTime > cloudTime) {
+            mergedMap.set(idStr, localBranch);
+            hasLocalNewer = true;
+          }
+        }
+      });
+
+      const mergedList = Array.from(mergedMap.values());
+      localStorage.setItem(STORAGE_BRANCHES_KEY, JSON.stringify(mergedList));
+      localStorage.setItem(SYNCED_BRANCHES_KEY, 'true');
       window.dispatchEvent(new Event('branches-updated'));
-      return cloudBranches;
+
+      if (hasLocalNewer) {
+        saveBranches(mergedList).catch(() => {});
+      }
+
+      return mergedList;
     }
   } catch (err) {
     console.warn('Lỗi đồng bộ chi nhánh từ Supabase:', err);

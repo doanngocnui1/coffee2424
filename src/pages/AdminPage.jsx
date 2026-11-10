@@ -82,7 +82,7 @@ import {
   pullCloudConfigToLocal 
 } from '../data/siteConfig';
 import { supabase, isSupabaseConfigured, isLocalhost, uploadImageToSupabase, saveCloudSiteConfig, compressImageToWebP } from '../lib/supabase';
-import { getJobs, saveJobs } from '../data/jobs';
+import { getJobs, saveJobs, syncJobsWithCloud } from '../data/jobs';
 import { getReviews, saveReviews, DEFAULT_REVIEWS } from '../data/reviews';
 import { 
   getAccounts, 
@@ -720,8 +720,14 @@ export default function AdminPage({ navigate }) {
     setTimeout(() => setSaveAlert(null), 3000);
   };
 
-  // Lắng nghe sự kiện đồng bộ dữ liệu tuyển dụng
+  // Lắng nghe và đồng bộ sự kiện dữ liệu tuyển dụng
   useEffect(() => {
+    syncJobsWithCloud().then(cloudJobs => {
+      if (cloudJobs && Array.isArray(cloudJobs)) {
+        setJobsList(cloudJobs);
+      }
+    }).catch(() => {});
+
     const handleSyncJobs = () => {
       setJobsList(getJobs());
     };
@@ -733,8 +739,14 @@ export default function AdminPage({ navigate }) {
     };
   }, []);
 
-  // Lắng nghe sự kiện đồng bộ dữ liệu bài viết (từ Supabase Cloud hoặc các tab khác)
+  // Lắng nghe và đồng bộ dữ liệu bài viết (tự động kéo từ Supabase Cloud khi mở trang hoặc reload)
   useEffect(() => {
+    syncArticlesWithCloud().then(cloudArticles => {
+      if (cloudArticles && Array.isArray(cloudArticles)) {
+        setArticles(cloudArticles);
+      }
+    }).catch(err => console.warn('Lỗi sync articles trong Admin:', err));
+
     const handleSyncArticles = () => {
       setArticles(getArticles());
     };
@@ -745,6 +757,17 @@ export default function AdminPage({ navigate }) {
       window.removeEventListener('storage', handleSyncArticles);
     };
   }, []);
+
+  // Khi chuyển sang tab articles, tự động kiểm tra và kéo toàn bộ bài viết thật từ Cloud
+  useEffect(() => {
+    if (activeTab === 'articles') {
+      syncArticlesWithCloud().then(cloudArticles => {
+        if (cloudArticles && Array.isArray(cloudArticles)) {
+          setArticles(cloudArticles);
+        }
+      }).catch(() => {});
+    }
+  }, [activeTab]);
 
   // Helper Bật / Tắt 1 vị trí tuyển dụng
   const handleToggleJobActive = (jobId) => {
@@ -4844,6 +4867,30 @@ export default function AdminPage({ navigate }) {
                         <option value="TITLE" className="bg-neutral-900 text-white">Tên A-Z</option>
                       </select>
                     </div>
+
+                    {/* Refresh from Cloud button */}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        triggerAlert('⏳ Đang kéo bài viết mới nhất từ Cloud...');
+                        try {
+                          const cloudArticles = await syncArticlesWithCloud();
+                          if (cloudArticles && Array.isArray(cloudArticles)) {
+                            setArticles(cloudArticles);
+                            triggerAlert(`✓ Đã đồng bộ thành công ${cloudArticles.length} bài viết từ Cloud!`);
+                          } else {
+                            triggerAlert('✓ Dữ liệu bài viết đã là mới nhất!');
+                          }
+                        } catch (err) {
+                          triggerAlert('⚠️ Lỗi kết nối Cloud: ' + err.message);
+                        }
+                      }}
+                      title="Làm mới bài viết từ Cloud"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-amber-400 border border-neutral-800 text-xs font-bold transition-all cursor-pointer shrink-0"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="hidden sm:inline">Làm mới Cloud</span>
+                    </button>
 
                     {/* View Mode Toggle: Grid vs List */}
                     <div className="flex items-center bg-neutral-900 border border-neutral-800 p-1 rounded-2xl shrink-0">
